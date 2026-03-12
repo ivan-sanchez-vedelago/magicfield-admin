@@ -1,0 +1,42 @@
+{
+  "expo": {
+    "name": "MagicField Admin",
+    "slug": "magicfield-admin",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#ffffff"
+      },
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ],
+      "package": "com.ivian.magicfieldadmin"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "The app accesses your photos to upload product images.",
+          "cameraPermission": "The app accesses your camera to take product photos."
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "6120a7ac-5a6b-4839-aa66-c2ce2a6f1809"
+      }
+    }
+  }
+}
