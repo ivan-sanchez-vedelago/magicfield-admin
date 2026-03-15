@@ -141,7 +141,7 @@ const DrawerNavigator = () => (
         drawerLabel: 'Productos',
         title: 'Productos',
         drawerIcon: ({ color, size }) => (
-          <Text style={{ fontSize: size, color }}>📦</Text>
+          <Text style={{ fontSize: size, color }}>📦  </Text>
         ),
       }}
     />
@@ -153,7 +153,7 @@ const DrawerNavigator = () => (
         drawerLabel: 'Dashboard',
         title: 'Dashboard',
         drawerIcon: ({ color, size }) => (
-          <Text style={{ fontSize: size, color }}>📊</Text>
+          <Text style={{ fontSize: size, color }}>📊  </Text>
         ),
       }}
     />
@@ -165,7 +165,7 @@ const DrawerNavigator = () => (
         drawerLabel: 'Crear Producto',
         title: 'Crear Producto',
         drawerIcon: ({ color, size }) => (
-          <Text style={{ fontSize: size, color }}>➕</Text>
+          <Text style={{ fontSize: size, color }}>➕  </Text>
         ),
       }}
     />
@@ -177,7 +177,7 @@ const DrawerNavigator = () => (
         drawerLabel: 'Configuración',
         title: 'Configuración',
         drawerIcon: ({ color, size }) => (
-          <Text style={{ fontSize: size, color }}>⚙️</Text>
+          <Text style={{ fontSize: size, color }}>⚙️  </Text>
         ),
       }}
     />

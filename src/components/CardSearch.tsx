@@ -1,4 +1,5 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
+
 import {
   View,
   TextInput,
@@ -8,10 +9,15 @@ import {
   StyleSheet,
   Image,
   ActivityIndicator,
+  Keyboard,
 } from 'react-native';
+
 import { debounce } from '@utils';
-import { useScryfallSearch } from '@hooks';
 import { ScryfallCard } from '@types';
+import { getCardImage } from '@utils/getCardImage';
+
+const autocompleteCache: Record<string, string[]> = {};
+const editionsCache: Record<string, ScryfallCard[]> = {};
 
 export interface CardSearchProps {
   onCardSelected: (card: ScryfallCard) => void;
@@ -22,46 +28,168 @@ export const CardSearch: React.FC<CardSearchProps> = ({
   onCardSelected,
   disabled = false,
 }) => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const { results, loading, error, search, clearResults } = useScryfallSearch();
-  const [showResults, setShowResults] = useState(false);
 
-  const debouncedSearch = useCallback(
-    debounce((query: string) => {
-      if (query.trim()) {
-        search(query);
-        setShowResults(true);
-      } else {
-        clearResults();
-        setShowResults(false);
+  const [query, setQuery] = useState('');
+  const [names, setNames] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const [editions, setEditions] = useState<ScryfallCard[]>([]);
+  const [showEditions, setShowEditions] = useState(false);
+
+  const abortRef = useRef<AbortController | null>(null);
+  const selectingRef = useRef(false);
+
+  const searchAutocomplete = async (text: string) => {
+
+    if (autocompleteCache[text]) {
+      setNames(autocompleteCache[text]);
+      return;
+    }
+
+    try {
+
+      abortRef.current?.abort();
+
+      const controller = new AbortController();
+      abortRef.current = controller;
+
+      setLoading(true);
+
+      const res = await fetch(
+        `https://api.scryfall.com/cards/autocomplete?q=${encodeURIComponent(text)}`,
+        {
+          headers: {
+            Accept: 'application/json',
+            'User-Agent': 'MagicFieldApp/1.0 (your-email@example.com)'
+          },
+          signal: controller.signal
+        }
+      );
+
+      const data = await res.json();
+
+      autocompleteCache[text] = data.data || [];
+      setNames(data.data || []);
+
+    } catch (err: any) {
+
+      if (err.name !== 'AbortError') {
+        console.error(err);
       }
-    }, 500),
-    [search, clearResults]
-  );
 
-  const handleChangeText = (text: string) => {
-    setSearchQuery(text);
-    debouncedSearch(text);
+    } finally {
+
+      setLoading(false);
+
+    }
+
   };
 
-  const handleSelectCard = (card: ScryfallCard) => {
+  const loadEditions = async (name: string) => {
+
+    if (editionsCache[name]) {
+      setNames([]);
+      setEditions(editionsCache[name]);
+      setShowEditions(true);
+      return;
+    }
+
+    try {
+      setNames([]);
+      setLoading(true);
+
+      const query = `name:"${name}"`;
+      const res = await fetch(
+        `https://api.scryfall.com/cards/search?q=${encodeURIComponent(query)}&unique=prints&order=released&dir=desc`,
+        {
+          headers: {
+            Accept: 'application/json',
+            'User-Agent': 'MagicFieldApp/1.0'
+          }
+        }
+      )
+      const data = await res.json();
+
+      editionsCache[name] = data.data;
+
+      setEditions(data.data);
+      setShowEditions(true);
+
+    } catch (err) {
+
+      console.error(err);
+
+    } finally {
+
+      setLoading(false);
+
+    }
+
+  };
+
+  const debouncedSearch = useCallback(
+    debounce((text: string) => {
+
+      if (text.length < 2) {
+        setNames([]);
+        return;
+      }
+
+      searchAutocomplete(text);
+
+    }, 350),
+    []
+  );
+
+  const handleChange = (text: string) => {
+
+    setQuery(text);
+
+    if (selectingRef.current) {
+      selectingRef.current = false;
+      return;
+    }
+
+    if (text.length < 2) {
+      setNames([]);
+      setEditions([]);
+      setShowEditions(false);
+      return;
+    }
+
+    setShowEditions(false);
+
+    debouncedSearch(text);
+
+  };
+
+  const handleSelectEdition = (card: ScryfallCard) => {
+    selectingRef.current = true;
+    Keyboard.dismiss();
+
+    setQuery(card.name);
+
+    setNames([]);
+    setEditions([]);
+    setShowEditions(false);
+
     onCardSelected(card);
-    setSearchQuery('');
-    clearResults();
-    setShowResults(false);
+
   };
 
   return (
     <View style={styles.container}>
+
       <View style={styles.searchBox}>
+
         <TextInput
           style={[styles.input, disabled && styles.disabledInput]}
-          placeholder="Buscar carta en Scryfall..."
-          value={searchQuery}
-          onChangeText={handleChangeText}
+          placeholder="Buscar carta..."
+          value={query}
+          onChangeText={handleChange}
           editable={!disabled}
-          placeholderTextColor="#9ca3af"
         />
+
         {loading && (
           <ActivityIndicator
             style={styles.spinner}
@@ -69,70 +197,94 @@ export const CardSearch: React.FC<CardSearchProps> = ({
             size="small"
           />
         )}
+
       </View>
 
-      {error && (
-        <View style={styles.errorMessage}>
-          <Text style={styles.errorText}>
-            Error en la búsqueda: {error.message}
-          </Text>
-        </View>
-      )}
-
-      {showResults && results.length > 0 && (
+      {!showEditions && names.length > 0 && (
         <ScrollView
           style={styles.resultsList}
-          keyboardShouldPersistTaps="handled"
           nestedScrollEnabled
+          keyboardShouldPersistTaps="handled"
         >
-          {results.slice(0, 8).map((card) => (
+          {names.map((name) => (
             <TouchableOpacity
-              key={card.id}
+              key={name}
               style={styles.resultItem}
-              onPress={() => handleSelectCard(card)}
+              onPress={() => loadEditions(name)}
             >
-              <View style={styles.resultContent}>
-                {card.image_uris?.small && (
-                  <Image
-                    source={{ uri: card.image_uris.small }}
-                    style={styles.cardImage}
-                    resizeMode="cover"
-                  />
-                )}
-                <View style={styles.resultInfo}>
-                  <Text style={styles.cardName} numberOfLines={1}>
-                    {card.name}
-                  </Text>
-                  <Text style={styles.cardSet}>
-                    {card.set.toUpperCase()} • #{card.collector_number}
-                  </Text>
-                  {card.prices?.usd && (
-                    <Text style={styles.cardPrice}>${card.prices.usd}</Text>
-                  )}
-                </View>
-              </View>
+              <Text style={styles.cardName}>{name}</Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
       )}
 
-      {showResults && results.length === 0 && !loading && searchQuery.trim() && (
-        <View style={styles.noResults}>
-          <Text style={styles.noResultsText}>No se encontraron cartas</Text>
-        </View>
+      {showEditions && (
+        <ScrollView
+          style={styles.resultsList}
+          nestedScrollEnabled
+          keyboardShouldPersistTaps="handled"
+        >
+          {editions.map((card) => {
+
+            const image = getCardImage(card);
+
+            return (
+              <TouchableOpacity
+                key={card.id}
+                style={styles.resultItem}
+                onPress={() => handleSelectEdition(card)}
+              >
+                <View style={styles.resultContent}>
+
+                  {image && (
+                    <Image
+                      source={{ uri: image }}
+                      style={styles.cardImage}
+                    />
+                  )}
+
+                  <View style={{ flex: 1 }}>
+
+                    <Text style={styles.cardName}>
+                      {card.name}
+                    </Text>
+
+                    <Text style={styles.cardSet}>
+                      {card.set_name} • #{card.collector_number}
+                    </Text>
+
+                    {card.prices?.usd && (
+                      <Text style={styles.cardPrice}>
+                        ${card.prices.usd}
+                      </Text>
+                    )}
+
+                  </View>
+
+                </View>
+              </TouchableOpacity>
+            );
+
+          })}
+        </ScrollView>
       )}
+
     </View>
   );
+
 };
 
 const styles = StyleSheet.create({
+
   container: {
     marginVertical: 12,
   },
+
   searchBox: {
     position: 'relative',
     marginBottom: 8,
   },
+
   input: {
     borderWidth: 1,
     borderColor: '#e5e7eb',
@@ -143,15 +295,18 @@ const styles = StyleSheet.create({
     color: '#1f2937',
     backgroundColor: '#fff',
   },
+
   disabledInput: {
     backgroundColor: '#f9fafb',
     color: '#9ca3af',
   },
+
   spinner: {
     position: 'absolute',
     right: 12,
     top: 12,
   },
+
   resultsList: {
     borderWidth: 1,
     borderColor: '#e5e7eb',
@@ -159,60 +314,42 @@ const styles = StyleSheet.create({
     maxHeight: 300,
     backgroundColor: '#fff',
   },
+
   resultItem: {
     borderBottomWidth: 1,
     borderBottomColor: '#f3f4f6',
     paddingVertical: 12,
     paddingHorizontal: 12,
   },
+
   resultContent: {
     flexDirection: 'row',
     gap: 12,
     alignItems: 'center',
   },
+
   cardImage: {
     width: 50,
     height: 70,
     borderRadius: 4,
     backgroundColor: '#f3f4f6',
   },
-  resultInfo: {
-    flex: 1,
-  },
+
   cardName: {
     fontSize: 14,
     fontWeight: '600',
     color: '#1f2937',
-    marginBottom: 2,
   },
+
   cardSet: {
     fontSize: 12,
     color: '#6b7280',
-    marginBottom: 2,
   },
+
   cardPrice: {
     fontSize: 13,
     fontWeight: '600',
     color: '#059669',
   },
-  errorMessage: {
-    backgroundColor: '#fee2e2',
-    borderRadius: 6,
-    padding: 8,
-    marginBottom: 8,
-  },
-  errorText: {
-    color: '#991b1b',
-    fontSize: 12,
-  },
-  noResults: {
-    backgroundColor: '#f3f4f6',
-    borderRadius: 8,
-    padding: 16,
-    alignItems: 'center',
-  },
-  noResultsText: {
-    color: '#6b7280',
-    fontSize: 14,
-  },
+
 });

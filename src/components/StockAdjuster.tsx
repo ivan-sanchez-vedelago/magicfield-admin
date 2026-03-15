@@ -9,7 +9,7 @@ import {
 
 export interface StockAdjusterProps {
   initialStock: number;
-  onStockChange: (newStock: number) => Promise<void>;
+  onStockChange: (newStock: number) => Promise<unknown>;
   disabled?: boolean;
 }
 

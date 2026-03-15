@@ -30,7 +30,7 @@ export const ProductDetailScreen: React.FC<Props> = ({
       },
     ]);
   });
-  const { execute: updateStock } = useUpdateProductStock(productId);
+  const { execute: updateStock } = useUpdateProductStock();
 
   const handleDelete = () => {
     Alert.alert(
@@ -144,7 +144,9 @@ export const ProductDetailScreen: React.FC<Props> = ({
         <Text style={styles.sectionTitle}>Ajustar Stock</Text>
         <StockAdjuster
           initialStock={product.stock}
-          onStockChange={(newStock) => updateStock(newStock)}
+          onStockChange={(newStock) =>
+            updateStock({ productId, stock: newStock })
+          }
         />
       </View>
 

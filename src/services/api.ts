@@ -59,10 +59,7 @@ class ApiService {
 
   // Products
   async getProducts(): Promise<Product[]> {
-    console.log("FULL URL:", this.client.defaults.baseURL + ENDPOINTS.PRODUCTS.LIST);
-    console.log("GET PRODUCTS - calling:", ENDPOINTS.PRODUCTS.LIST);
     const response = await this.client.get<Product[]>(ENDPOINTS.PRODUCTS.LIST);
-    console.log("GET PRODUCTS - response:", response.data);
     return response.data;
   }
 
@@ -95,7 +92,10 @@ class ApiService {
 
   // Quick stock update
   async updateProductStock(id: string, stock: number): Promise<Product> {
-    return this.updateProduct(id, { stock });
+    const response = await this.client.patch(
+      `/api/products/${id}/stock?stock=${stock}`
+    );
+    return response.data;
   }
 
   // Quick price update
@@ -140,6 +140,10 @@ class ApiService {
       const response = await axios.get<ScryfallSearchResult>(
         'https://api.scryfall.com/cards/search',
         {
+          headers: {
+            'Accept': 'application/json',
+            'User-Agent': 'MagicFieldApp/1.0 (your-email@example.com)'
+          },
           params: { q: query },
           timeout: 30000,
         }

@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   View,
   FlatList,
@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Alert,
   RefreshControl,
+  TextInput,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ProductCard } from '@components';
@@ -19,16 +20,32 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Products'>;
 
 export const ProductsScreen: React.FC<Props> = ({ navigation }) => {
   const { products, loading, error, refetch } = useProducts();
-  const { execute: deleteProduct, loading: isDeleting } = useDeleteProduct(
-    () => refetch()
-  );
-  const { execute: updateStock } = useUpdateProductStock('', () => refetch());
+
+  const { execute: deleteProduct } = useDeleteProduct(() => refetch());
+  const { execute: updateStock } = useUpdateProductStock(() => refetch());
+
   const [deletingId, setDeletingId] = useState<string | undefined>();
   const [refreshing, setRefreshing] = useState(false);
+  const [search, setSearch] = useState('');
+  const [selectedTypeFilter, setSelectedTypeFilter] = useState<Product['type'] | 'all'>('all');
 
-  const handleNavigateToCreate = () => {
-    navigation.navigate('CreateProduct');
-  };
+  const PRODUCT_TYPES_FILTER: { label: string; value: Product['type'] | 'all' }[] = [
+    { label: 'Todos', value: 'all' },
+    { label: 'Single', value: 'single' },
+    { label: 'Sealed', value: 'sealed' },
+    { label: 'Otro', value: 'other' },
+  ];
+
+  
+  const filteredProducts = useMemo(() => {
+    return products
+      .filter((p) => p.name.toLowerCase().includes(search.toLowerCase()))
+      .filter((p) =>
+        selectedTypeFilter === 'all'
+          ? true
+          : p.type.toLowerCase() === selectedTypeFilter.toLowerCase()
+      );
+  }, [products, search, selectedTypeFilter]);
 
   const handleEditProduct = (product: Product) => {
     navigation.navigate('EditProduct', { productId: product.id });
@@ -47,11 +64,8 @@ export const ProductsScreen: React.FC<Props> = ({ navigation }) => {
             try {
               await deleteProduct(product.id);
               Alert.alert('Éxito', 'Producto eliminado correctamente');
-            } catch (err) {
-              Alert.alert(
-                'Error',
-                'No se pudo eliminar el producto'
-              );
+            } catch {
+              Alert.alert('Error', 'No se pudo eliminar el producto');
             } finally {
               setDeletingId(undefined);
             }
@@ -63,7 +77,7 @@ export const ProductsScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   const handleStockChange = async (productId: string, newStock: number) => {
-    await updateStock(newStock);
+    await updateStock({ productId, stock: newStock });
   };
 
   const handleRefresh = async () => {
@@ -76,7 +90,6 @@ export const ProductsScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   const handleProductPress = (product: Product) => {
-    // Navigate to product detail
     navigation.navigate('ProductDetail', { productId: product.id });
   };
 
@@ -102,18 +115,45 @@ export const ProductsScreen: React.FC<Props> = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
+      
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Productos</Text>
-        <TouchableOpacity
-          style={styles.createButton}
-          onPress={handleNavigateToCreate}
-        >
-          <Text style={styles.createButtonText}>+ Nuevo</Text>
-        </TouchableOpacity>
+      </View>
+
+      {/* Botones de filtro */}
+      <View style={styles.filterContainer}>
+        {PRODUCT_TYPES_FILTER.map((type) => (
+          <TouchableOpacity
+            key={type.value}
+            style={[
+              styles.filterButton,
+              selectedTypeFilter === type.value && styles.filterButtonActive,
+            ]}
+            onPress={() => setSelectedTypeFilter(type.value)}
+          >
+            <Text
+              style={[
+                styles.filterButtonText,
+                selectedTypeFilter === type.value && styles.filterButtonTextActive,
+              ]}
+            >
+              {type.label}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      <View style={styles.searchContainer}>
+        <TextInput
+          placeholder="Buscar productos..."
+          value={search}
+          onChangeText={setSearch}
+          style={styles.searchInput}
+        />
       </View>
 
       <FlatList
-        data={products}
+        data={filteredProducts}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <ProductCard
@@ -131,31 +171,33 @@ export const ProductsScreen: React.FC<Props> = ({ navigation }) => {
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Text style={styles.emptyText}>No hay productos</Text>
-            <TouchableOpacity
-              style={styles.createEmptyButton}
-              onPress={handleNavigateToCreate}
-            >
+            <TouchableOpacity style={styles.createEmptyButton}>
               <Text style={styles.createEmptyButtonText}>Crear Primero</Text>
             </TouchableOpacity>
           </View>
         }
-        contentContainerStyle={products.length === 0 ? { flex: 1 } : undefined}
+        contentContainerStyle={
+          filteredProducts.length === 0 ? { flex: 1 } : undefined
+        }
       />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+
   container: {
     flex: 1,
     backgroundColor: '#f9fafb',
   },
+
   centerContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#f9fafb',
   },
+
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -166,62 +208,106 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
   },
+
   headerTitle: {
     fontSize: 22,
     fontWeight: '700',
     color: '#1f2937',
   },
-  createButton: {
-    backgroundColor: '#3b82f6',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 6,
+
+  searchContainer: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: '#fff',
   },
-  createButtonText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 13,
+
+  searchInput: {
+    backgroundColor: '#f3f4f6',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 8,
+    fontSize: 14,
   },
+
   loadingText: {
     marginTop: 12,
     color: '#6b7280',
     fontSize: 14,
   },
+
   errorText: {
     color: '#ef4444',
     fontSize: 16,
     textAlign: 'center',
     marginBottom: 12,
   },
+
   retryButton: {
     backgroundColor: '#3b82f6',
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 6,
   },
+
   retryButtonText: {
     color: '#fff',
     fontWeight: '600',
   },
+
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
+
   emptyText: {
     fontSize: 16,
     color: '#6b7280',
     marginBottom: 16,
   },
+
   createEmptyButton: {
     backgroundColor: '#3b82f6',
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
   },
+
   createEmptyButtonText: {
     color: '#fff',
     fontWeight: '600',
     fontSize: 14,
+  },
+
+  filterContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: '#fff',
+    justifyContent: 'space-around',
+  },
+
+  filterButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    backgroundColor: '#f3f4f6',
+  },
+
+  filterButtonActive: {
+    backgroundColor: '#3b82f6',
+    borderColor: '#3b82f6',
+  },
+
+  filterButtonText: {
+    color: '#374151',
+    fontWeight: '600',
+    fontSize: 13,
+  },
+
+  filterButtonTextActive: {
+    color: '#fff',
   },
 });

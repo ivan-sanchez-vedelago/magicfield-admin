@@ -2,7 +2,7 @@
 // This file handles environment-specific API URLs
 
 const ENV = {
-  DEV: 'http://192.168.0.18:8080',
+  DEV: 'http://192.168.0.20:8080',
   PROD: 'https://magicfield-backend-production.up.railway.app',
 };
 

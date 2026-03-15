@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   TouchableOpacity,
@@ -21,22 +21,30 @@ export interface ImageUploaderProps {
   onImagesSelected: (images: ImageUploadResult[]) => void;
   maxImages?: number;
   multiple?: boolean;
+  selectedImages?: ImageUploadResult[];
+  readonly?: boolean;
 }
 
 export const ImageUploader: React.FC<ImageUploaderProps> = ({
   onImagesSelected,
   maxImages = 5,
   multiple = true,
+  selectedImages: externalImages = [],
+  readonly = false,
 }) => {
   const [selectedImages, setSelectedImages] = useState<ImageUploadResult[]>([]);
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    setSelectedImages(externalImages);
+  }, [externalImages]);
 
   const pickImage = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsEditing: true,
-        aspect: [4, 3],
+        aspect: [5, 7],
         quality: 0.8,
       });
 
@@ -97,18 +105,20 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
                 style={styles.image}
                 resizeMode="cover"
               />
-              <TouchableOpacity
-                style={styles.removeButton}
-                onPress={() => removeImage(index)}
-              >
-                <Text style={styles.removeButtonText}>✕</Text>
-              </TouchableOpacity>
+              {!readonly && (
+                <TouchableOpacity
+                  style={styles.removeButton}
+                  onPress={() => removeImage(index)}
+                >
+                  <Text style={styles.removeButtonText}>✕</Text>
+                </TouchableOpacity>
+              )}
             </View>
           ))}
         </ScrollView>
       )}
 
-      {canAddMore && (
+      {canAddMore && !readonly && (
         <TouchableOpacity
           style={styles.uploadButton}
           onPress={pickImage}

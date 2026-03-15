@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   View,
   ScrollView,
@@ -17,6 +18,7 @@ import { useCreateProduct } from '@hooks';
 import { apiService } from '@services/api';
 import { ScryfallCard, ProductType, ProductImage } from '@types';
 import type { RootStackParamList } from '@navigation/types';
+import { getCardImage } from '@utils/getCardImage';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CreateProduct'>;
 
@@ -67,22 +69,68 @@ export const CreateProductScreen: React.FC<Props> = ({ navigation }) => {
   // Sealed-specific fields
   const [releaseDate, setReleaseDate] = useState('');
 
+  const resetForm = () => {
+    // tipo
+    setProductType(null);
+
+    // comunes
+    setName('');
+    setDescription('');
+    setPrice('');
+    setStock('');
+    setImages([]);
+
+    // single
+    setCardName('');
+    setSet('');
+    setCollectorNumber('');
+    setCondition('');
+    setLanguage('');
+    setIsFoil(false);
+    setScryfallId('');
+
+    // sealed
+    setReleaseDate('');
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        resetForm();
+      };
+    }, [])
+  );
+
   const { execute: createProduct, loading } = useCreateProduct((product) => {
     Alert.alert('Éxito', 'Producto creado correctamente', [
       {
         text: 'OK',
-        onPress: () => navigation.goBack(),
+        onPress: () => {
+          resetForm();
+          navigation.goBack();
+        },
       },
     ]);
   });
 
   const handleSelectCard = (card: ScryfallCard) => {
+    setName(card.name);
     setCardName(card.name);
     setSet(card.set);
     setCollectorNumber(card.collector_number);
     setScryfallId(card.id);
-    if (card.prices?.usd) {
-      setPrice(card.prices.usd);
+
+    setDescription(card.oracle_text || '');
+    setPrice(card.prices?.usd || '');
+    setStock('1');
+    setCondition('Near Mint');
+    setLanguage('English');
+
+    const imageUrl = getCardImage(card);
+    if (imageUrl) {
+      setImages([{ uri: imageUrl, name: `${card.name}.png`, type: 'image/png' }]);
+    } else {
+      setImages([]);
     }
   };
 
@@ -117,30 +165,12 @@ export const CreateProductScreen: React.FC<Props> = ({ navigation }) => {
     }
 
     try {
-      let imageUrl = undefined;
-
-      // Upload first image if exists
-      if (images.length > 0) {
-        try {
-          const uploadedImage = await apiService.uploadImage(
-            '', // Will be assigned after product creation
-            images[0].uri,
-            images[0].name
-          );
-          imageUrl = uploadedImage.url;
-        } catch (imageError) {
-          console.error('Image upload error:', imageError);
-          // Continue without image
-        }
-      }
-
       const productData: any = {
         name: name.trim(),
         description: description.trim(),
         price: parseFloat(price),
         stock: parseInt(stock),
         type: productType,
-        imageUrl,
       };
 
       // Add type-specific fields
@@ -156,7 +186,21 @@ export const CreateProductScreen: React.FC<Props> = ({ navigation }) => {
         productData.releaseDate = releaseDate;
       }
 
-      await createProduct(productData);
+      const createdProduct = await createProduct(productData);
+      const productId = createdProduct.id; // 🔑 acá obtenés el ID
+
+      if (images.length > 0) {
+      try {
+        const uploadedImage = await apiService.uploadImage(
+          productId,
+          images[0].uri,
+          images[0].name
+        );
+
+      } catch (imageError) {
+        console.error('Error subiendo imagen:', imageError);
+      }
+    }
     } catch (error) {
       Alert.alert(
         'Error',
@@ -210,53 +254,57 @@ export const CreateProductScreen: React.FC<Props> = ({ navigation }) => {
       {/* Image Uploader */}
       <View style={styles.section}>
         <ImageUploader
+          selectedImages={images}
           onImagesSelected={setImages}
           maxImages={5}
           multiple={true}
+          readonly={productType === 'single'}
         />
       </View>
 
       {/* Common Fields */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Información Básica</Text>
+      {productType !== 'single' && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Información básica</Text>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Nombre del producto"
-          value={name}
-          onChangeText={setName}
-          editable={!loading}
-        />
-
-        <TextInput
-          style={[styles.input, styles.multilineInput]}
-          placeholder="Descripción"
-          value={description}
-          onChangeText={setDescription}
-          multiline
-          numberOfLines={3}
-          editable={!loading}
-        />
-
-        <View style={styles.row}>
           <TextInput
-            style={[styles.input, styles.flex1]}
-            placeholder="Precio"
-            value={price}
-            onChangeText={setPrice}
-            keyboardType="decimal-pad"
+            style={styles.input}
+            placeholder="Nombre del producto"
+            value={name}
+            onChangeText={setName}
             editable={!loading}
           />
+
           <TextInput
-            style={[styles.input, styles.flex1, styles.marginLeft]}
-            placeholder="Stock"
-            value={stock}
-            onChangeText={setStock}
-            keyboardType="number-pad"
+            style={[styles.input, styles.multilineInput]}
+            placeholder="Descripción"
+            value={description}
+            onChangeText={setDescription}
+            multiline
+            numberOfLines={3}
             editable={!loading}
           />
+
+          <View style={styles.row}>
+            <TextInput
+              style={[styles.input, styles.flex1]}
+              placeholder="Precio"
+              value={price}
+              onChangeText={setPrice}
+              keyboardType="decimal-pad"
+              editable={!loading}
+            />
+            <TextInput
+              style={[styles.input, styles.flex1, styles.marginLeft]}
+              placeholder="Stock"
+              value={stock}
+              onChangeText={setStock}
+              keyboardType="number-pad"
+              editable={!loading}
+            />
+          </View>
         </View>
-      </View>
+      )}
 
       {/* Single Product Fields */}
       {productType === 'single' && (
@@ -266,12 +314,33 @@ export const CreateProductScreen: React.FC<Props> = ({ navigation }) => {
           <CardSearch onCardSelected={handleSelectCard} disabled={loading} />
 
           <TextInput
-            style={styles.input}
-            placeholder="Nombre de la carta"
-            value={cardName}
-            onChangeText={setCardName}
-            editable={false}
+            style={[styles.input, styles.multilineInput]}
+            placeholder="Descripción"
+            value={description}
+            onChangeText={setDescription}
+            multiline
+            numberOfLines={3}
+            editable={!loading}
           />
+
+          <View style={styles.row}>
+            <TextInput
+              style={[styles.input, styles.flex1]}
+              placeholder="Precio"
+              value={price}
+              onChangeText={setPrice}
+              keyboardType="decimal-pad"
+              editable={!loading}
+            />
+            <TextInput
+              style={[styles.input, styles.flex1, styles.marginLeft]}
+              placeholder="Stock"
+              value={stock}
+              onChangeText={setStock}
+              keyboardType="number-pad"
+              editable={!loading}
+            />
+          </View>
 
           <View style={styles.row}>
             <TextInput

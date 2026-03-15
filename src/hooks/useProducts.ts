@@ -1,4 +1,3 @@
-import { useState, useCallback } from 'react';
 import { apiService } from '@services/api';
 import { Product } from '@types';
 import { useAsync, useAsyncMutation } from './useAsync';
@@ -7,7 +6,7 @@ export function useProducts() {
   const { data, loading, error, execute } = useAsync(
     () => apiService.getProducts(),
     [],
-    true
+    false
   );
 
   return {
@@ -29,7 +28,7 @@ export function useProductById(id: string | null) {
   );
 
   return {
-    product: data,
+    product: data as Product | null,
     loading,
     error,
     refetch: execute,
@@ -59,21 +58,21 @@ export function useDeleteProduct(onSuccess?: () => void) {
 }
 
 export function useUpdateProductStock(
-  productId: string,
   onSuccess?: (product: Product) => void
 ) {
   return useAsyncMutation(
-    (stock: number) => apiService.updateProductStock(productId, stock),
+    ({ productId, stock }: { productId: string; stock: number }) =>
+      apiService.updateProductStock(productId, stock),
     onSuccess
   );
 }
 
 export function useUpdateProductPrice(
-  productId: string,
   onSuccess?: (product: Product) => void
 ) {
   return useAsyncMutation(
-    (price: number) => apiService.updateProductPrice(productId, price),
+    ({ productId, price }: { productId: string; price: number }) =>
+      apiService.updateProductPrice(productId, price),
     onSuccess
   );
 }

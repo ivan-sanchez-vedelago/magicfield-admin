@@ -61,7 +61,7 @@ export function useAsyncMutation<T, P>(
   });
 
   const execute = useCallback(
-    async (params: P) => {
+    async (params: P): Promise<T> => {
       setState({ data: null, loading: true, error: null });
 
       try {
@@ -74,6 +74,8 @@ export function useAsyncMutation<T, P>(
         });
 
         onSuccess?.(result);
+
+        return result;
       } catch (err) {
         const error =
           err instanceof Error ? err : new Error(String(err));
@@ -85,6 +87,8 @@ export function useAsyncMutation<T, P>(
         });
 
         onError?.(error);
+
+        throw error;
       }
     },
     [asyncFunction, onSuccess, onError]

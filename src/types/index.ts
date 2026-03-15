@@ -61,14 +61,25 @@ export interface ScryfallCard {
   id: string;
   name: string;
   set: string;
+  set_name: string;
   collector_number: string;
+  oracle_text?: string;
   image_uris?: {
-    normal?: string;
-    small?: string;
+    small: string;
+    normal: string;
+    large?: string;
   };
   prices?: {
     usd?: string;
+    usd_foil?: string;
   };
+  card_faces?: {
+    image_uris?: {
+      small?: string;
+      normal?: string;
+      large?: string;
+    };
+  }[];
 }
 
 export interface ScryfallSearchResult {
