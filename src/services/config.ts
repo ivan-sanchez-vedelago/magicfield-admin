@@ -1,12 +1,21 @@
-// API Configuration
-// This file handles environment-specific API URLs
+import Constants from 'expo-constants';
+
+// Obtiene IP automáticamente en Expo
+const getDevApiUrl = () => {
+  const debuggerHost =
+    Constants.expoConfig?.hostUri ||
+    Constants.manifest2?.extra?.expoGo?.debuggerHost;
+
+  const host = debuggerHost?.split(':')[0];
+
+  return `http://${host}:8080`;
+};
 
 const ENV = {
-  DEV: 'http://192.168.0.20:8080',
+  DEV: getDevApiUrl(),
   PROD: 'https://magicfield-backend-production.up.railway.app',
 };
 
-// Detect current environment
 const isProduction = process.env.NODE_ENV === 'production';
 
 export const API_CONFIG = {
@@ -39,6 +48,5 @@ export const setApiBaseUrl = (url: string) => {
 
 // Get current API base URL
 export const getApiBaseUrl = () => {
-  console.log("API BASE URL:", API_CONFIG.BASE_URL);
   return API_CONFIG.BASE_URL;
 };
