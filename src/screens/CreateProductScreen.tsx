@@ -16,6 +16,7 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ImageUploader, ImageUploadResult, CardSearch } from '@components';
 import { useCreateProduct } from '@hooks';
+import { apiService } from '@services/api';
 import { ScryfallCard, ProductType, ProductImage } from '@types';
 import type { RootStackParamList } from '@navigation/types';
 import { getCardImage } from '@utils/getCardImage';
@@ -180,7 +181,20 @@ export const CreateProductScreen: React.FC<Props> = ({ navigation }) => {
         productData.releaseDate = releaseDate;
       }
 
-      await createProduct(productData);
+      const createdProduct = await createProduct(productData);
+      const productId = createdProduct.id;
+
+      if (images.length > 0) {
+        try {
+          const uploadedImage = await apiService.uploadImage(
+            productId,
+            images[0].uri,
+            images[0].name
+          );
+        } catch (imageError) {
+          console.error('Error subiendo imagen:', imageError);
+        }
+      }
     } catch (error) {
       Alert.alert(
         'Error',
