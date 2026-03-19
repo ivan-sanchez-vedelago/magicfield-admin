@@ -9,13 +9,13 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
-  Modal,
-  FlatList,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ImageUploader, ImageUploadResult, CardSearch } from '@components';
 import { useCreateProduct } from '@hooks';
-import { apiService } from '@services/api';
 import { ScryfallCard, ProductType, ProductImage } from '@types';
 import type { RootStackParamList } from '@navigation/types';
 import { getCardImage } from '@utils/getCardImage';
@@ -48,7 +48,6 @@ const PRODUCT_TYPES: ProductTypeOption[] = [
 
 export const CreateProductScreen: React.FC<Props> = ({ navigation }) => {
   const [productType, setProductType] = useState<ProductType | null>(null);
-  const [showTypeModal, setShowTypeModal] = useState(false);
   const [images, setImages] = useState<ImageUploadResult[]>([]);
 
   // Common fields
@@ -135,28 +134,23 @@ export const CreateProductScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   const handleCreateProduct = async () => {
-    // Validation
     if (!productType) {
       Alert.alert('Error', 'Debes seleccionar un tipo de producto');
       return;
     }
-
     if (!name.trim()) {
       Alert.alert('Error', 'El nombre es requerido');
       return;
     }
-
     if (!price || isNaN(parseFloat(price))) {
       Alert.alert('Error', 'El precio debe ser un número válido');
       return;
     }
-
     if (!stock || isNaN(parseInt(stock))) {
       Alert.alert('Error', 'El stock debe ser un número válido');
       return;
     }
 
-    // Validate type-specific fields
     if (productType === 'single') {
       if (!cardName.trim() || !set.trim()) {
         Alert.alert('Error', 'Para singles debes especificar la carta y el set');
@@ -185,22 +179,6 @@ export const CreateProductScreen: React.FC<Props> = ({ navigation }) => {
       } else if (productType === 'sealed' && releaseDate) {
         productData.releaseDate = releaseDate;
       }
-
-      const createdProduct = await createProduct(productData);
-      const productId = createdProduct.id; // 🔑 acá obtenés el ID
-
-      if (images.length > 0) {
-      try {
-        const uploadedImage = await apiService.uploadImage(
-          productId,
-          images[0].uri,
-          images[0].name
-        );
-
-      } catch (imageError) {
-        console.error('Error subiendo imagen:', imageError);
-      }
-    }
     } catch (error) {
       Alert.alert(
         'Error',
@@ -241,183 +219,208 @@ export const CreateProductScreen: React.FC<Props> = ({ navigation }) => {
   }
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => setProductType(null)}>
-          <Text style={styles.backButton}>← Atrás</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>
-          Nuevo {PRODUCT_TYPES.find((t) => t.value === productType)?.label}
-        </Text>
-      </View>
-
-      {/* Image Uploader */}
-      <View style={styles.section}>
-        <ImageUploader
-          selectedImages={images}
-          onImagesSelected={setImages}
-          maxImages={5}
-          multiple={true}
-          readonly={productType === 'single'}
-        />
-      </View>
-
-      {/* Common Fields */}
-      {productType !== 'single' && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Información básica</Text>
-
-          <TextInput
-            style={styles.input}
-            placeholder="Nombre del producto"
-            value={name}
-            onChangeText={setName}
-            editable={!loading}
-          />
-
-          <TextInput
-            style={[styles.input, styles.multilineInput]}
-            placeholder="Descripción"
-            value={description}
-            onChangeText={setDescription}
-            multiline
-            numberOfLines={3}
-            editable={!loading}
-          />
-
-          <View style={styles.row}>
-            <TextInput
-              style={[styles.input, styles.flex1]}
-              placeholder="Precio"
-              value={price}
-              onChangeText={setPrice}
-              keyboardType="decimal-pad"
-              editable={!loading}
-            />
-            <TextInput
-              style={[styles.input, styles.flex1, styles.marginLeft]}
-              placeholder="Stock"
-              value={stock}
-              onChangeText={setStock}
-              keyboardType="number-pad"
-              editable={!loading}
-            />
-          </View>
-        </View>
-      )}
-
-      {/* Single Product Fields */}
-      {productType === 'single' && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Información de la Carta</Text>
-
-          <CardSearch onCardSelected={handleSelectCard} disabled={loading} />
-
-          <TextInput
-            style={[styles.input, styles.multilineInput]}
-            placeholder="Descripción"
-            value={description}
-            onChangeText={setDescription}
-            multiline
-            numberOfLines={3}
-            editable={!loading}
-          />
-
-          <View style={styles.row}>
-            <TextInput
-              style={[styles.input, styles.flex1]}
-              placeholder="Precio"
-              value={price}
-              onChangeText={setPrice}
-              keyboardType="decimal-pad"
-              editable={!loading}
-            />
-            <TextInput
-              style={[styles.input, styles.flex1, styles.marginLeft]}
-              placeholder="Stock"
-              value={stock}
-              onChangeText={setStock}
-              keyboardType="number-pad"
-              editable={!loading}
-            />
-          </View>
-
-          <View style={styles.row}>
-            <TextInput
-              style={[styles.input, styles.flex1]}
-              placeholder="Set"
-              value={set}
-              onChangeText={setSet}
-              editable={!loading}
-            />
-            <TextInput
-              style={[styles.input, styles.flex1, styles.marginLeft]}
-              placeholder="Collector #"
-              value={collectorNumber}
-              onChangeText={setCollectorNumber}
-              editable={!loading}
-            />
-          </View>
-
-          <View style={styles.row}>
-            <TextInput
-              style={[styles.input, styles.flex1]}
-              placeholder="Condición"
-              value={condition}
-              onChangeText={setCondition}
-              editable={!loading}
-            />
-            <TextInput
-              style={[styles.input, styles.flex1, styles.marginLeft]}
-              placeholder="Idioma"
-              value={language}
-              onChangeText={setLanguage}
-              editable={!loading}
-            />
-          </View>
-
-          <TouchableOpacity
-            style={[styles.input, styles.foilToggle, isFoil && styles.foilActive]}
-            onPress={() => setIsFoil(!isFoil)}
-            disabled={loading}
-          >
-            <Text style={styles.foilToggleText}>
-              {isFoil ? '✓' : '○'} Foil
-            </Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {/* Sealed Product Fields */}
-      {productType === 'sealed' && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Información del Sealed</Text>
-
-          <TextInput
-            style={styles.input}
-            placeholder="Fecha de lanzamiento (YYYY-MM-DD)"
-            value={releaseDate}
-            onChangeText={setReleaseDate}
-            editable={!loading}
-          />
-        </View>
-      )}
-
-      {/* Create Button */}
-      <View style={styles.createSection}>
-        <TouchableOpacity
-          style={[styles.createButton, loading && styles.disabled]}
-          onPress={handleCreateProduct}
-          disabled={loading}
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <KeyboardAwareScrollView
+        style={styles.container}
+        enableOnAndroid={true}
+        extraScrollHeight={115}
+        enableAutomaticScroll={true}
+        keyboardShouldPersistTaps="handled"
+      >
+        <ScrollView
+          style={styles.container}
+          keyboardShouldPersistTaps="handled"
         >
-          {loading ? (
-            <ActivityIndicator color="#fff" size="small" />
-          ) : (
-            <Text style={styles.createButtonText}>Crear Producto</Text>
+          <View style={styles.header}>
+            <TouchableOpacity onPress={() => setProductType(null)}>
+              <Text style={styles.backButton}>← Atrás</Text>
+            </TouchableOpacity>
+            <Text style={styles.headerTitle}>
+              Nuevo {PRODUCT_TYPES.find((t) => t.value === productType)?.label}
+            </Text>
+          </View>
+
+          {/* Image Uploader */}
+          <View style={styles.section}>
+            <ImageUploader
+              selectedImages={images}
+              onImagesSelected={setImages}
+              maxImages={5}
+              multiple={true}
+              readonly={productType === 'single'}
+            />
+          </View>
+
+          {/* Common Fields */}
+          {productType !== 'single' && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Información básica</Text>
+
+              <TextInput
+                style={styles.input}
+                placeholder="Nombre del producto"
+                placeholderTextColor="#9ca3af"
+                value={name}
+                onChangeText={setName}
+                editable={!loading}
+              />
+
+              <TextInput
+                style={[styles.input, styles.multilineInput]}
+                placeholder="Descripción"
+                placeholderTextColor="#9ca3af"
+                value={description}
+                onChangeText={setDescription}
+                multiline
+                numberOfLines={3}
+                editable={!loading}
+              />
+
+              <View style={styles.row}>
+                <TextInput
+                  style={[styles.input, styles.flex1]}
+                  placeholder="Precio"
+                  placeholderTextColor="#9ca3af"
+                  value={price}
+                  onChangeText={setPrice}
+                  keyboardType="decimal-pad"
+                  editable={!loading}
+                />
+                <TextInput
+                  style={[styles.input, styles.flex1, styles.marginLeft]}
+                  placeholder="Stock"
+                  placeholderTextColor="#9ca3af"
+                  value={stock}
+                  onChangeText={setStock}
+                  keyboardType="number-pad"
+                  editable={!loading}
+                />
+              </View>
+            </View>
           )}
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+
+          {/* Single Product Fields */}
+          {productType === 'single' && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Información de la Carta</Text>
+
+              <CardSearch onCardSelected={handleSelectCard} disabled={loading} />
+
+              <TextInput
+                style={[styles.input, styles.multilineInput]}
+                placeholder="Descripción"
+                placeholderTextColor="#9ca3af"
+                value={description}
+                onChangeText={setDescription}
+                multiline
+                numberOfLines={3}
+                editable={!loading}
+              />
+
+              <View style={styles.row}>
+                <TextInput
+                  style={[styles.input, styles.flex1]}
+                  placeholder="Precio"
+                  placeholderTextColor="#9ca3af"
+                  value={price}
+                  onChangeText={setPrice}
+                  keyboardType="decimal-pad"
+                  editable={!loading}
+                />
+                <TextInput
+                  style={[styles.input, styles.flex1, styles.marginLeft]}
+                  placeholder="Stock"
+                  placeholderTextColor="#9ca3af"
+                  value={stock}
+                  onChangeText={setStock}
+                  keyboardType="number-pad"
+                  editable={!loading}
+                />
+              </View>
+
+              <View style={styles.row}>
+                <TextInput
+                  style={[styles.input, styles.flex1]}
+                  placeholder="Set"
+                  placeholderTextColor="#9ca3af"
+                  value={set}
+                  onChangeText={setSet}
+                  editable={!loading}
+                />
+                <TextInput
+                  style={[styles.input, styles.flex1, styles.marginLeft]}
+                  placeholder="Collector #"
+                  placeholderTextColor="#9ca3af"
+                  value={collectorNumber}
+                  onChangeText={setCollectorNumber}
+                  editable={!loading}
+                />
+              </View>
+
+              <View style={styles.row}>
+                <TextInput
+                  style={[styles.input, styles.flex1]}
+                  placeholder="Condición"
+                  placeholderTextColor="#9ca3af"
+                  value={condition}
+                  onChangeText={setCondition}
+                  editable={!loading}
+                />
+                <TextInput
+                  style={[styles.input, styles.flex1, styles.marginLeft]}
+                  placeholder="Idioma"
+                  placeholderTextColor="#9ca3af"
+                  value={language}
+                  onChangeText={setLanguage}
+                  editable={!loading}
+                />
+              </View>
+
+              <TouchableOpacity
+                style={[styles.input, styles.foilToggle, isFoil && styles.foilActive]}
+                onPress={() => setIsFoil(!isFoil)}
+                disabled={loading}
+              >
+                <Text style={styles.foilToggleText}>
+                  {isFoil ? '✓' : '○'} Foil
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Sealed Product Fields */}
+          {productType === 'sealed' && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Información del Sealed</Text>
+
+              <TextInput
+                style={styles.input}
+                placeholder="Fecha de lanzamiento (YYYY-MM-DD)"
+                placeholderTextColor="#9ca3af"
+                value={releaseDate}
+                onChangeText={setReleaseDate}
+                editable={!loading}
+              />
+            </View>
+          )}
+
+          {/* Create Button */}
+          <View style={styles.createSection}>
+            <TouchableOpacity
+              style={[styles.createButton, loading && styles.disabled]}
+              onPress={handleCreateProduct}
+              disabled={loading}
+            >
+              {loading ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <Text style={styles.createButtonText}>Crear Producto</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </KeyboardAwareScrollView>
+    </TouchableWithoutFeedback>
   );
 };
 

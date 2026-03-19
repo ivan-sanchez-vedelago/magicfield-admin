@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 
 import {
   View,
@@ -38,6 +38,13 @@ export const CardSearch: React.FC<CardSearchProps> = ({
 
   const abortRef = useRef<AbortController | null>(null);
   const selectingRef = useRef(false);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      abortRef.current?.abort();
+    };
+  }, []);
 
   const searchAutocomplete = async (text: string) => {
 
@@ -185,6 +192,7 @@ export const CardSearch: React.FC<CardSearchProps> = ({
         <TextInput
           style={[styles.input, disabled && styles.disabledInput]}
           placeholder="Buscar carta..."
+          placeholderTextColor="#9ca3af"
           value={query}
           onChangeText={handleChange}
           editable={!disabled}
