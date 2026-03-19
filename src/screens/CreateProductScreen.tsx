@@ -179,6 +179,8 @@ export const CreateProductScreen: React.FC<Props> = ({ navigation }) => {
       } else if (productType === 'sealed' && releaseDate) {
         productData.releaseDate = releaseDate;
       }
+
+      await createProduct(productData);
     } catch (error) {
       Alert.alert(
         'Error',
