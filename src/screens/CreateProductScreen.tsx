@@ -54,8 +54,11 @@ export const CreateProductScreen: React.FC<Props> = ({ navigation }) => {
   // Common fields
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [priceUsd, setPriceUsd] = useState('');
+  const [priceUsdFoil, setPriceUsdFoil] = useState('');
   const [price, setPrice] = useState('');
   const [stock, setStock] = useState('');
+  const [dolarMep, setDolarMep] = useState<number | null>(null);
 
   // Single-specific fields
   const [cardName, setCardName] = useState('');
@@ -63,6 +66,7 @@ export const CreateProductScreen: React.FC<Props> = ({ navigation }) => {
   const [collectorNumber, setCollectorNumber] = useState('');
   const [condition, setCondition] = useState('');
   const [language, setLanguage] = useState('');
+  const [hasFoil, setHasFoil] = useState(false);
   const [isFoil, setIsFoil] = useState(false);
   const [scryfallId, setScryfallId] = useState('');
 
@@ -76,6 +80,8 @@ export const CreateProductScreen: React.FC<Props> = ({ navigation }) => {
     // comunes
     setName('');
     setDescription('');
+    setPriceUsd('');
+    setPriceUsdFoil('');
     setPrice('');
     setStock('');
     setImages([]);
@@ -87,14 +93,38 @@ export const CreateProductScreen: React.FC<Props> = ({ navigation }) => {
     setCondition('');
     setLanguage('');
     setIsFoil(false);
+    setHasFoil(false);
     setScryfallId('');
 
     // sealed
     setReleaseDate('');
   };
 
+  async function getDolarMep() {
+    try {
+      const res = await fetch('https://dolarapi.com/v1/dolares');
+      const data = await res.json();
+
+      return data.find((d: any) =>
+        d.nombre.toLowerCase().includes('bolsa')
+      );
+    } catch (e) {
+      console.error('Error dólar MEP:', e);
+      return null;
+    }
+  }
+
   useFocusEffect(
     useCallback(() => {
+      const fetchDolar = async () => {
+        const mep = await getDolarMep();
+        if (mep?.venta) {
+          setDolarMep(mep.venta);
+        }
+      };
+
+      fetchDolar();
+
       return () => {
         resetForm();
       };
@@ -113,15 +143,35 @@ export const CreateProductScreen: React.FC<Props> = ({ navigation }) => {
     ]);
   });
 
+  const handleFoilChange = () => {
+    if(hasFoil && !isFoil) {
+      setPrice(priceUsdFoil);
+    } else {
+      setPrice(priceUsd);
+    }
+    setIsFoil(!isFoil);
+  };
+
   const handleSelectCard = (card: ScryfallCard) => {
+    const newPriceUsd = card.prices?.usd ? (parseFloat(card.prices.usd) * 1.3).toString() : '';
+    const newPriceUsdFoil = card.prices?.usd_foil ? (parseFloat(card.prices.usd_foil) * 1.3).toString() : '';
+
     setName(card.name);
     setCardName(card.name);
-    setSet(card.set);
+    setSet(card.set_name);
     setCollectorNumber(card.collector_number);
     setScryfallId(card.id);
 
     setDescription(card.oracle_text || '');
-    setPrice(card.prices?.usd || '');
+    setHasFoil(card.foil || false);
+    setPriceUsd(newPriceUsd);
+    setPriceUsdFoil(newPriceUsdFoil);
+    if(card.foil && isFoil) {
+      setPrice(newPriceUsdFoil);
+    } else {
+      setIsFoil(false);
+      setPrice(newPriceUsd);
+    }
     setStock('1');
     setCondition('Near Mint');
     setLanguage('English');
@@ -163,7 +213,9 @@ export const CreateProductScreen: React.FC<Props> = ({ navigation }) => {
       const productData: any = {
         name: name.trim(),
         description: description.trim(),
-        price: parseFloat(price),
+        price: dolarMep
+          ? parseFloat(price) * dolarMep
+          : parseFloat(price),
         stock: parseInt(stock),
         type: productType,
       };
@@ -254,6 +306,8 @@ export const CreateProductScreen: React.FC<Props> = ({ navigation }) => {
             <Text style={styles.headerTitle}>
               Nuevo {PRODUCT_TYPES.find((t) => t.value === productType)?.label}
             </Text>
+            <Text>Mep:</Text>
+            <Text style={{ color: '#16a34a' }}>{dolarMep ? `$${dolarMep}` : '...'}</Text>
           </View>
 
           {/* Image Uploader */}
@@ -393,9 +447,9 @@ export const CreateProductScreen: React.FC<Props> = ({ navigation }) => {
               </View>
 
               <TouchableOpacity
-                style={[styles.input, styles.foilToggle, isFoil && styles.foilActive]}
-                onPress={() => setIsFoil(!isFoil)}
-                disabled={loading}
+                style={[styles.input, styles.foilToggle, isFoil && styles.foilActive, !hasFoil && styles.disabled]}
+                onPress={handleFoilChange}
+                disabled={loading || !hasFoil}
               >
                 <Text style={styles.foilToggleText}>
                   {isFoil ? '✓' : '○'} Foil
