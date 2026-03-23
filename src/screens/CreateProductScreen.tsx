@@ -58,7 +58,6 @@ export const CreateProductScreen: React.FC<Props> = ({ navigation }) => {
   const [priceUsdFoil, setPriceUsdFoil] = useState('');
   const [price, setPrice] = useState('');
   const [stock, setStock] = useState('');
-  const [dolarMep, setDolarMep] = useState<number | null>(null);
 
   // Single-specific fields
   const [cardName, setCardName] = useState('');
@@ -100,31 +99,8 @@ export const CreateProductScreen: React.FC<Props> = ({ navigation }) => {
     setReleaseDate('');
   };
 
-  async function getDolarMep() {
-    try {
-      const res = await fetch('https://dolarapi.com/v1/dolares');
-      const data = await res.json();
-
-      return data.find((d: any) =>
-        d.nombre.toLowerCase().includes('bolsa')
-      );
-    } catch (e) {
-      console.error('Error dólar MEP:', e);
-      return null;
-    }
-  }
-
   useFocusEffect(
     useCallback(() => {
-      const fetchDolar = async () => {
-        const mep = await getDolarMep();
-        if (mep?.venta) {
-          setDolarMep(mep.venta);
-        }
-      };
-
-      fetchDolar();
-
       return () => {
         resetForm();
       };
@@ -143,6 +119,25 @@ export const CreateProductScreen: React.FC<Props> = ({ navigation }) => {
     ]);
   });
 
+  const getPrice = (usd: string | undefined) => {
+    if (!usd) return '';
+
+    const base = Number(usd);
+    if (isNaN(base)) return '';
+    let price = base;
+    if (price < 10)
+      price *= 1.3;
+    else
+      price *= 1.4;
+
+    // Floor mínimo
+    if (price < 0.5) {
+      price = 0.5;
+    }
+    
+    return price.toFixed(2);
+  };
+
   const handleFoilChange = () => {
     if(hasFoil && !isFoil) {
       setPrice(priceUsdFoil);
@@ -153,8 +148,8 @@ export const CreateProductScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   const handleSelectCard = (card: ScryfallCard) => {
-    const newPriceUsd = card.prices?.usd ? (parseFloat(card.prices.usd) * 1.3).toString() : '';
-    const newPriceUsdFoil = card.prices?.usd_foil ? (parseFloat(card.prices.usd_foil) * 1.3).toString() : '';
+    const newPriceUsd = getPrice(card.prices?.usd);
+    const newPriceUsdFoil = getPrice(card.prices?.usd_foil);
 
     setName(card.name);
     setCardName(card.name);
@@ -213,9 +208,7 @@ export const CreateProductScreen: React.FC<Props> = ({ navigation }) => {
       const productData: any = {
         name: name.trim(),
         description: description.trim(),
-        price: dolarMep
-          ? parseFloat(price) * dolarMep
-          : parseFloat(price),
+        price: parseFloat(price),
         stock: parseInt(stock),
         type: productType,
       };
@@ -306,8 +299,6 @@ export const CreateProductScreen: React.FC<Props> = ({ navigation }) => {
             <Text style={styles.headerTitle}>
               Nuevo {PRODUCT_TYPES.find((t) => t.value === productType)?.label}
             </Text>
-            <Text>Mep:</Text>
-            <Text style={{ color: '#16a34a' }}>{dolarMep ? `$${dolarMep}` : '...'}</Text>
           </View>
 
           {/* Image Uploader */}
