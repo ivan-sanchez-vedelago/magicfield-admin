@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import {
   View,
   FlatList,
@@ -10,6 +10,7 @@ import {
   RefreshControl,
   TextInput,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ProductCard } from '@components';
 import { useProducts, useDeleteProduct, useUpdateProductStock } from '@hooks';
@@ -36,6 +37,11 @@ export const ProductsScreen: React.FC<Props> = ({ navigation }) => {
     { label: 'Otro', value: 'other' },
   ];
 
+  useFocusEffect(
+    useCallback(() => {
+      refetch();
+    }, [])
+  );
   
   const filteredProducts = useMemo(() => {
     return products
@@ -146,6 +152,7 @@ export const ProductsScreen: React.FC<Props> = ({ navigation }) => {
       <View style={styles.searchContainer}>
         <TextInput
           placeholder="Buscar productos..."
+          placeholderTextColor="#9ca3af"
           value={search}
           onChangeText={setSearch}
           style={styles.searchInput}
@@ -223,6 +230,8 @@ const styles = StyleSheet.create({
 
   searchInput: {
     backgroundColor: '#f3f4f6',
+    color: '#1f2937',
+    borderColor: '#e5e7eb',
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderRadius: 8,
