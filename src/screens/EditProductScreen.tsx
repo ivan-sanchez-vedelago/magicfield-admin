@@ -142,6 +142,7 @@ export const EditProductScreen: React.FC<Props> = ({
         <Text style={styles.sectionTitle}>Agregar Imagen</Text>
         <ImageUploader
           onImagesSelected={setImages}
+          selectedImages={images}
           maxImages={1}
           multiple={false}
         />

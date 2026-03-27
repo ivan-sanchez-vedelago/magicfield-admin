@@ -287,11 +287,8 @@ export const CreateProductScreen: React.FC<Props> = ({ navigation }) => {
         extraScrollHeight={115}
         enableAutomaticScroll={true}
         keyboardShouldPersistTaps="handled"
+        nestedScrollEnabled={true}
       >
-        <ScrollView
-          style={styles.container}
-          keyboardShouldPersistTaps="handled"
-        >
           <View style={styles.header}>
             <TouchableOpacity onPress={() => setProductType(null)}>
               <Text style={styles.backButton}>← Atrás</Text>
@@ -479,7 +476,6 @@ export const CreateProductScreen: React.FC<Props> = ({ navigation }) => {
               )}
             </TouchableOpacity>
           </View>
-        </ScrollView>
       </KeyboardAwareScrollView>
     </TouchableWithoutFeedback>
   );
