@@ -69,6 +69,7 @@ export interface ScryfallCard {
     small: string;
     normal: string;
     large?: string;
+    png?: string;
   };
   prices?: {
     usd?: string;
@@ -79,6 +80,7 @@ export interface ScryfallCard {
       small?: string;
       normal?: string;
       large?: string;
+      png?: string;
     };
   }[];
 }

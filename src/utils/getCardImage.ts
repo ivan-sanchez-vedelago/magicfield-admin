@@ -2,8 +2,11 @@ import { ScryfallCard } from '@types';
 
 export const getCardImage = (
   card: ScryfallCard,
-  size: 'small' | 'normal' | 'large' = 'small'
+  size: 'small' | 'normal' | 'large' | 'png' = 'png'
 ): string | undefined => {
+  if (size === 'png' && card.image_uris?.png) {
+    return card.image_uris.png;
+  }
 
   if (card.image_uris?.[size]) {
     return card.image_uris[size];
@@ -14,5 +17,4 @@ export const getCardImage = (
   }
 
   return undefined;
-
 };
