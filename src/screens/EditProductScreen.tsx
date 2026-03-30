@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Image,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ImageUploader, ImageUploadResult } from '@components';
@@ -41,6 +42,8 @@ export const EditProductScreen = ({
   const [price, setPrice] = useState('');
   const [stock, setStock] = useState('');
   const [images, setImages] = useState<ImageUploadResult[]>([]);
+  const [currentImages, setCurrentImages] = useState<ProductImage[]>([]);
+  const [loadingImages, setLoadingImages] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
 
   useEffect(() => {
@@ -50,8 +53,44 @@ export const EditProductScreen = ({
       setPrice(product.price.toString());
       setStock(product.stock.toString());
       setHasChanges(false);
+      loadProductImages(product.id);
     }
   }, [product]);
+
+  const loadProductImages = async (productId: string) => {
+    try {
+      setLoadingImages(true);
+      const images = await apiService.getProductImages(productId);
+      setCurrentImages(images || []);
+    } catch (err) {
+      console.warn('Error loading product images:', err);
+    } finally {
+      setLoadingImages(false);
+    }
+  };
+
+  const handleDeleteImage = async (imageId: string) => {
+    Alert.alert(
+      'Eliminar imagen',
+      '¿Estás seguro de que quieres eliminar esta imagen?',
+      [
+        { text: 'Cancelar', onPress: () => {} },
+        {
+          text: 'Eliminar',
+          onPress: async () => {
+            try {
+              await apiService.deleteImage(imageId);
+              setCurrentImages(currentImages.filter(img => img.id !== imageId));
+              Alert.alert('Éxito', 'Imagen eliminada correctamente');
+            } catch (err) {
+              Alert.alert('Error', 'No se pudo eliminar la imagen');
+            }
+          },
+          style: 'destructive',
+        },
+      ]
+    );
+  };
 
   const handleFieldChange = () => {
     setHasChanges(true);
@@ -81,10 +120,11 @@ export const EditProductScreen = ({
         description: description.trim(),
         price: parseFloat(price),
         stock: parseInt(stock),
+        type: product.type,
       };
 
       // Upload new images
-      if (product.type !== 'single' && images.length > 0) {
+      if (images.length > 0) {
         for (const img of images) {
           try {
             await apiService.uploadImage(productId, img.uri, img.name);
@@ -92,6 +132,9 @@ export const EditProductScreen = ({
             console.warn('Image upload error, continuing without image:', imageError);
           }
         }
+        // Reload images after upload
+        await loadProductImages(productId);
+        setImages([]);
       }
 
       await updateProduct({ id: productId, ...updates } as Product);
@@ -136,29 +179,52 @@ export const EditProductScreen = ({
         <Text style={styles.headerTitle}>Editar Producto</Text>
       </View>
 
-      {/* Image Uploader */}
-      {product.type !== 'single' && (
+      {/* Current Images */}
+      {currentImages.length > 0 && (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Agregar Imagen</Text>
-          <ImageUploader
-            onImagesSelected={setImages}
-            selectedImages={images}
-            maxImages={1}
-            multiple={false}
-          />
+          <Text style={styles.sectionTitle}>Imágenes Actuales ({currentImages.length})</Text>
+          {loadingImages ? (
+            <ActivityIndicator size="small" color="#3b82f6" />
+          ) : (
+            <View style={styles.imagesGrid}>
+              {currentImages.map((img) => (
+                <View key={img.id} style={styles.imageItem}>
+                  <Image
+                    source={{ uri: img.url }}
+                    style={styles.thumbnailImage}
+                  />
+                  {img.isMain && (
+                    <View style={styles.mainBadge}>
+                      <Text style={styles.mainBadgeText}>Principal</Text>
+                    </View>
+                  )}
+                  <TouchableOpacity
+                    style={styles.deleteImageButton}
+                    onPress={() => handleDeleteImage(img.id)}
+                  >
+                    <Text style={styles.deleteImageButtonText}>✕</Text>
+                  </TouchableOpacity>
+                </View>
+              ))}
+            </View>
+          )}
         </View>
       )}
 
-      {/* Current Image */}
-      {product.imageUrl && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Imagen Actual</Text>
-          <View style={styles.currentImageContainer}>
-            {/* Image would be displayed here */}
-            <Text style={styles.currentImagePlaceholder}>Imagen del producto</Text>
-          </View>
-        </View>
-      )}
+      {/* Image Uploader */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Agregar Imágenes</Text>
+        <Text style={styles.sectionSubtitle}>
+          {currentImages.length > 0 ? `${currentImages.length} imagen(es) actual(es)` : 'Sin imágenes aún'}
+        </Text>
+        <ImageUploader
+          onImagesSelected={setImages}
+          selectedImages={images}
+          maxImages={5}
+          multiple={true}
+          allowsEditing={true}
+        />
+      </View>
 
       {/* Product Info */}
       <View style={styles.section}>
@@ -435,5 +501,59 @@ const styles = StyleSheet.create({
   },
   disabled: {
     opacity: 0.6,
+  },
+  sectionSubtitle: {
+    fontSize: 12,
+    color: '#6b7280',
+    marginBottom: 12,
+  },
+  imagesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  imageItem: {
+    width: '30%',
+    aspectRatio: 1,
+    borderRadius: 8,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    position: 'relative',
+  },
+  thumbnailImage: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#f3f4f6',
+  },
+  mainBadge: {
+    position: 'absolute',
+    top: 4,
+    left: 4,
+    backgroundColor: '#3b82f6',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  mainBadgeText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  deleteImageButton: {
+    position: 'absolute',
+    top: 4,
+    right: 4,
+    backgroundColor: '#ef4444',
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  deleteImageButtonText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 14,
   },
 });

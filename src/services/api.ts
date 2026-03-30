@@ -104,6 +104,13 @@ class ApiService {
   }
 
   // Images
+  async getProductImages(productId: string) {
+    const response = await this.client.get(
+      ENDPOINTS.PRODUCTS.IMAGES(productId)
+    );
+    return response.data;
+  }
+
   async uploadImage(
     productId: string,
     imageUri: string,

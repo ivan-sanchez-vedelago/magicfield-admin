@@ -314,6 +314,7 @@ export const CreateProductScreen = ({ navigation }: Props) => {
               onImagesSelected={setImages}
               maxImages={5}
               multiple={true}
+              allowsEditing={true}
               readonly={productType === 'single'}
             />
           </View>

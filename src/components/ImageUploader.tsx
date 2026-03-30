@@ -23,6 +23,7 @@ export interface ImageUploaderProps {
   multiple?: boolean;
   selectedImages?: ImageUploadResult[];
   readonly?: boolean;
+  allowsEditing?: boolean;
 }
 
 export const ImageUploader: React.FC<ImageUploaderProps> = ({
@@ -31,6 +32,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
   multiple = true,
   selectedImages: externalImages = [],
   readonly = false,
+  allowsEditing = !multiple,
 }) => {
   const [selectedImages, setSelectedImages] = useState<ImageUploadResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -42,12 +44,15 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
   const pickImage = async () => {
     try {
       const remaining = maxImages - selectedImages.length;
+      // Si allowsEditing es true, siempre selecciona una imagen a la vez
+      const isMultiple = multiple && !allowsEditing;
+      
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsMultipleSelection: multiple,
-        selectionLimit: multiple ? remaining : 1,
-        allowsEditing: !multiple,
-        aspect: multiple ? undefined : [5, 7],
+        allowsMultipleSelection: isMultiple,
+        selectionLimit: isMultiple ? remaining : 1,
+        allowsEditing: allowsEditing,
+        aspect: allowsEditing ? [5, 7] : undefined,
         quality: 0.8,
       });
 
