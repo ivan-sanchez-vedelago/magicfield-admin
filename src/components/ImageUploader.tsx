@@ -41,10 +41,13 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
 
   const pickImage = async () => {
     try {
+      const remaining = maxImages - selectedImages.length;
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [5, 7],
+        allowsMultipleSelection: multiple,
+        selectionLimit: multiple ? remaining : 1,
+        allowsEditing: !multiple,
+        aspect: multiple ? undefined : [5, 7],
         quality: 0.8,
       });
 

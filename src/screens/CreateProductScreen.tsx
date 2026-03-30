@@ -1,8 +1,7 @@
-import React, { useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import {
   View,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -19,7 +18,7 @@ import { useCreateProduct } from '@hooks';
 import { apiService } from '@services/api';
 import { ScryfallCard, ProductType, ProductImage } from '@types';
 import type { RootStackParamList } from '@navigation/types';
-import { getCardImage } from '@utils/getCardImage';
+import { getAllCardImages } from '@utils/getCardImage';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CreateProduct'>;
 
@@ -47,7 +46,7 @@ const PRODUCT_TYPES: ProductTypeOption[] = [
   },
 ];
 
-export const CreateProductScreen: React.FC<Props> = ({ navigation }) => {
+export const CreateProductScreen = ({ navigation }: Props) => {
   const [productType, setProductType] = useState<ProductType | null>(null);
   const [images, setImages] = useState<ImageUploadResult[]>([]);
 
@@ -157,23 +156,35 @@ export const CreateProductScreen: React.FC<Props> = ({ navigation }) => {
     setCollectorNumber(card.collector_number);
     setScryfallId(card.id);
 
-    setDescription(card.oracle_text || '');
+    setDescription(
+      card.oracle_text ||
+      card.card_faces?.map(f => f.oracle_text).filter(Boolean).join('\n---\n') ||
+      ''
+    );
     setHasFoil(card.foil || false);
     setPriceUsd(newPriceUsd);
     setPriceUsdFoil(newPriceUsdFoil);
-    if(card.foil && isFoil) {
+    if (card.foil && isFoil) {
       setPrice(newPriceUsdFoil);
-    } else {
+    } else if (newPriceUsd) {
       setIsFoil(false);
       setPrice(newPriceUsd);
+    } else {
+      // solo tiene precio foil (carta solo-foil)
+      setIsFoil(true);
+      setPrice(newPriceUsdFoil);
     }
     setStock('1');
     setCondition('Near Mint');
     setLanguage('English');
 
-    const imageUrl = getCardImage(card);
-    if (imageUrl) {
-      setImages([{ uri: imageUrl, name: `${card.name}.png`, type: 'image/png' }]);
+    const cardImages = getAllCardImages(card);
+    if (cardImages.length > 0) {
+      setImages(cardImages.map((uri, i) => ({
+        uri,
+        name: `${card.name}_face${i + 1}.png`,
+        type: 'image/png',
+      })));
     } else {
       setImages([]);
     }
@@ -229,15 +240,13 @@ export const CreateProductScreen: React.FC<Props> = ({ navigation }) => {
       const createdProduct = await createProduct(productData);
       const productId = createdProduct.id;
 
-      if (images.length > 0) {
-        try {
-          const uploadedImage = await apiService.uploadImage(
-            productId,
-            images[0].uri,
-            images[0].name
-          );
-        } catch (imageError) {
-          console.error('Error subiendo imagen:', imageError);
+      if (productType !== 'single' && images.length > 0) {
+        for (const img of images) {
+          try {
+            await apiService.uploadImage(productId, img.uri, img.name);
+          } catch (imageError) {
+            console.error('Error subiendo imagen:', imageError);
+          }
         }
       }
     } catch (error) {

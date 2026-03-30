@@ -18,3 +18,23 @@ export const getCardImage = (
 
   return undefined;
 };
+
+export const getAllCardImages = (
+  card: ScryfallCard,
+  size: 'small' | 'normal' | 'large' | 'png' = 'png'
+): string[] => {
+  // Carta normal (una cara)
+  if (card.image_uris) {
+    const url = size === 'png' ? card.image_uris.png : card.image_uris[size];
+    return url ? [url] : [];
+  }
+
+  // Carta de doble cara
+  if (card.card_faces) {
+    return card.card_faces
+      .map(face => face.image_uris?.[size])
+      .filter((url): url is string => !!url);
+  }
+
+  return [];
+};

@@ -117,9 +117,16 @@ export const CardSearch: React.FC<CardSearchProps> = ({
       )
       const data = await res.json();
 
-      editionsCache[name] = data.data;
+      // Ordenar: primero nonfoil, luego foil-exclusivo
+      const sorted = [...(data.data as ScryfallCard[])].sort((a, b) => {
+        const aNonfoil = a.nonfoil ? 1 : 0;
+        const bNonfoil = b.nonfoil ? 1 : 0;
+        return bNonfoil - aNonfoil;
+      });
 
-      setEditions(data.data);
+      editionsCache[name] = sorted;
+
+      setEditions(sorted);
       setShowEditions(true);
 
     } catch (err) {
@@ -261,11 +268,15 @@ export const CardSearch: React.FC<CardSearchProps> = ({
                       {card.set_name} • #{card.collector_number}
                     </Text>
 
-                    {card.prices?.usd && (
+                    {card.prices?.usd ? (
                       <Text style={styles.cardPrice}>
                         ${card.prices.usd}
                       </Text>
-                    )}
+                    ) : card.prices?.usd_foil ? (
+                      <Text style={[styles.cardPrice, styles.foilPrice]}>
+                        ${card.prices.usd_foil} (foil)
+                      </Text>
+                    ) : null}
 
                   </View>
 
@@ -358,6 +369,10 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     color: '#059669',
+  },
+
+  foilPrice: {
+    color: '#7c3aed',
   },
 
 });

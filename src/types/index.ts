@@ -65,6 +65,7 @@ export interface ScryfallCard {
   collector_number: string;
   oracle_text?: string;
   foil?: boolean;
+  nonfoil?: boolean;
   image_uris?: {
     small: string;
     normal: string;
@@ -76,6 +77,8 @@ export interface ScryfallCard {
     usd_foil?: string;
   };
   card_faces?: {
+    name?: string;
+    oracle_text?: string;
     image_uris?: {
       small?: string;
       normal?: string;

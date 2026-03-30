@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   ScrollView,
@@ -18,10 +18,10 @@ import type { RootStackParamList } from '@navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'EditProduct'>;
 
-export const EditProductScreen: React.FC<Props> = ({
+export const EditProductScreen = ({
   route,
   navigation,
-}) => {
+}: Props) => {
   const { productId } = route.params;
   const { product, loading: loadingProduct, error } = useProductById(productId);
   const { execute: updateProduct, loading: updateLoading } = useUpdateProduct(
@@ -58,6 +58,8 @@ export const EditProductScreen: React.FC<Props> = ({
   };
 
   const handleUpdateProduct = async () => {
+    if (!product) return;
+
     if (!name.trim()) {
       Alert.alert('Error', 'El nombre es requerido');
       return;
@@ -81,17 +83,14 @@ export const EditProductScreen: React.FC<Props> = ({
         stock: parseInt(stock),
       };
 
-      // Upload new images if selected
-      if (images.length > 0) {
-        try {
-          const uploadedImage = await apiService.uploadImage(
-            productId,
-            images[0].uri,
-            images[0].name
-          );
-          updates.imageUrl = uploadedImage.url;
-        } catch (imageError) {
-          console.warn('Image upload error, continuing without image:', imageError);
+      // Upload new images
+      if (product.type !== 'single' && images.length > 0) {
+        for (const img of images) {
+          try {
+            await apiService.uploadImage(productId, img.uri, img.name);
+          } catch (imageError) {
+            console.warn('Image upload error, continuing without image:', imageError);
+          }
         }
       }
 
@@ -138,15 +137,17 @@ export const EditProductScreen: React.FC<Props> = ({
       </View>
 
       {/* Image Uploader */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Agregar Imagen</Text>
-        <ImageUploader
-          onImagesSelected={setImages}
-          selectedImages={images}
-          maxImages={1}
-          multiple={false}
-        />
-      </View>
+      {product.type !== 'single' && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Agregar Imagen</Text>
+          <ImageUploader
+            onImagesSelected={setImages}
+            selectedImages={images}
+            maxImages={1}
+            multiple={false}
+          />
+        </View>
+      )}
 
       {/* Current Image */}
       {product.imageUrl && (
