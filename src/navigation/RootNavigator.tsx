@@ -14,6 +14,7 @@ import {
   ProductDetailScreen,
   DashboardScreen,
   SettingsScreen,
+  BannersScreen,
 } from '@screens/index';
 import { Text, View, StyleSheet } from 'react-native';
 import type { RootStackParamList, DrawerStackParamList } from './types';
@@ -107,6 +108,21 @@ const SettingsStackNavigator = () => (
   </Stack.Navigator>
 );
 
+// Banners Stack
+const BannersStackNavigator = () => (
+  <Stack.Navigator
+    screenOptions={{
+      headerShown: false,
+    }}
+  >
+    <Stack.Screen
+      name="Banners"
+      component={BannersScreen}
+      options={{ title: 'Banners' }}
+    />
+  </Stack.Navigator>
+);
+
 // Main Drawer Navigation
 const DrawerNavigator = () => (
   <Drawer.Navigator
@@ -166,6 +182,18 @@ const DrawerNavigator = () => (
         title: 'Crear Producto',
         drawerIcon: ({ color, size }) => (
           <Text style={{ fontSize: size, color }}>➕  </Text>
+        ),
+      }}
+    />
+
+    <Drawer.Screen
+      name="BannersStack"
+      component={BannersStackNavigator}
+      options={{
+        drawerLabel: 'Banners',
+        title: 'Banners',
+        drawerIcon: ({ color, size }) => (
+          <Text style={{ fontSize: size, color }}>🖼️  </Text>
         ),
       }}
     />

@@ -11,6 +11,8 @@ import {
   ApiErrorResponse,
   ScryfallCard,
   ScryfallSearchResult,
+  Banner,
+  BannerRequest,
 } from '@types';
 
 class ApiService {
@@ -172,6 +174,46 @@ class ApiService {
     } catch {
       return false;
     }
+  }
+
+  // Banners
+  async getActiveBanners(): Promise<Banner[]> {
+    const response = await this.client.get<Banner[]>(ENDPOINTS.BANNERS.LIST_ACTIVE);
+    return response.data;
+  }
+
+  async getAllBanners(): Promise<Banner[]> {
+    const response = await this.client.get<Banner[]>(ENDPOINTS.BANNERS.LIST_ALL);
+    return response.data;
+  }
+
+  async createBanner(request: BannerRequest): Promise<Banner> {
+    const response = await this.client.post<Banner>(ENDPOINTS.BANNERS.CREATE, request);
+    return response.data;
+  }
+
+  async updateBanner(id: number, request: BannerRequest): Promise<Banner> {
+    const response = await this.client.put<Banner>(ENDPOINTS.BANNERS.UPDATE(id), request);
+    return response.data;
+  }
+
+  async uploadBannerImage(id: number, imageUri: string, fileName: string): Promise<Banner> {
+    const formData = new FormData();
+    formData.append('file', {
+      uri: imageUri,
+      name: fileName,
+      type: 'image/jpeg',
+    } as any);
+    const response = await this.client.post<Banner>(
+      ENDPOINTS.BANNERS.UPLOAD_IMAGE(id),
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' } }
+    );
+    return response.data;
+  }
+
+  async deleteBanner(id: number): Promise<void> {
+    await this.client.delete(ENDPOINTS.BANNERS.DELETE(id));
   }
 
   // Update base URL for different environments

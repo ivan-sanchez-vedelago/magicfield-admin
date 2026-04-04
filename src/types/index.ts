@@ -43,6 +43,23 @@ export interface ProductImage {
   uploadedAt: string;
 }
 
+export interface Banner {
+  id: number;
+  title: string;
+  subtitle?: string;
+  imageUrl?: string;
+  active: boolean;
+  sortOrder: number;
+  createdAt: string;
+}
+
+export interface BannerRequest {
+  title: string;
+  subtitle?: string;
+  active: boolean;
+  sortOrder: number;
+}
+
 // API Response Types
 export interface ApiResponse<T> {
   data: T;
