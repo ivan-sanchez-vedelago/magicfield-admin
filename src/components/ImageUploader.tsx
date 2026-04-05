@@ -53,7 +53,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
         selectionLimit: isMultiple ? remaining : 1,
         allowsEditing: allowsEditing,
         aspect: allowsEditing ? [5, 7] : undefined,
-        quality: 0.8,
+        quality: 1,
       });
 
       if (!result.canceled) {

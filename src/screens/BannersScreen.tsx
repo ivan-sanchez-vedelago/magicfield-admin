@@ -72,8 +72,8 @@ export const BannersScreen: React.FC = () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
-      aspect: [16, 5],
-      quality: 0.85,
+      aspect: [11, 5],
+      quality: 1,
     });
     if (!result.canceled) {
       const asset = result.assets[0];

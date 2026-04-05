@@ -20,7 +20,7 @@ const isProduction = process.env.NODE_ENV === 'production';
 
 export const API_CONFIG = {
   BASE_URL: isProduction ? ENV.PROD : ENV.DEV,
-  TIMEOUT: 10000,
+  TIMEOUT: 30000, // 30 segundos timeout default
   RETRY_ATTEMPTS: 3,
   RETRY_DELAY: 1000,
 };
