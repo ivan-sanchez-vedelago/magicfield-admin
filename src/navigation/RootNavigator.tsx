@@ -15,6 +15,7 @@ import {
   DashboardScreen,
   SettingsScreen,
   BannersScreen,
+  OrdersScreen,
 } from '@screens/index';
 import { Text, View, StyleSheet } from 'react-native';
 import type { RootStackParamList, DrawerStackParamList } from './types';
@@ -123,6 +124,21 @@ const BannersStackNavigator = () => (
   </Stack.Navigator>
 );
 
+// Orders Stack
+const OrdersStackNavigator = () => (
+  <Stack.Navigator
+    screenOptions={{
+      headerShown: false,
+    }}
+  >
+    <Stack.Screen
+      name="Orders"
+      component={OrdersScreen}
+      options={{ title: 'Pedidos' }}
+    />
+  </Stack.Navigator>
+);
+
 // Main Drawer Navigation
 const DrawerNavigator = () => (
   <Drawer.Navigator
@@ -194,6 +210,18 @@ const DrawerNavigator = () => (
         title: 'Banners',
         drawerIcon: ({ color, size }) => (
           <Text style={{ fontSize: size, color }}>🖼️  </Text>
+        ),
+      }}
+    />
+
+    <Drawer.Screen
+      name="OrdersStack"
+      component={OrdersStackNavigator}
+      options={{
+        drawerLabel: 'Pedidos',
+        title: 'Pedidos',
+        drawerIcon: ({ color, size }) => (
+          <Text style={{ fontSize: size, color }}>🛒  </Text>
         ),
       }}
     />

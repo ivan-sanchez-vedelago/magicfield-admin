@@ -219,6 +219,12 @@ class ApiService {
     await this.client.delete(ENDPOINTS.BANNERS.DELETE(id));
   }
 
+  // Orders / Sales Audit
+  async getAllSalesAudits() {
+    const response = await this.client.get(ENDPOINTS.ORDERS.ALL);
+    return response.data;
+  }
+
   // Update base URL for different environments
   updateBaseUrl(url: string) {
     this.client.defaults.baseURL = url;

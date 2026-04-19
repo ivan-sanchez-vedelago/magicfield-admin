@@ -47,6 +47,9 @@ export const ENDPOINTS = {
     DELETE: (id: number) => `/api/banners/${id}`,
     UPLOAD_IMAGE: (id: number) => `/api/banners/${id}/image`,
   },
+  ORDERS: {
+    ALL: '/api/sales-audit',
+  },
 };
 
 // For development, you can override the BASE_URL

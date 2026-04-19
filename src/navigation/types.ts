@@ -7,6 +7,7 @@ export type RootStackParamList = {
   Dashboard: undefined;
   Settings: undefined;
   Banners: undefined;
+  Orders: undefined;
 };
 
 export type DrawerStackParamList = {
@@ -15,4 +16,5 @@ export type DrawerStackParamList = {
   CreateProductStack: undefined;
   BannersStack: undefined;
   SettingsStack: undefined;
+  OrdersStack: undefined;
 };
