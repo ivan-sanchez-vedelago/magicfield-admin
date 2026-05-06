@@ -13,7 +13,7 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ProductCard } from '@components';
-import { useProducts, useDeleteProduct, useUpdateProductStock } from '@hooks';
+import { useProducts, useDeleteProduct, useUpdateProductStock, useCategories } from '@hooks';
 import { Product } from '@types';
 import type { RootStackParamList } from '@navigation/types';
 
@@ -21,6 +21,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Products'>;
 
 export const ProductsScreen: React.FC<Props> = ({ navigation }) => {
   const { products, loading, error, refetch } = useProducts();
+  const { categories } = useCategories();
 
   const { execute: deleteProduct } = useDeleteProduct(() => refetch());
   const { execute: updateStock } = useUpdateProductStock(() => refetch());
@@ -28,13 +29,11 @@ export const ProductsScreen: React.FC<Props> = ({ navigation }) => {
   const [deletingId, setDeletingId] = useState<string | undefined>();
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
-  const [selectedTypeFilter, setSelectedTypeFilter] = useState<Product['type'] | 'all'>('all');
+  const [selectedTypeFilter, setSelectedTypeFilter] = useState<string>('all');
 
-  const PRODUCT_TYPES_FILTER: { label: string; value: Product['type'] | 'all' }[] = [
+  const PRODUCT_TYPES_FILTER = [
     { label: 'Todos', value: 'all' },
-    { label: 'Single', value: 'SIN' },
-    { label: 'Sealed', value: 'PSL' },
-    { label: 'Otro', value: 'ACC' },
+    ...categories.map(c => ({ label: c.name, value: c.shortName })),
   ];
 
   useFocusEffect(
@@ -49,7 +48,7 @@ export const ProductsScreen: React.FC<Props> = ({ navigation }) => {
       .filter((p) =>
         selectedTypeFilter === 'all'
           ? true
-          : p.type.toLowerCase() === selectedTypeFilter.toLowerCase()
+          : p.type === selectedTypeFilter
       );
   }, [products, search, selectedTypeFilter]);
 

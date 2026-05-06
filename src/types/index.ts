@@ -1,5 +1,12 @@
 // Product Types
-export type ProductType = 'SIN' | 'PSL' | 'ACC';
+export type ProductType = string;
+
+export interface Category {
+  id: number;
+  name: string;
+  shortName: string;
+  parentId: number;
+}
 
 export interface BaseProduct {
   id: string;
@@ -7,7 +14,7 @@ export interface BaseProduct {
   description: string;
   price: number;
   stock: number;
-  type: ProductType;
+  type: string;
   imageUrl?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -33,7 +40,7 @@ export interface OtherProduct extends BaseProduct {
   type: 'ACC';
 }
 
-export type Product = SingleProduct | SealedProduct | OtherProduct;
+export type Product = SingleProduct | BaseProduct;
 
 export interface ProductImage {
   id: string;

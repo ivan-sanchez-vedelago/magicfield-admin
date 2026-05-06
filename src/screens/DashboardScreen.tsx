@@ -8,13 +8,16 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useProducts } from '@hooks/index';
+import { useProducts, useCategories } from '@hooks/index';
 import type { RootStackParamList } from '@navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Dashboard'>;
 
 export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
   const { products, loading } = useProducts();
+  const { categories } = useCategories();
+
+  const CATEGORY_COLORS = ['#3b82f6', '#8b5cf6', '#6b7280', '#22c55e', '#f59e0b', '#ef4444'];
 
   const stats = {
     totalProducts: products.length,
@@ -23,11 +26,11 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
     outOfStock: products.filter((p) => p.stock === 0).length,
   };
 
-  const productTypes = {
-    single: products.filter((p) => p.type === 'SIN').length,
-    sealed: products.filter((p) => p.type === 'PSL').length,
-    other: products.filter((p) => p.type === 'ACC').length,
-  };
+  const productTypes = categories.map((cat, index) => ({
+    label: cat.name,
+    count: products.filter((p) => p.type === cat.shortName).length,
+    color: CATEGORY_COLORS[index % CATEGORY_COLORS.length],
+  }));
 
   if (loading) {
     return (
@@ -72,9 +75,9 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Tipos de Productos</Text>
         <View style={styles.typesList}>
-          <TypeCard label="Singles" count={productTypes.single} color="#3b82f6" />
-          <TypeCard label="Sealed" count={productTypes.sealed} color="#8b5cf6" />
-          <TypeCard label="Otros" count={productTypes.other} color="#6b7280" />
+          {productTypes.map((pt) => (
+            <TypeCard key={pt.label} label={pt.label} count={pt.count} color={pt.color} />
+          ))}
         </View>
       </View>
 

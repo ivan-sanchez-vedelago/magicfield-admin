@@ -14,40 +14,17 @@ import {
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ImageUploader, ImageUploadResult, CardSearch } from '@components';
-import { useCreateProduct } from '@hooks';
+import { useCreateProduct, useCategories } from '@hooks';
 import { apiService } from '@services/api';
-import { ScryfallCard, ProductType, ProductImage } from '@types';
+import { ScryfallCard, ProductImage } from '@types';
 import type { RootStackParamList } from '@navigation/types';
 import { getAllCardImages } from '@utils/getCardImage';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CreateProduct'>;
 
-type ProductTypeOption = {
-  label: string;
-  value: ProductType;
-  description: string;
-};
-
-const PRODUCT_TYPES: ProductTypeOption[] = [
-  {
-    label: 'Single',
-    value: 'SIN',
-    description: 'Carta individual con datos de Scryfall',
-  },
-  {
-    label: 'Sealed',
-    value: 'PSL',
-    description: 'Producto sellado (booster, caja, etc)',
-  },
-  {
-    label: 'Otro',
-    value: 'ACC',
-    description: 'Otro tipo de producto',
-  },
-];
-
 export const CreateProductScreen = ({ navigation }: Props) => {
-  const [productType, setProductType] = useState<ProductType | null>(null);
+  const { categories, loading: loadingCategories } = useCategories();
+  const [productType, setProductType] = useState<string | null>(null);
   const [images, setImages] = useState<ImageUploadResult[]>([]);
 
   // Common fields
@@ -70,6 +47,8 @@ export const CreateProductScreen = ({ navigation }: Props) => {
 
   // Sealed-specific fields
   const [releaseDate, setReleaseDate] = useState('');
+
+  const selectedCategory = categories.find(c => c.shortName === productType);
 
   const resetForm = () => {
     // tipo
@@ -258,27 +237,34 @@ export const CreateProductScreen = ({ navigation }: Props) => {
     }
   };
 
+  if (loadingCategories) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.typeSelectionContainer}>
+          <ActivityIndicator size="large" color="#3b82f6" />
+        </View>
+      </View>
+    );
+  }
+
   if (!productType) {
     return (
       <View style={styles.container}>
-        {/* Type Selection Modal */}
+        {/* Type Selection */}
         <View style={styles.typeSelectionContainer}>
           <Text style={styles.title}>Selecciona el tipo de producto</Text>
           <Text style={styles.subtitle}>
             Elige qué tipo de producto deseas crear
           </Text>
 
-          {PRODUCT_TYPES.map((type) => (
+          {categories.map((cat) => (
             <TouchableOpacity
-              key={type.value}
+              key={cat.shortName}
               style={styles.typeOption}
-              onPress={() => setProductType(type.value)}
+              onPress={() => setProductType(cat.shortName)}
             >
               <View style={styles.typeOptionContent}>
-                <Text style={styles.typeOptionLabel}>{type.label}</Text>
-                <Text style={styles.typeOptionDescription}>
-                  {type.description}
-                </Text>
+                <Text style={styles.typeOptionLabel}>{cat.name}</Text>
               </View>
               <Text style={styles.typeOptionArrow}>→</Text>
             </TouchableOpacity>
@@ -303,7 +289,7 @@ export const CreateProductScreen = ({ navigation }: Props) => {
               <Text style={styles.backButton}>← Atrás</Text>
             </TouchableOpacity>
             <Text style={styles.headerTitle}>
-              Nuevo {PRODUCT_TYPES.find((t) => t.value === productType)?.label}
+              Nuevo {selectedCategory?.name ?? productType}
             </Text>
           </View>
 
@@ -453,22 +439,6 @@ export const CreateProductScreen = ({ navigation }: Props) => {
                   {isFoil ? '✓' : '○'} Foil
                 </Text>
               </TouchableOpacity>
-            </View>
-          )}
-
-          {/* Sealed Product Fields */}
-          {productType === 'PSL' && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Información del Sealed</Text>
-
-              <TextInput
-                style={styles.input}
-                placeholder="Fecha de lanzamiento (YYYY-MM-DD)"
-                placeholderTextColor="#9ca3af"
-                value={releaseDate}
-                onChangeText={setReleaseDate}
-                editable={!loading}
-              />
             </View>
           )}
 

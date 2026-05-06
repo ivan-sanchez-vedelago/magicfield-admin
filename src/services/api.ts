@@ -13,6 +13,7 @@ import {
   ScryfallSearchResult,
   Banner,
   BannerRequest,
+  Category,
 } from '@types';
 
 class ApiService {
@@ -57,6 +58,12 @@ class ApiService {
         return Promise.reject(error);
       }
     );
+  }
+
+  // Categories
+  async getCategories(): Promise<Category[]> {
+    const response = await this.client.get<Category[]>(ENDPOINTS.CATEGORIES.LIST);
+    return response.data;
   }
 
   // Products

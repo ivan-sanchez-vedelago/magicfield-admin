@@ -9,3 +9,4 @@ export {
   useUpdateProductPrice 
 } from './useProducts';
 export { useScryfallSearch } from './useScryfallSearch';
+export { useCategories } from './useCategories';
