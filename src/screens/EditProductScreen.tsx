@@ -288,7 +288,7 @@ export const EditProductScreen = ({
       </View>
 
       {/* Type-specific Info */}
-      {product.type === 'single' && 'cardName' in product && (
+      {product.type === 'SIN' && 'cardName' in product && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Información de la Carta</Text>
 

@@ -32,16 +32,16 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
   const getProductTypeBadge = () => {
     const typeColors: Record<string, string> = {
-      single: '#3b82f6',
-      sealed: '#8b5cf6',
-      other: '#6b7280',
+      SIN: '#3b82f6',
+      PSL: '#8b5cf6',
+      ACC: '#6b7280',
     };
 
     return (
       <View
         style={[
           styles.typeBadge,
-          { backgroundColor: typeColors[product.type] || typeColors.other },
+          { backgroundColor: typeColors[product.type] || typeColors.ACC },
         ]}
       >
         <Text style={styles.typeBadgeText}>{product.type.toUpperCase()}</Text>

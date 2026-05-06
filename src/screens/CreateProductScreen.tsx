@@ -31,17 +31,17 @@ type ProductTypeOption = {
 const PRODUCT_TYPES: ProductTypeOption[] = [
   {
     label: 'Single',
-    value: 'single',
+    value: 'SIN',
     description: 'Carta individual con datos de Scryfall',
   },
   {
     label: 'Sealed',
-    value: 'sealed',
+    value: 'PSL',
     description: 'Producto sellado (booster, caja, etc)',
   },
   {
     label: 'Otro',
-    value: 'other',
+    value: 'ACC',
     description: 'Otro tipo de producto',
   },
 ];
@@ -208,7 +208,7 @@ export const CreateProductScreen = ({ navigation }: Props) => {
       return;
     }
 
-    if (productType === 'single') {
+    if (productType === 'SIN') {
       if (!cardName.trim() || !set.trim()) {
         Alert.alert('Error', 'Para singles debes especificar la carta y el set');
         return;
@@ -225,7 +225,7 @@ export const CreateProductScreen = ({ navigation }: Props) => {
       };
 
       // Add type-specific fields
-      if (productType === 'single') {
+      if (productType === 'SIN') {
         productData.cardName = cardName.trim();
         productData.set = set.trim();
         productData.collectorNumber = collectorNumber.trim();
@@ -233,14 +233,14 @@ export const CreateProductScreen = ({ navigation }: Props) => {
         if (language) productData.language = language;
         productData.isFoil = isFoil;
         if (scryfallId) productData.scryfallId = scryfallId;
-      } else if (productType === 'sealed' && releaseDate) {
+      } else if (productType === 'PSL' && releaseDate) {
         productData.releaseDate = releaseDate;
       }
 
       const createdProduct = await createProduct(productData);
       const productId = createdProduct.id;
 
-      if (productType !== 'single' && images.length > 0) {
+      if (productType !== 'SIN' && images.length > 0) {
         for (const img of images) {
           try {
             await apiService.uploadImage(productId, img.uri, img.name);
@@ -315,12 +315,12 @@ export const CreateProductScreen = ({ navigation }: Props) => {
               maxImages={5}
               multiple={true}
               allowsEditing={true}
-              readonly={productType === 'single'}
+              readonly={productType === 'SIN'}
             />
           </View>
 
           {/* Common Fields */}
-          {productType !== 'single' && (
+          {productType !== 'SIN' && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Información básica</Text>
 
@@ -368,7 +368,7 @@ export const CreateProductScreen = ({ navigation }: Props) => {
           )}
 
           {/* Single Product Fields */}
-          {productType === 'single' && (
+          {productType === 'SIN' && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Información de la Carta</Text>
 
@@ -457,7 +457,7 @@ export const CreateProductScreen = ({ navigation }: Props) => {
           )}
 
           {/* Sealed Product Fields */}
-          {productType === 'sealed' && (
+          {productType === 'PSL' && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Información del Sealed</Text>
 

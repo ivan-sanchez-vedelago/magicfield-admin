@@ -24,9 +24,9 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   const productTypes = {
-    single: products.filter((p) => p.type === 'single').length,
-    sealed: products.filter((p) => p.type === 'sealed').length,
-    other: products.filter((p) => p.type === 'other').length,
+    single: products.filter((p) => p.type === 'SIN').length,
+    sealed: products.filter((p) => p.type === 'PSL').length,
+    other: products.filter((p) => p.type === 'ACC').length,
   };
 
   if (loading) {

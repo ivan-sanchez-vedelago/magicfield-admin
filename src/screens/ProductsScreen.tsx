@@ -32,9 +32,9 @@ export const ProductsScreen: React.FC<Props> = ({ navigation }) => {
 
   const PRODUCT_TYPES_FILTER: { label: string; value: Product['type'] | 'all' }[] = [
     { label: 'Todos', value: 'all' },
-    { label: 'Single', value: 'single' },
-    { label: 'Sealed', value: 'sealed' },
-    { label: 'Otro', value: 'other' },
+    { label: 'Single', value: 'SIN' },
+    { label: 'Sealed', value: 'PSL' },
+    { label: 'Otro', value: 'ACC' },
   ];
 
   useFocusEffect(

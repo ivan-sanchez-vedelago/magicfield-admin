@@ -1,5 +1,5 @@
 // Product Types
-export type ProductType = 'single' | 'sealed' | 'other';
+export type ProductType = 'SIN' | 'PSL' | 'ACC';
 
 export interface BaseProduct {
   id: string;
@@ -14,7 +14,7 @@ export interface BaseProduct {
 }
 
 export interface SingleProduct extends BaseProduct {
-  type: 'single';
+  type: 'SIN';
   cardName: string;
   set: string;
   collectorNumber: string;
@@ -25,12 +25,12 @@ export interface SingleProduct extends BaseProduct {
 }
 
 export interface SealedProduct extends BaseProduct {
-  type: 'sealed';
+  type: 'PSL';
   releaseDate?: string;
 }
 
 export interface OtherProduct extends BaseProduct {
-  type: 'other';
+  type: 'ACC';
 }
 
 export type Product = SingleProduct | SealedProduct | OtherProduct;
