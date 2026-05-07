@@ -15,3 +15,15 @@ export function useCategories() {
     error,
   };
 }
+
+export function getAllDescendants(
+  categoryId: number,
+  categories: Category[]
+): Category[] {
+  const children = categories.filter(c => c.parentId === categoryId);
+  if (children.length === 0) return [];
+  return [
+    ...children,
+    ...children.flatMap(child => getAllDescendants(child.id, categories))
+  ];
+}

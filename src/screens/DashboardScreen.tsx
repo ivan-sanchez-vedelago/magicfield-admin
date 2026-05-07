@@ -8,7 +8,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useProducts, useCategories } from '@hooks/index';
+import { useProducts, useCategories, getAllDescendants } from '@hooks/index';
 import type { RootStackParamList } from '@navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Dashboard'>;
@@ -22,9 +22,9 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
   const roots = categories.filter(c => c.parentId === 0);
 
   const getDescendantShortNames = (root: (typeof categories)[0]): string[] => {
-    const children = categories.filter(c => c.parentId === root.id);
-    if (children.length === 0) return [root.shortName];
-    return children.map(c => c.shortName);
+    const allDescendants = getAllDescendants(root.id, categories);
+    if (allDescendants.length === 0) return [root.shortName];
+    return [root.shortName, ...allDescendants.map(c => c.shortName)];
   };
 
   const stats = {

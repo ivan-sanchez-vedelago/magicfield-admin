@@ -14,7 +14,7 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ProductCard } from '@components';
-import { useProducts, useDeleteProduct, useUpdateProductStock, useCategories } from '@hooks';
+import { useProducts, useDeleteProduct, useUpdateProductStock, useCategories, getAllDescendants } from '@hooks';
 import { Product } from '@types';
 import type { RootStackParamList } from '@navigation/types';
 
@@ -42,9 +42,9 @@ export const ProductsScreen: React.FC<Props> = ({ navigation }) => {
   const getDescendantShortNames = useCallback((rootShortName: string): string[] => {
     const root = categories.find(c => c.shortName === rootShortName);
     if (!root) return [rootShortName];
-    const children = categories.filter(c => c.parentId === root.id);
-    if (children.length === 0) return [rootShortName];
-    return [rootShortName, ...children.map(c => c.shortName)];
+    const allDescendants = getAllDescendants(root.id, categories);
+    if (allDescendants.length === 0) return [rootShortName];
+    return [rootShortName, ...allDescendants.map(c => c.shortName)];
   }, [categories]);
 
   useFocusEffect(

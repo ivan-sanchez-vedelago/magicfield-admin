@@ -17,7 +17,7 @@ import {
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ImageUploader, ImageUploadResult, CardSearch } from '@components';
-import { useCreateProduct, useCategories } from '@hooks';
+import { useCreateProduct, useCategories, getAllDescendants } from '@hooks';
 import { apiService } from '@services/api';
 import { ScryfallCard, Category, ProductImage } from '@types';
 import type { RootStackParamList } from '@navigation/types';
@@ -39,8 +39,8 @@ export const CreateProductScreen = ({ navigation }: Props) => {
 
   const leafCategories = useMemo(() => {
     if (!selectedRoot) return [];
-    const children = categories.filter(c => c.parentId === selectedRoot.id);
-    return children.length > 0 ? children : [selectedRoot];
+    const allDescendants = getAllDescendants(selectedRoot.id, categories);
+    return allDescendants.length > 0 ? allDescendants : [selectedRoot];
   }, [selectedRoot, categories]);
 
   const isSingleType = selectedRoot?.shortName === 'SIN';
