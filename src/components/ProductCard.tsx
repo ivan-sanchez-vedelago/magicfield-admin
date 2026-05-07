@@ -7,11 +7,12 @@ import {
   Image,
   ActivityIndicator,
 } from 'react-native';
-import { Product } from '@types';
+import { Product, Category } from '@types';
 import { StockAdjuster } from './StockAdjuster';
 
 export interface ProductCardProps {
   product: Product;
+  categories: Category[];
   onPress: (product: Product) => void;
   onEdit: (product: Product) => void;
   onDelete: (product: Product) => void;
@@ -21,6 +22,7 @@ export interface ProductCardProps {
 
 export const ProductCard: React.FC<ProductCardProps> = ({
   product,
+  categories,
   onPress,
   onEdit,
   onDelete,
@@ -37,6 +39,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       ACC: '#6b7280',
     };
 
+    const category = categories.find(c => c.shortName === product.type);
+    const categoryName = category?.name || product.type.toUpperCase();
+
     return (
       <View
         style={[
@@ -44,7 +49,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           { backgroundColor: typeColors[product.type] || typeColors.ACC },
         ]}
       >
-        <Text style={styles.typeBadgeText}>{product.type.toUpperCase()}</Text>
+        <Text style={styles.typeBadgeText}>{categoryName}</Text>
       </View>
     );
   };

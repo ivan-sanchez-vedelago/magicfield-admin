@@ -44,7 +44,7 @@ export const ProductsScreen: React.FC<Props> = ({ navigation }) => {
     if (!root) return [rootShortName];
     const children = categories.filter(c => c.parentId === root.id);
     if (children.length === 0) return [rootShortName];
-    return children.map(c => c.shortName);
+    return [rootShortName, ...children.map(c => c.shortName)];
   }, [categories]);
 
   useFocusEffect(
@@ -181,6 +181,7 @@ export const ProductsScreen: React.FC<Props> = ({ navigation }) => {
         renderItem={({ item }) => (
           <ProductCard
             product={item}
+            categories={categories}
             onPress={handleProductPress}
             onEdit={handleEditProduct}
             onDelete={handleDeleteProduct}
