@@ -10,6 +10,9 @@ import {
   Alert,
   TouchableWithoutFeedback,
   Keyboard,
+  Modal,
+  FlatList,
+  ScrollView,
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -32,6 +35,7 @@ export const CreateProductScreen = ({ navigation }: Props) => {
 
   const [selectedRoot, setSelectedRoot] = useState<Category | null>(null);
   const [selectedLeafShortName, setSelectedLeafShortName] = useState<string>('');
+  const [showLeafDropdown, setShowLeafDropdown] = useState(false);
 
   const leafCategories = useMemo(() => {
     if (!selectedRoot) return [];
@@ -329,31 +333,61 @@ export const CreateProductScreen = ({ navigation }: Props) => {
             />
           </View>
 
-          {/* Common Fields */}
+          {/* Leaf Category Selection */}
           {!isSingleType && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Categoría</Text>
+              <TouchableOpacity
+                style={styles.dropdownButton}
+                onPress={() => setShowLeafDropdown(true)}
+                disabled={loading}
+              >
+                <Text style={styles.dropdownButtonText}>
+                  {selectedLeafShortName
+                    ? leafCategories.find(l => l.shortName === selectedLeafShortName)?.name
+                    : 'Selecciona una categoría...'}
+                </Text>
+                <Text style={styles.dropdownArrow}>▼</Text>
+              </TouchableOpacity>
 
-              {leafCategories.map((leaf) => (
-                <TouchableOpacity
-                  key={leaf.shortName}
-                  style={[
-                    styles.leafOption,
-                    selectedLeafShortName === leaf.shortName && styles.leafOptionActive,
-                  ]}
-                  onPress={() => setSelectedLeafShortName(leaf.shortName)}
-                  disabled={loading}
-                >
-                  <Text
-                    style={[
-                      styles.leafOptionText,
-                      selectedLeafShortName === leaf.shortName && styles.leafOptionTextActive,
-                    ]}
-                  >
-                    {leaf.name}
-                  </Text>
-                </TouchableOpacity>
-              ))}
+              <Modal
+                visible={showLeafDropdown}
+                transparent={true}
+                animationType="fade"
+                onRequestClose={() => setShowLeafDropdown(false)}
+              >
+                <TouchableWithoutFeedback onPress={() => setShowLeafDropdown(false)}>
+                  <View style={styles.dropdownOverlay}>
+                    <View style={styles.dropdownMenu}>
+                      <FlatList
+                        data={leafCategories}
+                        keyExtractor={(item) => item.shortName}
+                        renderItem={({ item }) => (
+                          <TouchableOpacity
+                            style={[
+                              styles.dropdownItem,
+                              selectedLeafShortName === item.shortName && styles.dropdownItemActive,
+                            ]}
+                            onPress={() => {
+                              setSelectedLeafShortName(item.shortName);
+                              setShowLeafDropdown(false);
+                            }}
+                          >
+                            <Text
+                              style={[
+                                styles.dropdownItemText,
+                                selectedLeafShortName === item.shortName && styles.dropdownItemTextActive,
+                              ]}
+                            >
+                              {item.name}
+                            </Text>
+                          </TouchableOpacity>
+                        )}
+                      />
+                    </View>
+                  </View>
+                </TouchableWithoutFeedback>
+              </Modal>
             </View>
           )}
 
@@ -651,26 +685,59 @@ const styles = StyleSheet.create({
   disabled: {
     opacity: 0.6,
   },
-  leafOption: {
+  dropdownButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     borderWidth: 1,
     borderColor: '#e5e7eb',
     borderRadius: 8,
     paddingHorizontal: 12,
-    paddingVertical: 10,
+    paddingVertical: 12,
     backgroundColor: '#fff',
-    marginBottom: 8,
   },
-  leafOptionActive: {
-    borderColor: '#3b82f6',
+  dropdownButtonText: {
+    fontSize: 13,
+    color: '#1f2937',
+    flex: 1,
+  },
+  dropdownArrow: {
+    fontSize: 12,
+    color: '#9ca3af',
+    marginLeft: 8,
+  },
+  dropdownOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  dropdownMenu: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    maxHeight: 300,
+    width: '80%',
+    paddingVertical: 8,
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  dropdownItem: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
+  },
+  dropdownItemActive: {
     backgroundColor: '#eff6ff',
   },
-  leafOptionText: {
-    fontSize: 13,
+  dropdownItemText: {
+    fontSize: 14,
     color: '#6b7280',
-    fontWeight: '500',
   },
-  leafOptionTextActive: {
+  dropdownItemTextActive: {
     color: '#3b82f6',
-    fontWeight: '700',
+    fontWeight: '600',
   },
 });

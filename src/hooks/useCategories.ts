@@ -10,7 +10,7 @@ export function useCategories() {
   );
 
   return {
-    categories: (data || []) as Category[],
+    categories: (data || []).filter(c => c.id !== 0) as Category[],
     loading,
     error,
   };

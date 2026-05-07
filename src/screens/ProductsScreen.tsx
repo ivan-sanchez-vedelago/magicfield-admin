@@ -9,6 +9,7 @@ import {
   Alert,
   RefreshControl,
   TextInput,
+  ScrollView,
 } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -136,7 +137,12 @@ export const ProductsScreen: React.FC<Props> = ({ navigation }) => {
       </View>
 
       {/* Botones de filtro */}
-      <View style={styles.filterContainer}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.filterContainer}
+        contentContainerStyle={styles.filterContentContainer}
+      >
         {PRODUCT_TYPES_FILTER.map((type) => (
           <TouchableOpacity
             key={type.value}
@@ -156,7 +162,7 @@ export const ProductsScreen: React.FC<Props> = ({ navigation }) => {
             </Text>
           </TouchableOpacity>
         ))}
-      </View>
+      </ScrollView>
 
       <View style={styles.searchContainer}>
         <TextInput
@@ -298,11 +304,14 @@ const styles = StyleSheet.create({
   },
 
   filterContainer: {
-    flexDirection: 'row',
     paddingHorizontal: 16,
     paddingVertical: 10,
     backgroundColor: '#fff',
-    justifyContent: 'space-around',
+  },
+
+  filterContentContainer: {
+    gap: 10,
+    paddingRight: 16,
   },
 
   filterButton: {
@@ -312,6 +321,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#d1d5db',
     backgroundColor: '#f3f4f6',
+    flexShrink: 0,
   },
 
   filterButtonActive: {
