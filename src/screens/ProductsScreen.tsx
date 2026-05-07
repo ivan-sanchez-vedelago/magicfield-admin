@@ -305,10 +305,10 @@ const styles = StyleSheet.create({
 
   filterContainer: {
     paddingHorizontal: 16,
-    paddingVertical: 10,
     backgroundColor: '#fff',
     alignSelf: 'flex-start',
     width: '100%',
+    height: 58,
   },
 
   filterContentContainer: {
