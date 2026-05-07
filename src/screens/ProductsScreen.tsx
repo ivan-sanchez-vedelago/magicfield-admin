@@ -312,11 +312,12 @@ const styles = StyleSheet.create({
   filterContentContainer: {
     gap: 10,
     paddingRight: 16,
+    flexGrow: 0,
   },
 
   filterButton: {
     paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingVertical: 10,
     borderRadius: 20,
     borderWidth: 1,
     borderColor: '#d1d5db',
