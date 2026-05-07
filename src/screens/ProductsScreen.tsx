@@ -137,10 +137,10 @@ export const ProductsScreen: React.FC<Props> = ({ navigation }) => {
       </View>
 
       {/* Botones de filtro */}
+      <View style={styles.filterContainer}>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        style={styles.filterContainer}
         contentContainerStyle={styles.filterContentContainer}
       >
         {PRODUCT_TYPES_FILTER.map((type) => (
@@ -163,6 +163,7 @@ export const ProductsScreen: React.FC<Props> = ({ navigation }) => {
           </TouchableOpacity>
         ))}
       </ScrollView>
+      </View>
 
       <View style={styles.searchContainer}>
         <TextInput
@@ -304,17 +305,16 @@ const styles = StyleSheet.create({
   },
 
   filterContainer: {
-    paddingHorizontal: 16,
-    backgroundColor: '#fff',
-    alignSelf: 'flex-start',
-    width: '100%',
     height: 58,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
   },
 
   filterContentContainer: {
+    paddingHorizontal: 16,
     gap: 10,
-    paddingRight: 16,
     flexGrow: 0,
+    alignItems: 'center',
   },
 
   filterButton: {
