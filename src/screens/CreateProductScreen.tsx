@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import {
   View,
@@ -16,7 +16,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ImageUploader, ImageUploadResult, CardSearch } from '@components';
 import { useCreateProduct, useCategories } from '@hooks';
 import { apiService } from '@services/api';
-import { ScryfallCard, ProductImage } from '@types';
+import { ScryfallCard, Category, ProductImage } from '@types';
 import type { RootStackParamList } from '@navigation/types';
 import { getAllCardImages } from '@utils/getCardImage';
 
@@ -24,7 +24,23 @@ type Props = NativeStackScreenProps<RootStackParamList, 'CreateProduct'>;
 
 export const CreateProductScreen = ({ navigation }: Props) => {
   const { categories, loading: loadingCategories } = useCategories();
-  const [productType, setProductType] = useState<string | null>(null);
+
+  const roots = useMemo(
+    () => categories.filter(c => c.parentId === 0),
+    [categories]
+  );
+
+  const [selectedRoot, setSelectedRoot] = useState<Category | null>(null);
+  const [selectedLeafShortName, setSelectedLeafShortName] = useState<string>('');
+
+  const leafCategories = useMemo(() => {
+    if (!selectedRoot) return [];
+    const children = categories.filter(c => c.parentId === selectedRoot.id);
+    return children.length > 0 ? children : [selectedRoot];
+  }, [selectedRoot, categories]);
+
+  const isSingleType = selectedRoot?.shortName === 'SIN';
+
   const [images, setImages] = useState<ImageUploadResult[]>([]);
 
   // Common fields
@@ -48,11 +64,12 @@ export const CreateProductScreen = ({ navigation }: Props) => {
   // Sealed-specific fields
   const [releaseDate, setReleaseDate] = useState('');
 
-  const selectedCategory = categories.find(c => c.shortName === productType);
+  const selectedCategory = categories.find(c => c.shortName === selectedLeafShortName);
 
   const resetForm = () => {
     // tipo
-    setProductType(null);
+    setSelectedRoot(null);
+    setSelectedLeafShortName('');
 
     // comunes
     setName('');
@@ -169,9 +186,24 @@ export const CreateProductScreen = ({ navigation }: Props) => {
     }
   };
 
+  const handleSelectRoot = (root: Category) => {
+    setSelectedRoot(root);
+    const children = categories.filter(c => c.parentId === root.id);
+    const leaves = children.length > 0 ? children : [root];
+    if (leaves.length === 1) {
+      setSelectedLeafShortName(leaves[0].shortName);
+    } else {
+      setSelectedLeafShortName('');
+    }
+  };
+
   const handleCreateProduct = async () => {
-    if (!productType) {
+    if (!selectedRoot) {
       Alert.alert('Error', 'Debes seleccionar un tipo de producto');
+      return;
+    }
+    if (!selectedLeafShortName) {
+      Alert.alert('Error', 'Debes seleccionar una categoría');
       return;
     }
     if (!name.trim()) {
@@ -187,7 +219,7 @@ export const CreateProductScreen = ({ navigation }: Props) => {
       return;
     }
 
-    if (productType === 'SIN') {
+    if (isSingleType) {
       if (!cardName.trim() || !set.trim()) {
         Alert.alert('Error', 'Para singles debes especificar la carta y el set');
         return;
@@ -200,11 +232,11 @@ export const CreateProductScreen = ({ navigation }: Props) => {
         description: description.trim(),
         price: parseFloat(price),
         stock: parseInt(stock),
-        type: productType,
+        type: selectedLeafShortName,
       };
 
       // Add type-specific fields
-      if (productType === 'SIN') {
+      if (isSingleType) {
         productData.cardName = cardName.trim();
         productData.set = set.trim();
         productData.collectorNumber = collectorNumber.trim();
@@ -212,14 +244,12 @@ export const CreateProductScreen = ({ navigation }: Props) => {
         if (language) productData.language = language;
         productData.isFoil = isFoil;
         if (scryfallId) productData.scryfallId = scryfallId;
-      } else if (productType === 'PSL' && releaseDate) {
-        productData.releaseDate = releaseDate;
       }
 
       const createdProduct = await createProduct(productData);
       const productId = createdProduct.id;
 
-      if (productType !== 'SIN' && images.length > 0) {
+      if (!isSingleType && images.length > 0) {
         for (const img of images) {
           try {
             await apiService.uploadImage(productId, img.uri, img.name);
@@ -237,17 +267,7 @@ export const CreateProductScreen = ({ navigation }: Props) => {
     }
   };
 
-  if (loadingCategories) {
-    return (
-      <View style={styles.container}>
-        <View style={styles.typeSelectionContainer}>
-          <ActivityIndicator size="large" color="#3b82f6" />
-        </View>
-      </View>
-    );
-  }
-
-  if (!productType) {
+  if (!selectedRoot) {
     return (
       <View style={styles.container}>
         {/* Type Selection */}
@@ -257,18 +277,22 @@ export const CreateProductScreen = ({ navigation }: Props) => {
             Elige qué tipo de producto deseas crear
           </Text>
 
-          {categories.map((cat) => (
-            <TouchableOpacity
-              key={cat.shortName}
-              style={styles.typeOption}
-              onPress={() => setProductType(cat.shortName)}
-            >
-              <View style={styles.typeOptionContent}>
-                <Text style={styles.typeOptionLabel}>{cat.name}</Text>
-              </View>
-              <Text style={styles.typeOptionArrow}>→</Text>
-            </TouchableOpacity>
-          ))}
+          {loadingCategories ? (
+            <ActivityIndicator size="large" color="#3b82f6" />
+          ) : (
+            roots.map((root) => (
+              <TouchableOpacity
+                key={root.shortName}
+                style={styles.typeOption}
+                onPress={() => handleSelectRoot(root)}
+              >
+                <View style={styles.typeOptionContent}>
+                  <Text style={styles.typeOptionLabel}>{root.name}</Text>
+                </View>
+                <Text style={styles.typeOptionArrow}>→</Text>
+              </TouchableOpacity>
+            ))
+          )}
         </View>
       </View>
     );
@@ -285,11 +309,11 @@ export const CreateProductScreen = ({ navigation }: Props) => {
         nestedScrollEnabled={true}
       >
           <View style={styles.header}>
-            <TouchableOpacity onPress={() => setProductType(null)}>
+            <TouchableOpacity onPress={() => setSelectedRoot(null)}>
               <Text style={styles.backButton}>← Atrás</Text>
             </TouchableOpacity>
             <Text style={styles.headerTitle}>
-              Nuevo {selectedCategory?.name ?? productType}
+              Nuevo {selectedRoot.name}
             </Text>
           </View>
 
@@ -301,12 +325,40 @@ export const CreateProductScreen = ({ navigation }: Props) => {
               maxImages={5}
               multiple={true}
               allowsEditing={true}
-              readonly={productType === 'SIN'}
+              readonly={isSingleType}
             />
           </View>
 
           {/* Common Fields */}
-          {productType !== 'SIN' && (
+          {!isSingleType && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Categoría</Text>
+
+              {leafCategories.map((leaf) => (
+                <TouchableOpacity
+                  key={leaf.shortName}
+                  style={[
+                    styles.leafOption,
+                    selectedLeafShortName === leaf.shortName && styles.leafOptionActive,
+                  ]}
+                  onPress={() => setSelectedLeafShortName(leaf.shortName)}
+                  disabled={loading}
+                >
+                  <Text
+                    style={[
+                      styles.leafOptionText,
+                      selectedLeafShortName === leaf.shortName && styles.leafOptionTextActive,
+                    ]}
+                  >
+                    {leaf.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          )}
+
+          {/* Common Fields */}
+          {!isSingleType && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Información básica</Text>
 
@@ -354,7 +406,7 @@ export const CreateProductScreen = ({ navigation }: Props) => {
           )}
 
           {/* Single Product Fields */}
-          {productType === 'SIN' && (
+          {isSingleType && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Información de la Carta</Text>
 
@@ -598,5 +650,28 @@ const styles = StyleSheet.create({
   },
   disabled: {
     opacity: 0.6,
+  },
+  leafOption: {
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: '#fff',
+    marginBottom: 8,
+  },
+  leafOptionActive: {
+    borderColor: '#3b82f6',
+    backgroundColor: '#eff6ff',
+  },
+  leafOptionText: {
+    fontSize: 13,
+    color: '#6b7280',
+    fontWeight: '500',
+  },
+  leafOptionTextActive: {
+    color: '#3b82f6',
+    fontWeight: '700',
+  },
   },
 });

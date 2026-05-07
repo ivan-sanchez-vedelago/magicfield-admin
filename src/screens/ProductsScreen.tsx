@@ -33,8 +33,18 @@ export const ProductsScreen: React.FC<Props> = ({ navigation }) => {
 
   const PRODUCT_TYPES_FILTER = [
     { label: 'Todos', value: 'all' },
-    ...categories.map(c => ({ label: c.name, value: c.shortName })),
+    ...categories
+      .filter(c => c.parentId === 0)
+      .map(c => ({ label: c.name, value: c.shortName })),
   ];
+
+  const getDescendantShortNames = useCallback((rootShortName: string): string[] => {
+    const root = categories.find(c => c.shortName === rootShortName);
+    if (!root) return [rootShortName];
+    const children = categories.filter(c => c.parentId === root.id);
+    if (children.length === 0) return [rootShortName];
+    return children.map(c => c.shortName);
+  }, [categories]);
 
   useFocusEffect(
     useCallback(() => {
@@ -45,11 +55,11 @@ export const ProductsScreen: React.FC<Props> = ({ navigation }) => {
   const filteredProducts = useMemo(() => {
     return products
       .filter((p) => p.name.toLowerCase().includes(search.toLowerCase()))
-      .filter((p) =>
-        selectedTypeFilter === 'all'
-          ? true
-          : p.type === selectedTypeFilter
-      );
+      .filter((p) => {
+        if (selectedTypeFilter === 'all') return true;
+        const descendants = getDescendantShortNames(selectedTypeFilter);
+        return descendants.includes(p.type);
+      });
   }, [products, search, selectedTypeFilter]);
 
   const handleEditProduct = (product: Product) => {

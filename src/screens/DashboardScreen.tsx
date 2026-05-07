@@ -19,6 +19,14 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
 
   const CATEGORY_COLORS = ['#3b82f6', '#8b5cf6', '#6b7280', '#22c55e', '#f59e0b', '#ef4444'];
 
+  const roots = categories.filter(c => c.parentId === 0);
+
+  const getDescendantShortNames = (root: (typeof categories)[0]): string[] => {
+    const children = categories.filter(c => c.parentId === root.id);
+    if (children.length === 0) return [root.shortName];
+    return children.map(c => c.shortName);
+  };
+
   const stats = {
     totalProducts: products.length,
     totalStock: products.reduce((acc, p) => acc + p.stock, 0),
@@ -26,9 +34,9 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
     outOfStock: products.filter((p) => p.stock === 0).length,
   };
 
-  const productTypes = categories.map((cat, index) => ({
-    label: cat.name,
-    count: products.filter((p) => p.type === cat.shortName).length,
+  const productTypes = roots.map((root, index) => ({
+    label: root.name,
+    count: products.filter((p) => getDescendantShortNames(root).includes(p.type)).length,
     color: CATEGORY_COLORS[index % CATEGORY_COLORS.length],
   }));
 
