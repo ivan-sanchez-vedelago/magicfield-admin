@@ -307,6 +307,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     backgroundColor: '#fff',
+    alignSelf: 'flex-start',
+    width: '100%',
   },
 
   filterContentContainer: {
