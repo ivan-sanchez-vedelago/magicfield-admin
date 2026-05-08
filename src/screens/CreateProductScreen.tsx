@@ -10,16 +10,14 @@ import {
   Alert,
   TouchableWithoutFeedback,
   Keyboard,
-  Modal,
-  FlatList,
   ScrollView,
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ImageUploader, ImageUploadResult, CardSearch } from '@components';
-import { useCreateProduct, useCategories, getAllDescendants } from '@hooks';
+import { useCreateProduct, useCategories } from '@hooks';
 import { apiService } from '@services/api';
-import { ScryfallCard, Category, ProductImage } from '@types';
+import { ScryfallCard, Category } from '@types';
 import type { RootStackParamList } from '@navigation/types';
 import { getAllCardImages } from '@utils/getCardImage';
 
@@ -28,22 +26,62 @@ type Props = NativeStackScreenProps<RootStackParamList, 'CreateProduct'>;
 export const CreateProductScreen = ({ navigation }: Props) => {
   const { categories, loading: loadingCategories } = useCategories();
 
-  const roots = useMemo(
-    () => categories.filter(c => c.parentId === 0),
+  // Category tree selection state
+  const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
+  const [selectedLeaf, setSelectedLeaf] = useState<Category | null>(null);
+
+  const getChildren = useCallback(
+    (parentId: number) => categories.filter(c => c.parentId === parentId),
     [categories]
   );
 
-  const [selectedRoot, setSelectedRoot] = useState<Category | null>(null);
-  const [selectedLeafShortName, setSelectedLeafShortName] = useState<string>('');
-  const [showLeafDropdown, setShowLeafDropdown] = useState(false);
+  // Flattened tree respecting expanded state
+  const flatTree = useMemo(() => {
+    const result: { category: Category; depth: number }[] = [];
+    const addLevel = (parentId: number, depth: number) => {
+      const children = categories.filter(c => c.parentId === parentId);
+      for (const cat of children) {
+        result.push({ category: cat, depth });
+        if (expandedIds.has(cat.id)) {
+          addLevel(cat.id, depth + 1);
+        }
+      }
+    };
+    addLevel(0, 0);
+    return result;
+  }, [categories, expandedIds]);
 
-  const leafCategories = useMemo(() => {
-    if (!selectedRoot) return [];
-    const allDescendants = getAllDescendants(selectedRoot.id, categories);
-    return allDescendants.length > 0 ? allDescendants : [selectedRoot];
-  }, [selectedRoot, categories]);
+  const findRoot = useCallback(
+    (category: Category): Category => {
+      if (category.parentId === 0) return category;
+      const parent = categories.find(c => c.id === category.parentId);
+      return parent ? findRoot(parent) : category;
+    },
+    [categories]
+  );
 
-  const isSingleType = selectedRoot?.shortName === 'SIN';
+  const isSingleType = useMemo(
+    () => (selectedLeaf ? findRoot(selectedLeaf).shortName === 'SIN' : false),
+    [selectedLeaf, findRoot]
+  );
+
+  const handleCategoryPress = (cat: Category) => {
+    const children = getChildren(cat.id);
+    if (children.length === 0) {
+      setSelectedLeaf(cat);
+    } else {
+      setExpandedIds(prev => {
+        const next = new Set(prev);
+        if (next.has(cat.id)) {
+          next.delete(cat.id);
+        } else {
+          next.add(cat.id);
+        }
+        return next;
+      });
+    }
+  };
+
 
   const [images, setImages] = useState<ImageUploadResult[]>([]);
 
@@ -68,12 +106,10 @@ export const CreateProductScreen = ({ navigation }: Props) => {
   // Sealed-specific fields
   const [releaseDate, setReleaseDate] = useState('');
 
-  const selectedCategory = categories.find(c => c.shortName === selectedLeafShortName);
-
   const resetForm = () => {
     // tipo
-    setSelectedRoot(null);
-    setSelectedLeafShortName('');
+    setSelectedLeaf(null);
+    setExpandedIds(new Set());
 
     // comunes
     setName('');
@@ -190,24 +226,9 @@ export const CreateProductScreen = ({ navigation }: Props) => {
     }
   };
 
-  const handleSelectRoot = (root: Category) => {
-    setSelectedRoot(root);
-    const children = categories.filter(c => c.parentId === root.id);
-    const leaves = children.length > 0 ? children : [root];
-    if (leaves.length === 1) {
-      setSelectedLeafShortName(leaves[0].shortName);
-    } else {
-      setSelectedLeafShortName('');
-    }
-  };
-
   const handleCreateProduct = async () => {
-    if (!selectedRoot) {
+    if (!selectedLeaf) {
       Alert.alert('Error', 'Debes seleccionar un tipo de producto');
-      return;
-    }
-    if (!selectedLeafShortName) {
-      Alert.alert('Error', 'Debes seleccionar una categoría');
       return;
     }
     if (!name.trim()) {
@@ -236,7 +257,7 @@ export const CreateProductScreen = ({ navigation }: Props) => {
         description: description.trim(),
         price: parseFloat(price),
         stock: parseInt(stock),
-        type: selectedLeafShortName,
+        type: selectedLeaf.shortName,
       };
 
       // Add type-specific fields
@@ -271,33 +292,55 @@ export const CreateProductScreen = ({ navigation }: Props) => {
     }
   };
 
-  if (!selectedRoot) {
+  if (!selectedLeaf) {
     return (
       <View style={styles.container}>
-        {/* Type Selection */}
-        <View style={styles.typeSelectionContainer}>
+        <View style={styles.typeSelectionHeader}>
           <Text style={styles.title}>Selecciona el tipo de producto</Text>
           <Text style={styles.subtitle}>
             Elige qué tipo de producto deseas crear
           </Text>
-
-          {loadingCategories ? (
-            <ActivityIndicator size="large" color="#3b82f6" />
-          ) : (
-            roots.map((root) => (
-              <TouchableOpacity
-                key={root.shortName}
-                style={styles.typeOption}
-                onPress={() => handleSelectRoot(root)}
-              >
-                <View style={styles.typeOptionContent}>
-                  <Text style={styles.typeOptionLabel}>{root.name}</Text>
-                </View>
-                <Text style={styles.typeOptionArrow}>→</Text>
-              </TouchableOpacity>
-            ))
-          )}
         </View>
+
+        {loadingCategories ? (
+          <ActivityIndicator size="large" color="#3b82f6" style={{ marginTop: 32 }} />
+        ) : (
+          <ScrollView
+            style={styles.treeScroll}
+            contentContainerStyle={styles.treeScrollContent}
+            showsVerticalScrollIndicator={true}
+          >
+            {flatTree.map(({ category, depth }) => {
+              const hasChildren = getChildren(category.id).length > 0;
+              const isExpanded = expandedIds.has(category.id);
+              return (
+                <TouchableOpacity
+                  key={category.id}
+                  style={[
+                    styles.treeNode,
+                    depth === 0 ? styles.treeNodeRoot : styles.treeNodeChild,
+                    { paddingLeft: 16 + depth * 20 },
+                  ]}
+                  onPress={() => handleCategoryPress(category)}
+                  activeOpacity={0.7}
+                >
+                  <Text
+                    style={[
+                      styles.treeNodeText,
+                      depth === 0 && styles.treeNodeTextRoot,
+                      !hasChildren && styles.treeNodeTextLeaf,
+                    ]}
+                  >
+                    {category.name}
+                  </Text>
+                  <Text style={styles.treeArrow}>
+                    {hasChildren ? (isExpanded ? '▼' : '▶') : '→'}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        )}
       </View>
     );
   }
@@ -313,11 +356,11 @@ export const CreateProductScreen = ({ navigation }: Props) => {
         nestedScrollEnabled={true}
       >
           <View style={styles.header}>
-            <TouchableOpacity onPress={() => setSelectedRoot(null)}>
+            <TouchableOpacity onPress={() => setSelectedLeaf(null)}>
               <Text style={styles.backButton}>← Atrás</Text>
             </TouchableOpacity>
             <Text style={styles.headerTitle}>
-              Nuevo {selectedRoot.name}
+              Nuevo {selectedLeaf.name}
             </Text>
           </View>
 
@@ -332,64 +375,6 @@ export const CreateProductScreen = ({ navigation }: Props) => {
               readonly={isSingleType}
             />
           </View>
-
-          {/* Leaf Category Selection */}
-          {!isSingleType && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Categoría</Text>
-              <TouchableOpacity
-                style={styles.dropdownButton}
-                onPress={() => setShowLeafDropdown(true)}
-                disabled={loading}
-              >
-                <Text style={styles.dropdownButtonText}>
-                  {selectedLeafShortName
-                    ? leafCategories.find(l => l.shortName === selectedLeafShortName)?.name
-                    : 'Selecciona una categoría...'}
-                </Text>
-                <Text style={styles.dropdownArrow}>▼</Text>
-              </TouchableOpacity>
-
-              <Modal
-                visible={showLeafDropdown}
-                transparent={true}
-                animationType="fade"
-                onRequestClose={() => setShowLeafDropdown(false)}
-              >
-                <TouchableWithoutFeedback onPress={() => setShowLeafDropdown(false)}>
-                  <View style={styles.dropdownOverlay}>
-                    <View style={styles.dropdownMenu}>
-                      <FlatList
-                        data={leafCategories}
-                        keyExtractor={(item) => item.shortName}
-                        renderItem={({ item }) => (
-                          <TouchableOpacity
-                            style={[
-                              styles.dropdownItem,
-                              selectedLeafShortName === item.shortName && styles.dropdownItemActive,
-                            ]}
-                            onPress={() => {
-                              setSelectedLeafShortName(item.shortName);
-                              setShowLeafDropdown(false);
-                            }}
-                          >
-                            <Text
-                              style={[
-                                styles.dropdownItemText,
-                                selectedLeafShortName === item.shortName && styles.dropdownItemTextActive,
-                              ]}
-                            >
-                              {item.name}
-                            </Text>
-                          </TouchableOpacity>
-                        )}
-                      />
-                    </View>
-                  </View>
-                </TouchableWithoutFeedback>
-              </Modal>
-            </View>
-          )}
 
           {/* Common Fields */}
           {!isSingleType && (
@@ -552,10 +537,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f9fafb',
   },
-  typeSelectionContainer: {
-    flex: 1,
+  typeSelectionHeader: {
     padding: 16,
-    justifyContent: 'center',
+    paddingBottom: 8,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
   },
   title: {
     fontSize: 22,
@@ -566,35 +553,46 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 14,
     color: '#6b7280',
-    marginBottom: 24,
+    marginBottom: 4,
   },
-  typeOption: {
+  treeScroll: {
+    flex: 1,
+  },
+  treeScrollContent: {
+    paddingBottom: 24,
+  },
+  treeNode: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
+    paddingRight: 16,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
   },
-  typeOptionContent: {
+  treeNodeRoot: {
+    backgroundColor: '#fff',
+  },
+  treeNodeChild: {
+    backgroundColor: '#f3f4f6',
+  },
+  treeNodeText: {
+    fontSize: 15,
+    color: '#374151',
     flex: 1,
   },
-  typeOptionLabel: {
-    fontSize: 16,
+  treeNodeTextRoot: {
     fontWeight: '700',
+    fontSize: 16,
     color: '#1f2937',
-    marginBottom: 4,
   },
-  typeOptionDescription: {
-    fontSize: 13,
-    color: '#6b7280',
+  treeNodeTextLeaf: {
+    color: '#3b82f6',
   },
-  typeOptionArrow: {
-    fontSize: 20,
+  treeArrow: {
+    fontSize: 14,
     color: '#9ca3af',
+    marginLeft: 8,
   },
   header: {
     paddingHorizontal: 16,
@@ -684,60 +682,5 @@ const styles = StyleSheet.create({
   },
   disabled: {
     opacity: 0.6,
-  },
-  dropdownButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    backgroundColor: '#fff',
-  },
-  dropdownButtonText: {
-    fontSize: 13,
-    color: '#1f2937',
-    flex: 1,
-  },
-  dropdownArrow: {
-    fontSize: 12,
-    color: '#9ca3af',
-    marginLeft: 8,
-  },
-  dropdownOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  dropdownMenu: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    maxHeight: 300,
-    width: '80%',
-    paddingVertical: 8,
-    shadowColor: '#000',
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 8,
-  },
-  dropdownItem: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f3f4f6',
-  },
-  dropdownItemActive: {
-    backgroundColor: '#eff6ff',
-  },
-  dropdownItemText: {
-    fontSize: 14,
-    color: '#6b7280',
-  },
-  dropdownItemTextActive: {
-    color: '#3b82f6',
-    fontWeight: '600',
   },
 });
