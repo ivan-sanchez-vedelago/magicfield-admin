@@ -41,6 +41,7 @@ interface GroupedOrder {
   customerPhone: string;
   total: number;
   items: SalesAudit[];
+  status: string;
   isNew: boolean;
 }
 
@@ -52,6 +53,7 @@ export const OrdersScreen: React.FC<Props> = ({ navigation }) => {
   const [refreshing, setRefreshing] = useState(false);
   const [seenOrderIds, setSeenOrderIds] = useState<Set<string>>(new Set());
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   const loadSeenOrders = async (): Promise<Set<string>> => {
     try {
@@ -114,9 +116,34 @@ export const OrdersScreen: React.FC<Props> = ({ navigation }) => {
         customerPhone: items[0].customerPhone,
         total: items.reduce((sum, item) => sum + item.subtotal, 0),
         items,
+        status: items[0].status,
         isNew: !seenOrderIds.has(orderId),
       }))
       .sort((a, b) => new Date(b.saleDate).getTime() - new Date(a.saleDate).getTime());
+  };
+
+  const handleFinalizeOrder = async (orderId: string) => {
+    setActionLoading(orderId + '_finalize');
+    try {
+      await apiService.finalizeOrder(orderId);
+      await fetchAudits();
+    } catch (error) {
+      console.error('Error al finalizar pedido:', error);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleCancelOrder = async (orderId: string) => {
+    setActionLoading(orderId + '_cancel');
+    try {
+      await apiService.cancelOrder(orderId);
+      await fetchAudits();
+    } catch (error) {
+      console.error('Error al cancelar pedido:', error);
+    } finally {
+      setActionLoading(null);
+    }
   };
 
   const handleToggleOrder = (orderId: string) => {
@@ -195,6 +222,18 @@ export const OrdersScreen: React.FC<Props> = ({ navigation }) => {
                   </View>
                   <View style={styles.cardHeaderRight}>
                     <Text style={styles.orderTotal}>{formatPrice(order.total)}</Text>
+                    <View style={[
+                      styles.statusBadge,
+                      order.status === 'PENDING' && styles.statusPending,
+                      order.status === 'COMPLETED' && styles.statusCompleted,
+                      order.status === 'CANCELED' && styles.statusCanceled,
+                    ]}>
+                      <Text style={styles.statusText}>
+                        {order.status === 'PENDING' ? 'Pendiente'
+                          : order.status === 'COMPLETED' ? 'Completado'
+                          : 'Cancelado'}
+                      </Text>
+                    </View>
                     <Text style={styles.chevron}>{isExpanded ? '▲' : '▼'}</Text>
                   </View>
                 </TouchableOpacity>
@@ -230,6 +269,30 @@ export const OrdersScreen: React.FC<Props> = ({ navigation }) => {
                       <Text style={styles.totalLabel}>Total</Text>
                       <Text style={styles.totalValue}>{formatPrice(order.total)}</Text>
                     </View>
+
+                    {/* Acciones (solo PENDING) */}
+                    {order.status === 'PENDING' && (
+                      <View style={styles.actionsRow}>
+                        <TouchableOpacity
+                          style={[styles.actionButton, styles.cancelButton]}
+                          onPress={() => handleCancelOrder(order.orderId)}
+                          disabled={actionLoading !== null}
+                        >
+                          <Text style={styles.cancelButtonText}>
+                            {actionLoading === order.orderId + '_cancel' ? 'Cancelando...' : 'Cancelar'}
+                          </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[styles.actionButton, styles.finalizeButton]}
+                          onPress={() => handleFinalizeOrder(order.orderId)}
+                          disabled={actionLoading !== null}
+                        >
+                          <Text style={styles.finalizeButtonText}>
+                            {actionLoading === order.orderId + '_finalize' ? 'Finalizando...' : 'Finalizar'}
+                          </Text>
+                        </TouchableOpacity>
+                      </View>
+                    )}
                   </View>
                 )}
               </View>
@@ -407,5 +470,53 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: '#1f2937',
+  },
+  statusBadge: {
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    alignSelf: 'flex-end',
+  },
+  statusPending: {
+    backgroundColor: '#fef3c7',
+  },
+  statusCompleted: {
+    backgroundColor: '#d1fae5',
+  },
+  statusCanceled: {
+    backgroundColor: '#fee2e2',
+  },
+  statusText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#374151',
+  },
+  actionsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    paddingTop: 8,
+  },
+  actionButton: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  cancelButton: {
+    borderWidth: 1,
+    borderColor: '#ef4444',
+  },
+  cancelButtonText: {
+    color: '#ef4444',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  finalizeButton: {
+    backgroundColor: '#3b82f6',
+  },
+  finalizeButtonText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: 14,
   },
 });

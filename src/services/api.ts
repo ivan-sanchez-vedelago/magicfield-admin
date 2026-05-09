@@ -232,6 +232,14 @@ class ApiService {
     return response.data;
   }
 
+  async finalizeOrder(orderId: string): Promise<void> {
+    await this.client.post(`/api/orders/${orderId}/finalize`);
+  }
+
+  async cancelOrder(orderId: string): Promise<void> {
+    await this.client.post(`/api/orders/${orderId}/cancel`, { isAdmin: 'true' });
+  }
+
   // Update base URL for different environments
   updateBaseUrl(url: string) {
     this.client.defaults.baseURL = url;
