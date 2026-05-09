@@ -66,17 +66,12 @@ export const CreateProductScreen = ({ navigation }: Props) => {
   );
 
   const handleCategoryPress = (cat: Category) => {
+    setSelectedLeaf(cat);    
     const children = getChildren(cat.id);
-    if (children.length === 0) {
-      setSelectedLeaf(cat);
-    } else {
+    if (children.length > 0) {
       setExpandedIds(prev => {
         const next = new Set(prev);
-        if (next.has(cat.id)) {
-          next.delete(cat.id);
-        } else {
-          next.add(cat.id);
-        }
+        next.add(cat.id);
         return next;
       });
     }
