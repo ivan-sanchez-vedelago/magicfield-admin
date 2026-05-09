@@ -60,18 +60,22 @@ export const CreateProductScreen = ({ navigation }: Props) => {
     [categories]
   );
 
-  const isSingleType = useMemo(
-    () => (selectedLeaf ? findRoot(selectedLeaf).shortName === 'SIN' : false),
-    [selectedLeaf, findRoot]
-  );
+  const isSingleType = selectedLeaf?.shortName === 'SIN';
 
   const handleCategoryPress = (cat: Category) => {
-    setSelectedLeaf(cat);    
     const children = getChildren(cat.id);
-    if (children.length > 0) {
+    if (children.length === 0) {
+      // Solo las hojas (sin hijos) son seleccionables
+      setSelectedLeaf(cat);
+    } else {
+      // Las ramas solo expanden/colapsan
       setExpandedIds(prev => {
         const next = new Set(prev);
-        next.add(cat.id);
+        if (next.has(cat.id)) {
+          next.delete(cat.id);
+        } else {
+          next.add(cat.id);
+        }
         return next;
       });
     }
