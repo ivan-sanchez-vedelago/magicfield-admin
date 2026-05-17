@@ -405,6 +405,7 @@ const styles = StyleSheet.create({
   pageSizeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'flex-end',
     paddingHorizontal: 16,
     paddingVertical: 8,
     backgroundColor: '#fff',
@@ -446,7 +447,7 @@ const styles = StyleSheet.create({
   paginationContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
     paddingVertical: 16,
     paddingHorizontal: 16,
     gap: 16,
