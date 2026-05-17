@@ -237,27 +237,25 @@ export const ProductsScreen: React.FC<Props> = ({ navigation }) => {
           </View>
         }
         ListFooterComponent={
-          totalPages > 1 ? (
-            <View style={styles.paginationContainer}>
-              <TouchableOpacity
-                style={[styles.paginationButton, currentPage === 0 && styles.paginationButtonDisabled]}
-                onPress={() => setCurrentPage(p => Math.max(0, p - 1))}
-                disabled={currentPage === 0}
-              >
-                <Text style={styles.paginationButtonText}>Anterior</Text>
-              </TouchableOpacity>
-              <Text style={styles.paginationInfo}>
-                {currentPage + 1} / {totalPages}  ({totalElements})
-              </Text>
-              <TouchableOpacity
-                style={[styles.paginationButton, currentPage >= totalPages - 1 && styles.paginationButtonDisabled]}
-                onPress={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
-                disabled={currentPage >= totalPages - 1}
-              >
-                <Text style={styles.paginationButtonText}>Siguiente</Text>
-              </TouchableOpacity>
-            </View>
-          ) : null
+          <View style={styles.paginationContainer}>
+            <TouchableOpacity
+              style={[styles.paginationButton, currentPage === 0 && styles.paginationButtonDisabled]}
+              onPress={() => setCurrentPage(p => Math.max(0, p - 1))}
+              disabled={currentPage === 0}
+            >
+              <Text style={styles.paginationButtonText}>Anterior</Text>
+            </TouchableOpacity>
+            <Text style={styles.paginationInfo}>
+              {currentPage + 1} / {totalPages}  ({totalElements})
+            </Text>
+            <TouchableOpacity
+              style={[styles.paginationButton, currentPage >= totalPages - 1 && styles.paginationButtonDisabled]}
+              onPress={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
+              disabled={currentPage >= totalPages - 1}
+            >
+              <Text style={styles.paginationButtonText}>Siguiente</Text>
+            </TouchableOpacity>
+          </View>
         }
         contentContainerStyle={
           products.length === 0 ? { flex: 1 } : undefined
