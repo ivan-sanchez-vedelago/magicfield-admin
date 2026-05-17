@@ -34,7 +34,7 @@ export const ProductsScreen: React.FC<Props> = ({ navigation }) => {
   const PRODUCT_TYPES_FILTER = [
     { label: 'Todos', value: 'all' },
     ...categories
-      .filter(c => c.parentId === 0)
+      .filter(c => !categories.some(child => child.parentId === c.id))
       .map(c => ({ label: c.name, value: c.shortName })),
   ];
 
