@@ -17,6 +17,29 @@ export function useProducts() {
   };
 }
 
+export function useProductsPaged(
+  page: number,
+  size: number,
+  search: string,
+  categories: string[]
+) {
+  const categoriesKey = categories.join(',');
+  const { data, loading, error, execute } = useAsync(
+    () => apiService.getProductsPaged(page, size, search || undefined, categories.length > 0 ? categories : undefined),
+    [page, size, search, categoriesKey],
+    true
+  );
+
+  return {
+    products: data?.content ?? [],
+    totalPages: data?.totalPages ?? 0,
+    totalElements: data?.totalElements ?? 0,
+    loading,
+    error,
+    refetch: execute,
+  };
+}
+
 export function useProductById(id: string | null) {
   const { data, loading, error, execute } = useAsync(
     () => {

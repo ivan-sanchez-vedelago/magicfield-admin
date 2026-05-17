@@ -29,6 +29,7 @@ export const API_CONFIG = {
 export const ENDPOINTS = {
   PRODUCTS: {
     LIST: '/api/products',
+    PAGED: '/api/products/paged',
     GET: (id: string) => `/api/products/${id}`,
     CREATE: '/api/products',
     UPDATE: (id: string) => `/api/products/${id}`,

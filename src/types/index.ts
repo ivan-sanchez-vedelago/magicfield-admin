@@ -42,6 +42,13 @@ export interface OtherProduct extends BaseProduct {
 
 export type Product = SingleProduct | BaseProduct;
 
+export interface PagedProducts {
+  content: Product[];
+  totalElements: number;
+  totalPages: number;
+  currentPage: number;
+}
+
 export interface ProductImage {
   id: string;
   productId: string;

@@ -1,6 +1,7 @@
 export { useAsync, type UseAsyncState } from './useAsync';
 export { 
-  useProducts, 
+  useProducts,
+  useProductsPaged,
   useProductById, 
   useCreateProduct, 
   useUpdateProduct, 

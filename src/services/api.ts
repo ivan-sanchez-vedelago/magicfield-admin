@@ -7,6 +7,7 @@ import axios, {
 import { API_CONFIG, ENDPOINTS } from './config';
 import {
   Product,
+  PagedProducts,
   ApiResponse,
   ApiErrorResponse,
   ScryfallCard,
@@ -69,6 +70,22 @@ class ApiService {
   // Products
   async getProducts(): Promise<Product[]> {
     const response = await this.client.get<Product[]>(ENDPOINTS.PRODUCTS.LIST);
+    return response.data;
+  }
+
+  async getProductsPaged(
+    page: number,
+    size: number,
+    search?: string,
+    categories?: string[]
+  ): Promise<PagedProducts> {
+    const params: Record<string, string> = {
+      page: String(page),
+      size: String(size),
+    };
+    if (search) params.search = search;
+    if (categories && categories.length > 0) params.categories = categories.join(',');
+    const response = await this.client.get<PagedProducts>(ENDPOINTS.PRODUCTS.PAGED, { params });
     return response.data;
   }
 

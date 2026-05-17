@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   View,
   FlatList,
@@ -14,23 +14,24 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ProductCard } from '@components';
-import { useProducts, useDeleteProduct, useUpdateProductStock, useCategories, getAllDescendants } from '@hooks';
+import { useProductsPaged, useDeleteProduct, useUpdateProductStock, useCategories, getAllDescendants } from '@hooks';
 import { Product } from '@types';
 import type { RootStackParamList } from '@navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Products'>;
 
-export const ProductsScreen: React.FC<Props> = ({ navigation }) => {
-  const { products, loading, error, refetch } = useProducts();
-  const { categories } = useCategories();
+const PAGE_SIZE_OPTIONS = [10, 20, 30];
 
-  const { execute: deleteProduct } = useDeleteProduct(() => refetch());
-  const { execute: updateStock } = useUpdateProductStock(() => refetch());
+export const ProductsScreen: React.FC<Props> = ({ navigation }) => {
+  const { categories } = useCategories();
 
   const [deletingId, setDeletingId] = useState<string | undefined>();
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [selectedTypeFilter, setSelectedTypeFilter] = useState<string>('all');
+  const [currentPage, setCurrentPage] = useState(0);
+  const [pageSize, setPageSize] = useState(20);
 
   const PRODUCT_TYPES_FILTER = [
     { label: 'Todos', value: 'all' },
@@ -47,21 +48,40 @@ export const ProductsScreen: React.FC<Props> = ({ navigation }) => {
     return [rootShortName, ...allDescendants.map(c => c.shortName)];
   }, [categories]);
 
+  const activeCategories = useMemo(() => {
+    if (selectedTypeFilter === 'all') return [];
+    return getDescendantShortNames(selectedTypeFilter);
+  }, [selectedTypeFilter, getDescendantShortNames]);
+
+  // Debounce search input (400 ms)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setCurrentPage(0);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [search]);
+
+  // Reset page on filter change
+  useEffect(() => {
+    setCurrentPage(0);
+  }, [selectedTypeFilter]);
+
+  const { products, totalPages, totalElements, loading, error, refetch } = useProductsPaged(
+    currentPage,
+    pageSize,
+    debouncedSearch,
+    activeCategories
+  );
+
+  const { execute: deleteProduct } = useDeleteProduct(() => refetch());
+  const { execute: updateStock } = useUpdateProductStock(() => refetch());
+
   useFocusEffect(
     useCallback(() => {
       refetch();
     }, [])
   );
-  
-  const filteredProducts = useMemo(() => {
-    return products
-      .filter((p) => p.name.toLowerCase().includes(search.toLowerCase()))
-      .filter((p) => {
-        if (selectedTypeFilter === 'all') return true;
-        const descendants = getDescendantShortNames(selectedTypeFilter);
-        return descendants.includes(p.type);
-      });
-  }, [products, search, selectedTypeFilter]);
 
   const handleEditProduct = (product: Product) => {
     navigation.navigate('EditProduct', { productId: product.id });
@@ -136,7 +156,7 @@ export const ProductsScreen: React.FC<Props> = ({ navigation }) => {
         <Text style={styles.headerTitle}>Productos</Text>
       </View>
 
-      {/* Botones de filtro */}
+      {/* Botones de filtro por tipo */}
       <View style={styles.filterContainer}>
       <ScrollView
         horizontal
@@ -175,8 +195,24 @@ export const ProductsScreen: React.FC<Props> = ({ navigation }) => {
         />
       </View>
 
+      {/* Selector de items por página */}
+      <View style={styles.pageSizeContainer}>
+        <Text style={styles.pageSizeLabel}>Por página:</Text>
+        {PAGE_SIZE_OPTIONS.map(size => (
+          <TouchableOpacity
+            key={size}
+            style={[styles.pageSizeButton, pageSize === size && styles.pageSizeButtonActive]}
+            onPress={() => { setPageSize(size); setCurrentPage(0); }}
+          >
+            <Text style={[styles.pageSizeButtonText, pageSize === size && styles.pageSizeButtonTextActive]}>
+              {size}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
       <FlatList
-        data={filteredProducts}
+        data={products}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <ProductCard
@@ -200,8 +236,31 @@ export const ProductsScreen: React.FC<Props> = ({ navigation }) => {
             </TouchableOpacity>
           </View>
         }
+        ListFooterComponent={
+          totalPages > 1 ? (
+            <View style={styles.paginationContainer}>
+              <TouchableOpacity
+                style={[styles.paginationButton, currentPage === 0 && styles.paginationButtonDisabled]}
+                onPress={() => setCurrentPage(p => Math.max(0, p - 1))}
+                disabled={currentPage === 0}
+              >
+                <Text style={styles.paginationButtonText}>Anterior</Text>
+              </TouchableOpacity>
+              <Text style={styles.paginationInfo}>
+                {currentPage + 1} / {totalPages}  ({totalElements})
+              </Text>
+              <TouchableOpacity
+                style={[styles.paginationButton, currentPage >= totalPages - 1 && styles.paginationButtonDisabled]}
+                onPress={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
+                disabled={currentPage >= totalPages - 1}
+              >
+                <Text style={styles.paginationButtonText}>Siguiente</Text>
+              </TouchableOpacity>
+            </View>
+          ) : null
+        }
         contentContainerStyle={
-          filteredProducts.length === 0 ? { flex: 1 } : undefined
+          products.length === 0 ? { flex: 1 } : undefined
         }
       />
     </View>
@@ -341,5 +400,79 @@ const styles = StyleSheet.create({
 
   filterButtonTextActive: {
     color: '#fff',
+  },
+
+  pageSizeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+    gap: 8,
+  },
+
+  pageSizeLabel: {
+    fontSize: 13,
+    color: '#6b7280',
+    marginRight: 4,
+  },
+
+  pageSizeButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    backgroundColor: '#f9fafb',
+  },
+
+  pageSizeButtonActive: {
+    backgroundColor: '#1f2937',
+    borderColor: '#1f2937',
+  },
+
+  pageSizeButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#374151',
+  },
+
+  pageSizeButtonTextActive: {
+    color: '#fff',
+  },
+
+  paginationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    gap: 16,
+  },
+
+  paginationButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+    backgroundColor: '#fff',
+  },
+
+  paginationButtonDisabled: {
+    opacity: 0.4,
+  },
+
+  paginationButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
+  },
+
+  paginationInfo: {
+    fontSize: 13,
+    color: '#6b7280',
   },
 });
