@@ -20,8 +20,6 @@ import type { RootStackParamList } from '@navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Products'>;
 
-const PAGE_SIZE_OPTIONS = [10, 20, 30];
-
 export const ProductsScreen: React.FC<Props> = ({ navigation }) => {
   const { categories } = useCategories();
 
@@ -193,22 +191,6 @@ export const ProductsScreen: React.FC<Props> = ({ navigation }) => {
           onChangeText={setSearch}
           style={styles.searchInput}
         />
-      </View>
-
-      {/* Selector de items por página */}
-      <View style={styles.pageSizeContainer}>
-        <Text style={styles.pageSizeLabel}>Por página:</Text>
-        {PAGE_SIZE_OPTIONS.map(size => (
-          <TouchableOpacity
-            key={size}
-            style={[styles.pageSizeButton, pageSize === size && styles.pageSizeButtonActive]}
-            onPress={() => { setPageSize(size); setCurrentPage(0); }}
-          >
-            <Text style={[styles.pageSizeButtonText, pageSize === size && styles.pageSizeButtonTextActive]}>
-              {size}
-            </Text>
-          </TouchableOpacity>
-        ))}
       </View>
 
       <FlatList
@@ -397,48 +379,6 @@ const styles = StyleSheet.create({
   },
 
   filterButtonTextActive: {
-    color: '#fff',
-  },
-
-  pageSizeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-    gap: 8,
-  },
-
-  pageSizeLabel: {
-    fontSize: 13,
-    color: '#6b7280',
-    marginRight: 4,
-  },
-
-  pageSizeButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: '#d1d5db',
-    backgroundColor: '#f9fafb',
-  },
-
-  pageSizeButtonActive: {
-    backgroundColor: '#1f2937',
-    borderColor: '#1f2937',
-  },
-
-  pageSizeButtonText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#374151',
-  },
-
-  pageSizeButtonTextActive: {
     color: '#fff',
   },
 
