@@ -72,13 +72,13 @@ export const ProductsScreen: React.FC<Props> = ({ navigation }) => {
     activeCategories
   );
 
-  const { execute: deleteProduct } = useDeleteProduct(() => refetch());
-  const { execute: updateStock } = useUpdateProductStock(() => refetch());
+  const { execute: deleteProduct } = useDeleteProduct();
+  const { execute: updateStock } = useUpdateProductStock();
 
   useFocusEffect(
     useCallback(() => {
       refetch();
-    }, [])
+    }, [refetch])
   );
 
   const handleEditProduct = (product: Product) => {
@@ -97,6 +97,7 @@ export const ProductsScreen: React.FC<Props> = ({ navigation }) => {
             setDeletingId(product.id);
             try {
               await deleteProduct(product.id);
+              refetch();
               Alert.alert('Éxito', 'Producto eliminado correctamente');
             } catch {
               Alert.alert('Error', 'No se pudo eliminar el producto');
@@ -112,6 +113,7 @@ export const ProductsScreen: React.FC<Props> = ({ navigation }) => {
 
   const handleStockChange = async (productId: string, newStock: number) => {
     await updateStock({ productId, stock: newStock });
+    refetch();
   };
 
   const handleRefresh = async () => {

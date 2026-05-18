@@ -30,7 +30,6 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   deletingId,
 }) => {
   const isDeleting = deletingId === product.id;
-  console.log("Rendering ProductCard for:", product);
 
   const getProductTypeBadge = () => {
     const typeColors: Record<string, string> = {
@@ -62,8 +61,19 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     >
       <View style={styles.row}>
 
-        {/* LEFT SIDE */}
-        <View style={styles.left}>
+        {/* LEFT: IMAGE */}
+        {product.imageUrl ? (
+          <Image
+            source={{ uri: product.imageUrl }}
+            style={styles.image}
+            resizeMode="cover"
+          />
+        ) : (
+          <View style={[styles.image, styles.imagePlaceholder]} />
+        )}
+
+        {/* RIGHT: CONTENT */}
+        <View style={styles.content}>
 
           <View style={styles.header}>
             <Text style={styles.productName} numberOfLines={2}>
@@ -72,17 +82,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             {getProductTypeBadge()}
           </View>
 
-          <View style={styles.info}>
-            <Text style={styles.price}>${product.price.toFixed(2)}</Text>
-            <Text
-              style={[
-                styles.stock,
-                product.stock === 0 && styles.outOfStock,
-              ]}
-            >
-              Stock: {product.stock}
-            </Text>
-          </View>
+          <Text style={styles.price}>${product.price.toFixed(2)}</Text>
 
           <StockAdjuster
             initialStock={product.stock}
@@ -98,7 +98,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               onPress={() => onEdit(product)}
               disabled={isDeleting}
             >
-              <Text style={styles.actionButtonText}>Editar</Text>
+              <Text style={styles.editButtonText}>Editar</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -111,23 +111,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               disabled={isDeleting}
             >
               {isDeleting ? (
-                <ActivityIndicator color="#fff" size="small" />
+                <ActivityIndicator color="#ef4444" size="small" />
               ) : (
-                <Text style={styles.actionButtonText}>Eliminar</Text>
+                <Text style={styles.deleteButtonText}>Eliminar</Text>
               )}
             </TouchableOpacity>
           </View>
 
         </View>
-
-        {/* RIGHT SIDE IMAGE */}
-        {product.imageUrl && (
-          <Image
-            source={{ uri: product.imageUrl }}
-            style={styles.image}
-            resizeMode="cover"
-          />
-        )}
 
       </View>
     </TouchableOpacity>
@@ -151,18 +142,29 @@ const styles = StyleSheet.create({
 
   row: {
     flexDirection: 'row',
+    gap: 12,
   },
 
-  left: {
+  image: {
+    width: 80,
+    height: 110,
+    borderRadius: 6,
+    flexShrink: 0,
+  },
+
+  imagePlaceholder: {
+    backgroundColor: '#f3f4f6',
+  },
+
+  content: {
     flex: 1,
     justifyContent: 'space-between',
-    marginRight: 10,
   },
 
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: 6,
   },
 
@@ -186,62 +188,49 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
 
-  info: {
-    marginBottom: 8,
-  },
-
   price: {
     fontSize: 16,
     fontWeight: '700',
     color: '#059669',
-  },
-
-  stock: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#374151',
-  },
-
-  outOfStock: {
-    color: '#ef4444',
-  },
-
-  image: {
-    width: 70,
-    height: 100,
-    borderRadius: 6,
+    marginBottom: 4,
   },
 
   actions: {
     flexDirection: 'row',
-    marginTop: 8,
+    marginTop: 4,
     gap: 8,
   },
 
   actionButton: {
     flex: 1,
     paddingVertical: 8,
-    borderRadius: 6,
+    borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
   },
 
   editButton: {
-    backgroundColor: '#3b82f6',
+    backgroundColor: '#eff6ff',
+  },
+
+  editButtonText: {
+    color: '#3b82f6',
+    fontWeight: '600',
+    fontSize: 13,
   },
 
   deleteButton: {
-    backgroundColor: '#ef4444',
+    backgroundColor: '#fef2f2',
+  },
+
+  deleteButtonText: {
+    color: '#ef4444',
+    fontWeight: '600',
+    fontSize: 13,
   },
 
   disabledButton: {
     opacity: 0.6,
-  },
-
-  actionButtonText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 12,
   },
 
 });
