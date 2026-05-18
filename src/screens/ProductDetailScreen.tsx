@@ -84,10 +84,10 @@ export const ProductDetailScreen: React.FC<Props> = ({
   return (
     <ScrollView style={styles.container}>
       {/* Product Image */}
-      {product.imageUrl && (
+      {product.imageUrls?.[0] && (
         <View style={styles.imageContainer}>
           <Image
-            source={{ uri: product.imageUrl }}
+            source={{ uri: product.imageUrls![0] }}
             style={styles.image}
             resizeMode="cover"
           />

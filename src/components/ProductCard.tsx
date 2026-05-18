@@ -62,9 +62,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       <View style={styles.row}>
 
         {/* LEFT: IMAGE */}
-        {product.imageUrl ? (
+        {product.imageUrls?.[0] ? (
           <Image
-            source={{ uri: product.imageUrl }}
+            source={{ uri: product.imageUrls[0] }}
             style={styles.image}
             resizeMode="cover"
           />

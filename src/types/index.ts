@@ -15,7 +15,7 @@ export interface BaseProduct {
   price: number;
   stock: number;
   type: string;
-  imageUrl?: string;
+  imageUrls?: string[];
   createdAt?: string;
   updatedAt?: string;
 }
