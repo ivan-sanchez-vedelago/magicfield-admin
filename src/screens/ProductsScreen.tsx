@@ -72,6 +72,26 @@ export const ProductsScreen: React.FC<Props> = ({ navigation }) => {
     activeCategories
   );
 
+  const [hiddenIds, setHiddenIds] = useState<Set<string>>(new Set());
+
+  // Limpia hiddenIds para los IDs que el servidor ya no devuelve (cache expirado)
+  useEffect(() => {
+    if (!loading && hiddenIds.size > 0) {
+      setHiddenIds(prev => {
+        const next = new Set(prev);
+        for (const id of prev) {
+          if (!products.some(p => p.id === id)) next.delete(id);
+        }
+        return next;
+      });
+    }
+  }, [loading, products]);
+
+  const visibleProducts = useMemo(
+    () => products.filter(p => !hiddenIds.has(p.id)),
+    [products, hiddenIds]
+  );
+
   const { execute: deleteProduct } = useDeleteProduct();
   const { execute: updateStock } = useUpdateProductStock();
 
@@ -97,6 +117,7 @@ export const ProductsScreen: React.FC<Props> = ({ navigation }) => {
             setDeletingId(product.id);
             try {
               await deleteProduct(product.id);
+              setHiddenIds(prev => { const s = new Set(prev); s.add(product.id); return s; });
               refetch();
               Alert.alert('Éxito', 'Producto eliminado correctamente');
             } catch {
@@ -113,6 +134,9 @@ export const ProductsScreen: React.FC<Props> = ({ navigation }) => {
 
   const handleStockChange = async (productId: string, newStock: number) => {
     await updateStock({ productId, stock: newStock });
+    if (newStock === 0) {
+      setHiddenIds(prev => { const s = new Set(prev); s.add(productId); return s; });
+    }
     refetch();
   };
 
@@ -196,7 +220,7 @@ export const ProductsScreen: React.FC<Props> = ({ navigation }) => {
       </View>
 
       <FlatList
-        data={products}
+        data={visibleProducts}
         keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
           <ProductCard
@@ -242,7 +266,7 @@ export const ProductsScreen: React.FC<Props> = ({ navigation }) => {
           </View>
         }
         contentContainerStyle={
-          products.length === 0 ? { flex: 1 } : undefined
+          visibleProducts.length === 0 ? { flex: 1 } : undefined
         }
       />
     </View>
