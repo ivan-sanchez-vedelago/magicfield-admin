@@ -163,13 +163,8 @@ export const CreateProductScreen = ({ navigation }: Props) => {
       price *= 1.3;
     else
       price *= 1.4;
-
-    // Floor mínimo
-    if (price < 0.5) {
-      price = 0.5;
-    }
     
-    return price.toFixed(2);
+    return String(price);
   };
 
   const handleFoilChange = () => {
