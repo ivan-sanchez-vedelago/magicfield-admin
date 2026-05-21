@@ -73,6 +73,8 @@ export const CardSearch: React.FC<CardSearchProps> = ({
         }
       );
 
+      if (!res.ok) throw new Error(`Scryfall autocomplete error: ${res.status}`);
+
       const data = await res.json();
 
       autocompleteCache[text] = data.data || [];
@@ -114,7 +116,10 @@ export const CardSearch: React.FC<CardSearchProps> = ({
             'User-Agent': 'MagicFieldApp/1.0'
           }
         }
-      )
+      );
+
+      if (!res.ok) throw new Error(`Scryfall search error: ${res.status}`);
+
       const data = await res.json();
 
       // Ordenar: primero nonfoil, luego foil-exclusivo
