@@ -11,3 +11,5 @@ export {
 } from './useProducts';
 export { useScryfallSearch } from './useScryfallSearch';
 export { useCategories, getAllDescendants } from './useCategories';
+export { useDashboardStats } from './useDashboardStats';
+export type { DashboardStats } from './useDashboardStats';

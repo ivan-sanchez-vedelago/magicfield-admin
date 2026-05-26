@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import {
   View,
   ScrollView,
@@ -6,116 +6,155 @@ import {
   Text,
   TouchableOpacity,
   ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { useProducts, useCategories, getAllDescendants } from '@hooks/index';
+import { useDashboardStats } from '@hooks/index';
 import type { RootStackParamList } from '@navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Dashboard'>;
 
 export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
-  const { products, loading } = useProducts();
-  const { categories } = useCategories();
+  const { stats, loading, refetch } = useDashboardStats();
 
-  const CATEGORY_COLORS = ['#3b82f6', '#8b5cf6', '#6b7280', '#22c55e', '#f59e0b', '#ef4444'];
+  const onRefresh = useCallback(() => {
+    refetch();
+  }, [refetch]);
 
-  const roots = categories.filter(c => c.parentId === 0);
-
-  const getDescendantShortNames = (root: (typeof categories)[0]): string[] => {
-    const allDescendants = getAllDescendants(root.id, categories);
-    if (allDescendants.length === 0) return [root.shortName];
-    return [root.shortName, ...allDescendants.map(c => c.shortName)];
+  const formatCurrency = (value: number | undefined) => {
+    if (!value) return '$0';
+    if (value >= 1000000) return `$${(value / 1000000).toFixed(1)}M`;
+    if (value >= 1000) return `$${(value / 1000).toFixed(1)}k`;
+    return `$${value.toFixed(0)}`;
   };
 
-  const stats = {
-    totalProducts: products.length,
-    totalStock: products.reduce((acc, p) => acc + p.stock, 0),
-    totalValue: products.reduce((acc, p) => acc + p.price * p.stock, 0),
-    outOfStock: products.filter((p) => p.stock === 0).length,
-  };
-
-  const productTypes = roots.map((root, index) => ({
-    label: root.name,
-    count: products.filter((p) => getDescendantShortNames(root).includes(p.type)).length,
-    color: CATEGORY_COLORS[index % CATEGORY_COLORS.length],
-  }));
-
-  if (loading) {
+  if (loading && !stats) {
     return (
       <View style={styles.centerContainer}>
         <ActivityIndicator size="large" color="#3b82f6" />
+        <Text style={styles.loadingText}>Cargando estadísticas...</Text>
       </View>
     );
   }
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      refreshControl={
+        <RefreshControl refreshing={loading} onRefresh={onRefresh} colors={['#3b82f6']} />
+      }
+    >
       <View style={styles.header}>
         <Text style={styles.title}>Dashboard</Text>
-        <Text style={styles.subtitle}>Resumen de tu inventario</Text>
+        <Text style={styles.subtitle}>Resumen de tu negocio en tiempo real</Text>
       </View>
 
-      {/* Stats Grid */}
+      {/* Inventory Stats */}
       <View style={styles.statsGrid}>
         <StatCard
           title="Productos"
-          value={stats.totalProducts.toString()}
+          value={String(stats?.totalProducts ?? 0)}
           color="#3b82f6"
         />
         <StatCard
           title="Stock Total"
-          value={stats.totalStock.toString()}
+          value={String(stats?.totalStock ?? 0)}
           color="#22c55e"
         />
         <StatCard
-          title="Valor Total"
-          value={`$${(stats.totalValue / 1000).toFixed(1)}k`}
+          title="Valor Inventario"
+          value={formatCurrency(stats?.totalInventoryValue)}
           color="#f59e0b"
         />
         <StatCard
           title="Sin Stock"
-          value={stats.outOfStock.toString()}
+          value={String(stats?.outOfStockProducts ?? 0)}
           color="#ef4444"
         />
       </View>
 
-      {/* Product Types */}
+      {/* Orders Today / Week */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Tipos de Productos</Text>
-        <View style={styles.typesList}>
-          {productTypes.map((pt) => (
-            <TypeCard key={pt.label} label={pt.label} count={pt.count} color={pt.color} />
-          ))}
+        <Text style={styles.sectionTitle}>Ventas</Text>
+        <View style={styles.salesRow}>
+          <View style={styles.salesCard}>
+            <Text style={styles.salesLabel}>Hoy</Text>
+            <Text style={styles.salesOrderCount}>{stats?.ordersToday ?? 0} órdenes</Text>
+            <Text style={styles.salesRevenue}>{formatCurrency(stats?.revenueToday)}</Text>
+          </View>
+          <View style={styles.salesCard}>
+            <Text style={styles.salesLabel}>Esta Semana</Text>
+            <Text style={styles.salesOrderCount}>{stats?.ordersThisWeek ?? 0} órdenes</Text>
+            <Text style={styles.salesRevenue}>{formatCurrency(stats?.revenueThisWeek)}</Text>
+          </View>
         </View>
       </View>
+
+      {/* Order Status */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Estado de Órdenes</Text>
+        <View style={styles.statusRow}>
+          <StatusBadge label="Pendientes" count={stats?.pendingOrders ?? 0} color="#f59e0b" />
+          <StatusBadge label="Completadas" count={stats?.completedOrders ?? 0} color="#22c55e" />
+          <StatusBadge label="Canceladas" count={stats?.cancelledOrders ?? 0} color="#ef4444" />
+        </View>
+      </View>
+
+      {/* Top Products */}
+      {stats?.topProducts && stats.topProducts.length > 0 && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Top 5 Productos Vendidos</Text>
+          {stats.topProducts.map((product, index) => (
+            <View key={product.productId} style={styles.topProductRow}>
+              <View style={[styles.rankBadge, { backgroundColor: index === 0 ? '#f59e0b' : '#e5e7eb' }]}>
+                <Text style={[styles.rankText, { color: index === 0 ? '#fff' : '#374151' }]}>
+                  {index + 1}
+                </Text>
+              </View>
+              <Text style={styles.topProductName} numberOfLines={1}>
+                {product.productName}
+              </Text>
+              <Text style={styles.topProductQty}>{product.totalQuantity} uds</Text>
+            </View>
+          ))}
+        </View>
+      )}
 
       {/* Quick Actions */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Acciones Rápidas</Text>
         <TouchableOpacity
           style={styles.actionButton}
-          onPress={() => navigation.navigate('CreateProduct')}
+          onPress={() => navigation.getParent()?.navigate('CreateProductStack' as any)}
         >
           <Text style={styles.actionButtonText}>➕ Crear Producto</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.actionButton}
-          onPress={() => navigation.navigate('Products')}
+          onPress={() => navigation.getParent()?.navigate('ProductsStack' as any)}
         >
           <Text style={styles.actionButtonText}>📦 Ver Productos</Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.actionButton, { backgroundColor: '#8b5cf6' }]}
+          onPress={() => navigation.getParent()?.navigate('OrdersStack' as any)}
+        >
+          <Text style={styles.actionButtonText}>🧾 Ver Órdenes</Text>
+        </TouchableOpacity>
       </View>
 
-      {/* Info */}
+      {/* Last Updated */}
       <View style={styles.infoBox}>
-        <Text style={styles.infoTitle}>Información</Text>
         <Text style={styles.infoText}>
-          Última actualización: {new Date().toLocaleString()}
+          Última actualización: {new Date().toLocaleString('es-AR')}
         </Text>
+        <Text style={styles.infoHint}>Desliza hacia abajo para actualizar</Text>
       </View>
     </ScrollView>
   );
 };
+
+// --- Sub-components ---
 
 interface StatCardProps {
   title: string;
@@ -130,16 +169,16 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, color }) => (
   </View>
 );
 
-interface TypeCardProps {
+interface StatusBadgeProps {
   label: string;
   count: number;
   color: string;
 }
 
-const TypeCard: React.FC<TypeCardProps> = ({ label, count, color }) => (
-  <View style={[styles.typeCard, { backgroundColor: color }]}>
-    <Text style={styles.typeCount}>{count}</Text>
-    <Text style={styles.typeLabel}>{label}</Text>
+const StatusBadge: React.FC<StatusBadgeProps> = ({ label, count, color }) => (
+  <View style={[styles.statusBadge, { borderColor: color }]}>
+    <Text style={[styles.statusCount, { color }]}>{count}</Text>
+    <Text style={styles.statusLabel}>{label}</Text>
   </View>
 );
 
@@ -153,6 +192,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#f9fafb',
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: '#6b7280',
   },
   header: {
     paddingHorizontal: 16,
@@ -175,23 +219,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     padding: 8,
-    gap: 8,
   },
   statCard: {
-    flex: 0.5,
+    width: '46%',
     backgroundColor: '#fff',
     borderRadius: 12,
     padding: 16,
     borderLeftWidth: 4,
-    marginHorizontal: 8,
-    marginVertical: 8,
+    margin: '2%',
     shadowColor: '#000',
     shadowOpacity: 0.05,
     shadowRadius: 3,
     elevation: 2,
   },
   statValue: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: '800',
     color: '#1f2937',
     marginBottom: 4,
@@ -203,7 +245,7 @@ const styles = StyleSheet.create({
   },
   section: {
     marginHorizontal: 16,
-    marginVertical: 16,
+    marginVertical: 12,
   },
   sectionTitle: {
     fontSize: 16,
@@ -211,28 +253,93 @@ const styles = StyleSheet.create({
     color: '#1f2937',
     marginBottom: 12,
   },
-  typesList: {
+  salesRow: {
     flexDirection: 'row',
-    gap: 8,
-    justifyContent: 'space-between',
+    gap: 12,
   },
-  typeCard: {
+  salesCard: {
     flex: 1,
+    backgroundColor: '#fff',
     borderRadius: 12,
     padding: 16,
     alignItems: 'center',
-    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
   },
-  typeCount: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: '#fff',
-    marginBottom: 4,
-  },
-  typeLabel: {
+  salesLabel: {
     fontSize: 12,
-    color: '#fff',
     fontWeight: '600',
+    color: '#6b7280',
+    marginBottom: 8,
+  },
+  salesOrderCount: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1f2937',
+  },
+  salesRevenue: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#22c55e',
+    marginTop: 4,
+  },
+  statusRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  statusBadge: {
+    flex: 1,
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    borderWidth: 2,
+    padding: 12,
+    alignItems: 'center',
+  },
+  statusCount: {
+    fontSize: 20,
+    fontWeight: '800',
+  },
+  statusLabel: {
+    fontSize: 10,
+    color: '#6b7280',
+    fontWeight: '600',
+    marginTop: 4,
+  },
+  topProductRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 8,
+    shadowColor: '#000',
+    shadowOpacity: 0.03,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  rankBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  rankText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  topProductName: {
+    flex: 1,
+    fontSize: 14,
+    color: '#374151',
+  },
+  topProductQty: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#3b82f6',
   },
   actionButton: {
     backgroundColor: '#3b82f6',
@@ -250,20 +357,18 @@ const styles = StyleSheet.create({
   infoBox: {
     marginHorizontal: 16,
     marginBottom: 24,
-    backgroundColor: '#eff6ff',
+    backgroundColor: '#f3f4f6',
     borderRadius: 8,
-    borderLeftWidth: 4,
-    borderLeftColor: '#3b82f6',
     padding: 12,
-  },
-  infoTitle: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#1e40af',
-    marginBottom: 4,
+    alignItems: 'center',
   },
   infoText: {
     fontSize: 12,
-    color: '#1e40af',
+    color: '#6b7280',
+  },
+  infoHint: {
+    fontSize: 11,
+    color: '#9ca3af',
+    marginTop: 4,
   },
 });

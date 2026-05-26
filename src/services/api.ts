@@ -257,6 +257,12 @@ class ApiService {
     await this.client.post(`/api/orders/${orderId}/cancel`, { isAdmin: 'true' });
   }
 
+  // Dashboard Stats
+  async getDashboardStats() {
+    const response = await this.client.get(ENDPOINTS.DASHBOARD.STATS);
+    return response.data;
+  }
+
   // Update base URL for different environments
   updateBaseUrl(url: string) {
     this.client.defaults.baseURL = url;

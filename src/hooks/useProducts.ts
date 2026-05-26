@@ -6,7 +6,7 @@ export function useProducts() {
   const { data, loading, error, execute } = useAsync(
     () => apiService.getProducts(),
     [],
-    false
+    true
   );
 
   return {

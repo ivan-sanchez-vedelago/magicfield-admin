@@ -8,6 +8,7 @@ const getDevApiUrl = () => {
 
   const host = debuggerHost?.split(':')[0];
 
+  if (!host) return 'http://localhost:8080';
   return `http://${host}:8080`;
 };
 
@@ -53,6 +54,9 @@ export const ENDPOINTS = {
   },
   ORDERS: {
     ALL: '/api/sales-audit',
+  },
+  DASHBOARD: {
+    STATS: '/api/admin/dashboard-stats',
   },
 };
 
