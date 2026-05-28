@@ -1,63 +1,25 @@
 import { apiService } from '@services/api';
 import { useAsync } from './useAsync';
 
-export interface PageView {
-  page: string;
-  visitors: number;
-}
-
-export interface Referrer {
-  referrer: string;
-  count: number;
-}
-
-export interface Country {
-  country: string;
-  countryCode: string;
-  visitors: number;
-}
-
-export interface Device {
-  device: string;
-  count: number;
-}
-
-export interface Browser {
-  browser: string;
-  count: number;
-}
-
-export interface OS {
-  os: string;
-  count: number;
-}
-
-export interface VercelAnalytics {
-  totalVisitors: number;
-  pageViews: number;
-  bounceRate: number;
-  topPages: PageView[];
-  topReferrers: Referrer[];
-  topCountries: Country[];
-  devices: Device[];
-  browsers: Browser[];
-  operatingSystems: OS[];
-}
-
 export interface DashboardStats {
   totalProducts: number;
+  totalStock: number;
   totalInventoryValue: number;
+  outOfStockProducts: number;
+  ordersToday: number;
+  revenueToday: number;
+  ordersThisWeek: number;
+  revenueThisWeek: number;
   pendingOrders: number;
   completedOrders: number;
   cancelledOrders: number;
-  vercelAnalytics: VercelAnalytics;
-  period: string;
+  topProducts: { productId: string; productName: string; totalQuantity: number }[];
 }
 
-export function useDashboardStats(period: string = '7days') {
+export function useDashboardStats() {
   const { data, loading, error, execute } = useAsync<DashboardStats>(
-    () => apiService.getDashboardStats(period),
-    [period],
+    () => apiService.getDashboardStats(),
+    [],
     true
   );
 

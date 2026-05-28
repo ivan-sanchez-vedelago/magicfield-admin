@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback } from 'react';
 import {
   View,
   ScrollView,
@@ -10,27 +10,16 @@ import {
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useDashboardStats } from '@hooks/index';
-import { VercelStatsCard } from '@components/VercelStatsCard';
-import { TopPagesCard } from '@components/TopPagesCard';
-import { ReferrersCard } from '@components/ReferrersCard';
-import { CountriesCard } from '@components/CountriesCard';
-import { DeviceBreakdown } from '@components/DeviceBreakdown';
-import { PeriodSelector } from '@components/PeriodSelector';
 import type { RootStackParamList } from '@navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Dashboard'>;
 
 export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
-  const [selectedPeriod, setSelectedPeriod] = useState<string>('7days');
-  const { stats, loading, refetch } = useDashboardStats(selectedPeriod);
+  const { stats, loading, refetch } = useDashboardStats();
 
   const onRefresh = useCallback(() => {
     refetch();
   }, [refetch]);
-
-  const handlePeriodChange = (period: string) => {
-    setSelectedPeriod(period);
-  };
 
   const formatCurrency = (value: number | undefined) => {
     if (!value) return '$0';
@@ -57,26 +46,47 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
     >
       <View style={styles.header}>
         <Text style={styles.title}>Dashboard</Text>
-        <Text style={styles.subtitle}>Análisis de tu negocio y estadísticas</Text>
+        <Text style={styles.subtitle}>Resumen de tu negocio en tiempo real</Text>
       </View>
 
-      {/* Period Selector */}
-      <PeriodSelector selectedPeriod={selectedPeriod} onPeriodChange={handlePeriodChange} />
+      {/* Inventory Stats */}
+      <View style={styles.statsGrid}>
+        <StatCard
+          title="Productos"
+          value={String(stats?.totalProducts ?? 0)}
+          color="#3b82f6"
+        />
+        <StatCard
+          title="Stock Total"
+          value={String(stats?.totalStock ?? 0)}
+          color="#22c55e"
+        />
+        <StatCard
+          title="Valor Inventario"
+          value={formatCurrency(stats?.totalInventoryValue)}
+          color="#f59e0b"
+        />
+        <StatCard
+          title="Sin Stock"
+          value={String(stats?.outOfStockProducts ?? 0)}
+          color="#ef4444"
+        />
+      </View>
 
-      {/* Business Stats */}
+      {/* Orders Today / Week */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Negocio</Text>
-        <View style={styles.statsGrid}>
-          <StatCard
-            title="Productos"
-            value={String(stats?.totalProducts ?? 0)}
-            color="#3b82f6"
-          />
-          <StatCard
-            title="Valor Inventario"
-            value={formatCurrency(stats?.totalInventoryValue)}
-            color="#f59e0b"
-          />
+        <Text style={styles.sectionTitle}>Ventas</Text>
+        <View style={styles.salesRow}>
+          <View style={styles.salesCard}>
+            <Text style={styles.salesLabel}>Hoy</Text>
+            <Text style={styles.salesOrderCount}>{stats?.ordersToday ?? 0} órdenes</Text>
+            <Text style={styles.salesRevenue}>{formatCurrency(stats?.revenueToday)}</Text>
+          </View>
+          <View style={styles.salesCard}>
+            <Text style={styles.salesLabel}>Esta Semana</Text>
+            <Text style={styles.salesOrderCount}>{stats?.ordersThisWeek ?? 0} órdenes</Text>
+            <Text style={styles.salesRevenue}>{formatCurrency(stats?.revenueThisWeek)}</Text>
+          </View>
         </View>
       </View>
 
@@ -90,53 +100,24 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
         </View>
       </View>
 
-      {/* Vercel Analytics Section */}
-      {stats?.vercelAnalytics && (
-        <>
-          {/* Main Metrics */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Analítica Web</Text>
-            <View style={styles.metricsGrid}>
-              <VercelStatsCard
-                label="Visitantes"
-                value={stats.vercelAnalytics.totalVisitors.toLocaleString()}
-                color="#3b82f6"
-              />
-              <VercelStatsCard
-                label="Page Views"
-                value={stats.vercelAnalytics.pageViews.toLocaleString()}
-                color="#22c55e"
-              />
-              <VercelStatsCard
-                label="Bounce Rate"
-                value={`${stats.vercelAnalytics.bounceRate.toFixed(1)}%`}
-                color="#f59e0b"
-              />
+      {/* Top Products */}
+      {stats?.topProducts && stats.topProducts.length > 0 && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Top 5 Productos Vendidos</Text>
+          {stats.topProducts.map((product, index) => (
+            <View key={product.productId} style={styles.topProductRow}>
+              <View style={[styles.rankBadge, { backgroundColor: index === 0 ? '#f59e0b' : '#e5e7eb' }]}>
+                <Text style={[styles.rankText, { color: index === 0 ? '#fff' : '#374151' }]}>
+                  {index + 1}
+                </Text>
+              </View>
+              <Text style={styles.topProductName} numberOfLines={1}>
+                {product.productName}
+              </Text>
+              <Text style={styles.topProductQty}>{product.totalQuantity} uds</Text>
             </View>
-          </View>
-
-          {/* Top Pages */}
-          {stats.vercelAnalytics.topPages && stats.vercelAnalytics.topPages.length > 0 && (
-            <TopPagesCard pages={stats.vercelAnalytics.topPages} />
-          )}
-
-          {/* Referrers */}
-          {stats.vercelAnalytics.topReferrers && stats.vercelAnalytics.topReferrers.length > 0 && (
-            <ReferrersCard referrers={stats.vercelAnalytics.topReferrers} />
-          )}
-
-          {/* Countries */}
-          {stats.vercelAnalytics.topCountries && stats.vercelAnalytics.topCountries.length > 0 && (
-            <CountriesCard countries={stats.vercelAnalytics.topCountries} />
-          )}
-
-          {/* Devices, Browsers, OS */}
-          <DeviceBreakdown
-            devices={stats.vercelAnalytics.devices || []}
-            browsers={stats.vercelAnalytics.browsers || []}
-            operatingSystems={stats.vercelAnalytics.operatingSystems || []}
-          />
-        </>
+          ))}
+        </View>
       )}
 
       {/* Quick Actions */}
@@ -229,13 +210,15 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#1f2937',
     marginBottom: 4,
-  },Horizontal: 8,
   },
-  metricsGrid: {
+  subtitle: {
+    fontSize: 13,
+    color: '#9ca3af',
+  },
+  statsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    paddingHorizontal: 8,
-    gap: 8,
+    padding: 8,
   },
   statCard: {
     width: '46%',
@@ -261,7 +244,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   section: {
-    marginHorizontal: 0,
+    marginHorizontal: 16,
     marginVertical: 12,
   },
   sectionTitle: {
@@ -269,12 +252,42 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#1f2937',
     marginBottom: 12,
-    marginHorizontal: 16,
+  },
+  salesRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  salesCard: {
+    flex: 1,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  salesLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#6b7280',
+    marginBottom: 8,
+  },
+  salesOrderCount: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1f2937',
+  },
+  salesRevenue: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#22c55e',
+    marginTop: 4,
   },
   statusRow: {
     flexDirection: 'row',
     gap: 8,
-    paddingHorizontal: 16,
   },
   statusBadge: {
     flex: 1,
@@ -283,10 +296,6 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     padding: 12,
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
   },
   statusCount: {
     fontSize: 20,
@@ -298,13 +307,46 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginTop: 4,
   },
+  topProductRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 8,
+    shadowColor: '#000',
+    shadowOpacity: 0.03,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  rankBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  rankText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  topProductName: {
+    flex: 1,
+    fontSize: 14,
+    color: '#374151',
+  },
+  topProductQty: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#3b82f6',
+  },
   actionButton: {
     backgroundColor: '#3b82f6',
     borderRadius: 8,
     paddingVertical: 12,
     paddingHorizontal: 16,
     marginBottom: 8,
-    marginHorizontal: 16,
   },
   actionButtonText: {
     color: '#fff',
@@ -313,23 +355,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   infoBox: {
-    backgroundColor: '#eff6ff',
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
     marginHorizontal: 16,
-    marginVertical: 20,
-    borderLeftWidth: 4,
-    borderLeftColor: '#3b82f6',
-  },
-  infoText: {
-    fontSize: 12,
-    color: '#1f2937',
-    fontWeight: '500',
-  },
-  infoHint: {
-    fontSize: 11,
-    color: '#6b7280nter',
+    marginBottom: 24,
+    backgroundColor: '#f3f4f6',
+    borderRadius: 8,
+    padding: 12,
+    alignItems: 'center',
   },
   infoText: {
     fontSize: 12,
