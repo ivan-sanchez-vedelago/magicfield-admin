@@ -57,7 +57,7 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
     >
       <View style={styles.header}>
         <Text style={styles.title}>Dashboard</Text>
-        <Text style={styles.subtitle}>Análisis de tu negocio y estadísticas</Text>
+        <Text style={styles.title}>Análisis de tu negocio y estadísticas</Text>
       </View>
 
       {/* Period Selector */}
@@ -66,7 +66,7 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
       {/* Business Stats */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Negocio</Text>
-        <View style={styles.statsGrid}>
+        <View style={styles.metricsGrid}>
           <StatCard
             title="Productos"
             value={String(stats?.totalProducts ?? 0)}
@@ -229,7 +229,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#1f2937',
     marginBottom: 4,
-  },Horizontal: 8,
+    marginHorizontal: 8,
   },
   metricsGrid: {
     flexDirection: 'row',
@@ -330,14 +330,5 @@ const styles = StyleSheet.create({
   infoHint: {
     fontSize: 11,
     color: '#6b7280nter',
-  },
-  infoText: {
-    fontSize: 12,
-    color: '#6b7280',
-  },
-  infoHint: {
-    fontSize: 11,
-    color: '#9ca3af',
-    marginTop: 4,
   },
 });
