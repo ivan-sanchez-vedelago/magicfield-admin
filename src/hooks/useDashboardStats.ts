@@ -1,25 +1,37 @@
 import { apiService } from '@services/api';
 import { useAsync } from './useAsync';
 
+export interface MetricItem {
+  x: string;
+  y: number;
+}
+
+export interface UmamiAnalytics {
+  pageViews: number;
+  sessions: number;
+  bounceRate: number;
+  topPages: MetricItem[];
+  referrers: MetricItem[];
+  countries: MetricItem[];
+  browsers: MetricItem[];
+  devices: MetricItem[];
+  operatingSystems: MetricItem[];
+}
+
 export interface DashboardStats {
   totalProducts: number;
-  totalStock: number;
   totalInventoryValue: number;
-  outOfStockProducts: number;
-  ordersToday: number;
-  revenueToday: number;
-  ordersThisWeek: number;
-  revenueThisWeek: number;
   pendingOrders: number;
   completedOrders: number;
   cancelledOrders: number;
-  topProducts: { productId: string; productName: string; totalQuantity: number }[];
+  umamiAnalytics: UmamiAnalytics;
+  period: string;
 }
 
-export function useDashboardStats() {
+export function useDashboardStats(period: string = '7days') {
   const { data, loading, error, execute } = useAsync<DashboardStats>(
-    () => apiService.getDashboardStats(),
-    [],
+    () => apiService.getDashboardStats(period),
+    [period],
     true
   );
 

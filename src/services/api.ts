@@ -258,8 +258,10 @@ class ApiService {
   }
 
   // Dashboard Stats
-  async getDashboardStats() {
-    const response = await this.client.get(ENDPOINTS.DASHBOARD.STATS);
+  async getDashboardStats(period: string = '7days') {
+    const response = await this.client.get(ENDPOINTS.DASHBOARD.STATS, {
+      params: { period },
+    });
     return response.data;
   }
 

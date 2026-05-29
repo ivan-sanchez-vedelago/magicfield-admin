@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState } from 'react';
 import {
   View,
   ScrollView,
@@ -10,12 +10,21 @@ import {
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useDashboardStats } from '@hooks/index';
+import {
+  UmamiStatsCard,
+  TopPagesCard,
+  ReferrersCard,
+  CountriesCard,
+  DeviceBreakdown,
+  PeriodSelector,
+} from '@components/index';
 import type { RootStackParamList } from '@navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Dashboard'>;
 
 export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
-  const { stats, loading, refetch } = useDashboardStats();
+  const [selectedPeriod, setSelectedPeriod] = useState('7days');
+  const { stats, loading, refetch } = useDashboardStats(selectedPeriod);
 
   const onRefresh = useCallback(() => {
     refetch();
@@ -37,6 +46,8 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
     );
   }
 
+  const umami = stats?.umamiAnalytics;
+
   return (
     <ScrollView
       style={styles.container}
@@ -46,51 +57,21 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
     >
       <View style={styles.header}>
         <Text style={styles.title}>Dashboard</Text>
-        <Text style={styles.subtitle}>Resumen de tu negocio en tiempo real</Text>
+        <Text style={styles.subtitle}>Negocio y analítica web</Text>
       </View>
 
-      {/* Inventory Stats */}
-      <View style={styles.statsGrid}>
-        <StatCard
-          title="Productos"
-          value={String(stats?.totalProducts ?? 0)}
-          color="#3b82f6"
-        />
-        <StatCard
-          title="Stock Total"
-          value={String(stats?.totalStock ?? 0)}
-          color="#22c55e"
-        />
-        <StatCard
-          title="Valor Inventario"
-          value={formatCurrency(stats?.totalInventoryValue)}
-          color="#f59e0b"
-        />
-        <StatCard
-          title="Sin Stock"
-          value={String(stats?.outOfStockProducts ?? 0)}
-          color="#ef4444"
-        />
-      </View>
+      <PeriodSelector selectedPeriod={selectedPeriod} onPeriodChange={setSelectedPeriod} />
 
-      {/* Orders Today / Week */}
+      {/* Negocio */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Ventas</Text>
-        <View style={styles.salesRow}>
-          <View style={styles.salesCard}>
-            <Text style={styles.salesLabel}>Hoy</Text>
-            <Text style={styles.salesOrderCount}>{stats?.ordersToday ?? 0} órdenes</Text>
-            <Text style={styles.salesRevenue}>{formatCurrency(stats?.revenueToday)}</Text>
-          </View>
-          <View style={styles.salesCard}>
-            <Text style={styles.salesLabel}>Esta Semana</Text>
-            <Text style={styles.salesOrderCount}>{stats?.ordersThisWeek ?? 0} órdenes</Text>
-            <Text style={styles.salesRevenue}>{formatCurrency(stats?.revenueThisWeek)}</Text>
-          </View>
+        <Text style={styles.sectionTitle}>Negocio</Text>
+        <View style={styles.statsRow}>
+          <StatCard title="Productos" value={String(stats?.totalProducts ?? 0)} color="#3b82f6" />
+          <StatCard title="Valor Inventario" value={formatCurrency(stats?.totalInventoryValue)} color="#f59e0b" />
         </View>
       </View>
 
-      {/* Order Status */}
+      {/* Estado de Órdenes */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Estado de Órdenes</Text>
         <View style={styles.statusRow}>
@@ -100,27 +81,29 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
         </View>
       </View>
 
-      {/* Top Products */}
-      {stats?.topProducts && stats.topProducts.length > 0 && (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Top 5 Productos Vendidos</Text>
-          {stats.topProducts.map((product, index) => (
-            <View key={product.productId} style={styles.topProductRow}>
-              <View style={[styles.rankBadge, { backgroundColor: index === 0 ? '#f59e0b' : '#e5e7eb' }]}>
-                <Text style={[styles.rankText, { color: index === 0 ? '#fff' : '#374151' }]}>
-                  {index + 1}
-                </Text>
-              </View>
-              <Text style={styles.topProductName} numberOfLines={1}>
-                {product.productName}
-              </Text>
-              <Text style={styles.topProductQty}>{product.totalQuantity} uds</Text>
+      {/* Analítica Web */}
+      {umami && (
+        <>
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Analítica Web</Text>
+            <View style={styles.metricsRow}>
+              <UmamiStatsCard label="Sesiones" value={umami.sessions.toLocaleString()} color="#3b82f6" />
+              <UmamiStatsCard label="Page Views" value={umami.pageViews.toLocaleString()} color="#22c55e" />
+              <UmamiStatsCard label="Bounce Rate" value={`${umami.bounceRate.toFixed(1)}%`} color="#f59e0b" />
             </View>
-          ))}
-        </View>
+          </View>
+          {umami.topPages?.length > 0 && <TopPagesCard pages={umami.topPages} />}
+          {umami.referrers?.length > 0 && <ReferrersCard referrers={umami.referrers} />}
+          {umami.countries?.length > 0 && <CountriesCard countries={umami.countries} />}
+          <DeviceBreakdown
+            devices={umami.devices ?? []}
+            browsers={umami.browsers ?? []}
+            operatingSystems={umami.operatingSystems ?? []}
+          />
+        </>
       )}
 
-      {/* Quick Actions */}
+      {/* Acciones Rápidas */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Acciones Rápidas</Text>
         <TouchableOpacity
@@ -143,7 +126,6 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
-      {/* Last Updated */}
       <View style={styles.infoBox}>
         <Text style={styles.infoText}>
           Última actualización: {new Date().toLocaleString('es-AR')}
@@ -198,6 +180,120 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#6b7280',
   },
+  header: {
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: '700',
+    color: '#1f2937',
+    marginBottom: 4,
+  },
+  subtitle: {
+    fontSize: 13,
+    color: '#9ca3af',
+  },
+  section: {
+    marginHorizontal: 16,
+    marginVertical: 10,
+  },
+  sectionTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#1f2937',
+    marginBottom: 10,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    borderLeftWidth: 4,
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  statValue: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#1f2937',
+    marginBottom: 4,
+  },
+  statTitle: {
+    fontSize: 12,
+    color: '#6b7280',
+    fontWeight: '600',
+  },
+  statusRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  statusBadge: {
+    flex: 1,
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    borderWidth: 2,
+    padding: 12,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 1,
+  },
+  statusCount: {
+    fontSize: 20,
+    fontWeight: '800',
+  },
+  statusLabel: {
+    fontSize: 10,
+    color: '#6b7280',
+    fontWeight: '600',
+    marginTop: 4,
+  },
+  metricsRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  actionButton: {
+    backgroundColor: '#3b82f6',
+    borderRadius: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    marginBottom: 8,
+  },
+  actionButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  infoBox: {
+    marginHorizontal: 16,
+    marginBottom: 24,
+    backgroundColor: '#f3f4f6',
+    borderRadius: 8,
+    padding: 12,
+    alignItems: 'center',
+  },
+  infoText: {
+    fontSize: 12,
+    color: '#6b7280',
+  },
+  infoHint: {
+    fontSize: 11,
+    color: '#9ca3af',
+    marginTop: 4,
+  },
+});
   header: {
     paddingHorizontal: 16,
     paddingVertical: 16,
