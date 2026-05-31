@@ -191,9 +191,9 @@ export const OrdersScreen: React.FC<Props> = ({ navigation }) => {
   const buildOrderText = (order: GroupedOrder) =>
     [
       `Nombre: ${toTitleCase(order.customerName)} ${toTitleCase(order.customerLastName)}`,
-      `DNI: ${order.customerDni}`,
-      `Telefono: ${order.customerPhone}`,
-      `Email: ${order.customerEmail}`,
+      (order.customerDni ? `DNI: ${order.customerDni}` : ''),
+      (order.customerPhone ? `Telefono: ${order.customerPhone}` : ''),
+      (order.customerEmail ? `Email: ${order.customerEmail}` : ''),
       `Direccion: `
         + (order.deliveryType === 'RETIRO_RAMOS' ? `(Retiro en Ramos Mejia) ` : '')
         + (order.deliveryType === 'RETIRO_FRANCISCO' ? `(Retiro en Francisco Alvarez) ` : '')
@@ -202,8 +202,8 @@ export const OrdersScreen: React.FC<Props> = ({ navigation }) => {
         + `${[toTitleCase(order.shippingStreet), order.shippingStreetNumber].filter(Boolean).join(' ')}`
         + (order.shippingCity ? `, ${toTitleCase(order.shippingCity)}` : '')
         + (order.shippingProvince ? `, ${toTitleCase(order.shippingProvince)}` : ''),
-      `Codigo postal: ${order.shippingPostalCode}`,
-      `Costo total: $${order.total}`,
+      (order.shippingPostalCode ? `Codigo postal: ${order.shippingPostalCode}` : ''),
+      (order.total ? `Costo total: $${order.total}` : ''),
     ].filter(Boolean).join('\n');
 
   const handleCopyOrder = async (order: GroupedOrder) => {
