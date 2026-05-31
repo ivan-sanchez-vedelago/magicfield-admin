@@ -35,6 +35,7 @@ interface SalesAudit {
   shippingCity: string | null;
   shippingProvince: string | null;
   shippingPostalCode: string | null;
+  paymentMethod: string | null;
   saleDate: string;
   status: string;
   notes: string | null;
@@ -54,6 +55,7 @@ interface GroupedOrder {
   shippingCity: string | null;
   shippingProvince: string | null;
   shippingPostalCode: string | null;
+  paymentMethod: string | null;
   total: number;
   items: SalesAudit[];
   status: string;
@@ -137,6 +139,7 @@ export const OrdersScreen: React.FC<Props> = ({ navigation }) => {
         shippingCity: items[0].shippingCity ?? null,
         shippingProvince: items[0].shippingProvince ?? null,
         shippingPostalCode: items[0].shippingPostalCode ?? null,
+        paymentMethod: items[0].paymentMethod ?? null,
         total: items.reduce((sum, item) => sum + item.subtotal, 0),
         items,
         status: items[0].status,
@@ -312,6 +315,16 @@ export const OrdersScreen: React.FC<Props> = ({ navigation }) => {
                         </Text>
                       </View>
                     </TouchableOpacity>
+
+                    {/* Método de pago — separado del bloque copiable */}
+                    {order.paymentMethod && (
+                      <View style={styles.customerSection}>
+                        <Text style={styles.sectionLabel}>MÉTODO DE PAGO</Text>
+                        <Text style={styles.detailText}>
+                          {order.paymentMethod === 'EFECTIVO' ? 'Efectivo' : 'Transferencia'}
+                        </Text>
+                      </View>
+                    )}
 
                     {/* Productos */}
                     <View style={styles.productsSection}>
