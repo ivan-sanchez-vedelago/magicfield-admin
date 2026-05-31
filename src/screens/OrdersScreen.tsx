@@ -274,20 +274,20 @@ export const OrdersScreen: React.FC<Props> = ({ navigation }) => {
                       <Text style={styles.sectionLabel}>DATOS DEL PEDIDO</Text>
                       <Text selectable style={styles.detailText}>
                         {[
-                          `${toTitleCase(order.customerName)} ${toTitleCase(order.customerLastName)}`,  
-                          order.customerDni ? `DNI: ${order.customerDni}` : null,
-                          `Tel: ${order.customerPhone}`,
+                          `Nombre: ${toTitleCase(order.customerName)} ${toTitleCase(order.customerLastName)}`,  
+                          `DNI: ${order.customerDni}`,
+                          `Telefono: ${order.customerPhone}`,
                           `Email: ${order.customerEmail}`,
-                          order.deliveryType === 'RETIRO_RAMOS' ? 'Retiro en Ramos Mejia' :
-                          order.deliveryType === 'RETIRO_FRANCISCO' ? 'Retiro en Francisco Alvarez' :
-                          order.deliveryType === 'ENVIO_DOMICILIO' ? 'Envío a domicilio' :
-                          order.deliveryType === 'ENVIO_ANDREANI' ? 'Envío a sucursal Andreani' : null,
-                          (order.shippingStreet || order.shippingCity)
-                            ? [toTitleCase(order.shippingStreet), order.shippingStreetNumber].filter(Boolean).join(' ') +
-                              (order.shippingCity ? `, ${toTitleCase(order.shippingCity)}` : '') +
-                              (order.shippingProvince ? `, ${toTitleCase(order.shippingProvince)}` : '')
-                            : null,
-                          order.shippingPostalCode ? `CP: ${order.shippingPostalCode}` : null,
+                          `Direccion: `
+                            + (order.deliveryType === 'RETIRO_RAMOS' ? `(Retiro en Ramos Mejia) ` : '')
+                            + (order.deliveryType === 'RETIRO_FRANCISCO' ? `(Retiro en Francisco Alvarez) ` : '')
+                            + (order.deliveryType === 'ENVIO_DOMICILIO' ? `(Envío a domicilio) ` : '')
+                            + (order.deliveryType === 'ENVIO_ANDREANI' ? `(Envío a sucursal Andreani) ` : '')
+                            + `${[toTitleCase(order.shippingStreet), toTitleCase(order.shippingStreetNumber)].filter(Boolean).join(' ')}`
+                            + (order.shippingCity ? `, ${toTitleCase(order.shippingCity)}` : '')
+                            + (order.shippingProvince ? `, ${toTitleCase(order.shippingProvince)}` : ''),
+                          `Codigo postal: ${order.shippingPostalCode}`,
+                          `Costo total: $${order.total}`,
                         ].filter(Boolean).join('\n')}
                       </Text>
                     </View>
