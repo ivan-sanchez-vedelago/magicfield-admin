@@ -262,38 +262,28 @@ export const OrdersScreen: React.FC<Props> = ({ navigation }) => {
                 {/* Contenido expandible */}
                 {isExpanded && (
                   <View style={styles.cardBody}>
-                    {/* Datos del cliente */}
+                    {/* Datos del cliente + envío — un único bloque seleccionable */}
                     <View style={styles.customerSection}>
-                      <Text style={styles.sectionLabel}>DATOS DEL CLIENTE</Text>
-                      <Text selectable style={styles.detailText}>{order.customerEmail}</Text>
-                      <Text selectable style={styles.detailText}>{order.customerPhone}</Text>
-                      {order.customerDni && (
-                        <Text selectable style={styles.detailText}>DNI: {order.customerDni}</Text>
-                      )}
+                      <Text style={styles.sectionLabel}>DATOS DEL PEDIDO</Text>
+                      <Text selectable style={styles.detailText}>
+                        {[
+                          `${order.customerName} ${order.customerLastName}`,
+                          order.customerDni ? `DNI: ${order.customerDni}` : null,
+                          `Tel: ${order.customerPhone}`,
+                          `Email: ${order.customerEmail}`,
+                          order.deliveryType === 'RETIRO_RAMOS' ? 'Retiro en Ramos Mejia' :
+                          order.deliveryType === 'RETIRO_FRANCISCO' ? 'Retiro en Francisco Alvarez' :
+                          order.deliveryType === 'ENVIO_DOMICILIO' ? 'Envío a domicilio' :
+                          order.deliveryType === 'ENVIO_ANDREANI' ? 'Envío a sucursal Andreani' : null,
+                          (order.shippingStreet || order.shippingCity)
+                            ? [order.shippingStreet, order.shippingStreetNumber].filter(Boolean).join(' ') +
+                              (order.shippingCity ? `, ${order.shippingCity}` : '') +
+                              (order.shippingProvince ? `, ${order.shippingProvince}` : '')
+                            : null,
+                          order.shippingPostalCode ? `CP: ${order.shippingPostalCode}` : null,
+                        ].filter(Boolean).join('\n')}
+                      </Text>
                     </View>
-
-                    {/* Envío */}
-                    {order.deliveryType && (
-                      <View style={styles.customerSection}>
-                        <Text style={styles.sectionLabel}>ENVÍO</Text>
-                        <Text selectable style={styles.detailText}>
-                          {order.deliveryType === 'RETIRO_RAMOS' && 'Retiro en Ramos Mejia'}
-                          {order.deliveryType === 'RETIRO_FRANCISCO' && 'Retiro en Francisco Alvarez'}
-                          {order.deliveryType === 'ENVIO_DOMICILIO' && 'Envío a domicilio'}
-                          {order.deliveryType === 'ENVIO_ANDREANI' && 'Envío a sucursal Andreani'}
-                        </Text>
-                        {(order.shippingStreet || order.shippingCity) && (
-                          <Text selectable style={styles.detailText}>
-                            {[order.shippingStreet, order.shippingStreetNumber].filter(Boolean).join(' ')}
-                            {order.shippingCity ? `, ${order.shippingCity}` : ''}
-                            {order.shippingProvince ? `, ${order.shippingProvince}` : ''}
-                          </Text>
-                        )}
-                        {order.shippingPostalCode && (
-                          <Text selectable style={styles.detailText}>CP: {order.shippingPostalCode}</Text>
-                        )}
-                      </View>
-                    )}
 
                     {/* Productos */}
                     <View style={styles.productsSection}>
