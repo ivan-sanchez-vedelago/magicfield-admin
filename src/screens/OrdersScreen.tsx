@@ -27,6 +27,13 @@ interface SalesAudit {
   customerLastName: string;
   customerEmail: string;
   customerPhone: string;
+  customerDni: string | null;
+  deliveryType: string | null;
+  shippingStreet: string | null;
+  shippingStreetNumber: string | null;
+  shippingCity: string | null;
+  shippingProvince: string | null;
+  shippingPostalCode: string | null;
   saleDate: string;
   status: string;
   notes: string | null;
@@ -39,6 +46,13 @@ interface GroupedOrder {
   customerLastName: string;
   customerEmail: string;
   customerPhone: string;
+  customerDni: string | null;
+  deliveryType: string | null;
+  shippingStreet: string | null;
+  shippingStreetNumber: string | null;
+  shippingCity: string | null;
+  shippingProvince: string | null;
+  shippingPostalCode: string | null;
   total: number;
   items: SalesAudit[];
   status: string;
@@ -114,6 +128,13 @@ export const OrdersScreen: React.FC<Props> = ({ navigation }) => {
         customerLastName: items[0].customerLastName,
         customerEmail: items[0].customerEmail,
         customerPhone: items[0].customerPhone,
+        customerDni: items[0].customerDni ?? null,
+        deliveryType: items[0].deliveryType ?? null,
+        shippingStreet: items[0].shippingStreet ?? null,
+        shippingStreetNumber: items[0].shippingStreetNumber ?? null,
+        shippingCity: items[0].shippingCity ?? null,
+        shippingProvince: items[0].shippingProvince ?? null,
+        shippingPostalCode: items[0].shippingPostalCode ?? null,
         total: items.reduce((sum, item) => sum + item.subtotal, 0),
         items,
         status: items[0].status,
@@ -244,9 +265,35 @@ export const OrdersScreen: React.FC<Props> = ({ navigation }) => {
                     {/* Datos del cliente */}
                     <View style={styles.customerSection}>
                       <Text style={styles.sectionLabel}>DATOS DEL CLIENTE</Text>
-                      <Text style={styles.detailText}>{order.customerEmail}</Text>
-                      <Text style={styles.detailText}>{order.customerPhone}</Text>
+                      <Text selectable style={styles.detailText}>{order.customerEmail}</Text>
+                      <Text selectable style={styles.detailText}>{order.customerPhone}</Text>
+                      {order.customerDni && (
+                        <Text selectable style={styles.detailText}>DNI: {order.customerDni}</Text>
+                      )}
                     </View>
+
+                    {/* Envío */}
+                    {order.deliveryType && (
+                      <View style={styles.customerSection}>
+                        <Text style={styles.sectionLabel}>ENVÍO</Text>
+                        <Text selectable style={styles.detailText}>
+                          {order.deliveryType === 'RETIRO_RAMOS' && 'Retiro en Ramos Mejia'}
+                          {order.deliveryType === 'RETIRO_FRANCISCO' && 'Retiro en Francisco Alvarez'}
+                          {order.deliveryType === 'ENVIO_DOMICILIO' && 'Envío a domicilio'}
+                          {order.deliveryType === 'ENVIO_ANDREANI' && 'Envío a sucursal Andreani'}
+                        </Text>
+                        {(order.shippingStreet || order.shippingCity) && (
+                          <Text selectable style={styles.detailText}>
+                            {[order.shippingStreet, order.shippingStreetNumber].filter(Boolean).join(' ')}
+                            {order.shippingCity ? `, ${order.shippingCity}` : ''}
+                            {order.shippingProvince ? `, ${order.shippingProvince}` : ''}
+                          </Text>
+                        )}
+                        {order.shippingPostalCode && (
+                          <Text selectable style={styles.detailText}>CP: {order.shippingPostalCode}</Text>
+                        )}
+                      </View>
+                    )}
 
                     {/* Productos */}
                     <View style={styles.productsSection}>
