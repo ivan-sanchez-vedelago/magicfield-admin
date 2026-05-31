@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
+import * as Clipboard from 'expo-clipboard';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { apiService } from '@services/index';
@@ -68,6 +69,7 @@ export const OrdersScreen: React.FC<Props> = ({ navigation }) => {
   const [seenOrderIds, setSeenOrderIds] = useState<Set<string>>(new Set());
   const [expandedOrder, setExpandedOrder] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [copiedOrderId, setCopiedOrderId] = useState<string | null>(null);
 
   const loadSeenOrders = async (): Promise<Set<string>> => {
     try {
@@ -183,6 +185,30 @@ export const OrdersScreen: React.FC<Props> = ({ navigation }) => {
         .join(' ')
       : '';
 
+  const buildOrderText = (order: GroupedOrder) =>
+    [
+      `Nombre: ${toTitleCase(order.customerName)} ${toTitleCase(order.customerLastName)}`,
+      `DNI: ${order.customerDni}`,
+      `Telefono: ${order.customerPhone}`,
+      `Email: ${order.customerEmail}`,
+      `Direccion: `
+        + (order.deliveryType === 'RETIRO_RAMOS' ? `(Retiro en Ramos Mejia) ` : '')
+        + (order.deliveryType === 'RETIRO_FRANCISCO' ? `(Retiro en Francisco Alvarez) ` : '')
+        + (order.deliveryType === 'ENVIO_DOMICILIO' ? `(Envío a domicilio) ` : '')
+        + (order.deliveryType === 'ENVIO_ANDREANI' ? `(Envío a sucursal Andreani) ` : '')
+        + `${[toTitleCase(order.shippingStreet), order.shippingStreetNumber].filter(Boolean).join(' ')}`
+        + (order.shippingCity ? `, ${toTitleCase(order.shippingCity)}` : '')
+        + (order.shippingProvince ? `, ${toTitleCase(order.shippingProvince)}` : ''),
+      `Codigo postal: ${order.shippingPostalCode}`,
+      `Costo total: $${order.total}`,
+    ].filter(Boolean).join('\n');
+
+  const handleCopyOrder = async (order: GroupedOrder) => {
+    await Clipboard.setStringAsync(buildOrderText(order));
+    setCopiedOrderId(order.orderId);
+    setTimeout(() => setCopiedOrderId(null), 2000);
+  };
+
   const formatDate = (dateStr: string) =>
     new Date(dateStr).toLocaleDateString('es-ES', {
       day: '2-digit',
@@ -269,28 +295,23 @@ export const OrdersScreen: React.FC<Props> = ({ navigation }) => {
                 {/* Contenido expandible */}
                 {isExpanded && (
                   <View style={styles.cardBody}>
-                    {/* Datos del cliente + envío — un único bloque seleccionable */}
-                    <View style={styles.customerSection}>
-                      <Text style={styles.sectionLabel}>DATOS DEL PEDIDO</Text>
-                      <Text selectable style={styles.detailText}>
-                        {[
-                          `Nombre: ${toTitleCase(order.customerName)} ${toTitleCase(order.customerLastName)}`,  
-                          `DNI: ${order.customerDni}`,
-                          `Telefono: ${order.customerPhone}`,
-                          `Email: ${order.customerEmail}`,
-                          `Direccion: `
-                            + (order.deliveryType === 'RETIRO_RAMOS' ? `(Retiro en Ramos Mejia) ` : '')
-                            + (order.deliveryType === 'RETIRO_FRANCISCO' ? `(Retiro en Francisco Alvarez) ` : '')
-                            + (order.deliveryType === 'ENVIO_DOMICILIO' ? `(Envío a domicilio) ` : '')
-                            + (order.deliveryType === 'ENVIO_ANDREANI' ? `(Envío a sucursal Andreani) ` : '')
-                            + `${[toTitleCase(order.shippingStreet), toTitleCase(order.shippingStreetNumber)].filter(Boolean).join(' ')}`
-                            + (order.shippingCity ? `, ${toTitleCase(order.shippingCity)}` : '')
-                            + (order.shippingProvince ? `, ${toTitleCase(order.shippingProvince)}` : ''),
-                          `Codigo postal: ${order.shippingPostalCode}`,
-                          `Costo total: $${order.total}`,
-                        ].filter(Boolean).join('\n')}
-                      </Text>
-                    </View>
+                    {/* Datos del cliente + envío — toca para copiar todo */}
+                    <TouchableOpacity
+                      onPress={() => handleCopyOrder(order)}
+                      activeOpacity={0.7}
+                    >
+                      <View style={styles.customerSection}>
+                        <View style={styles.copyBlockHeader}>
+                          <Text style={styles.sectionLabel}>DATOS DEL PEDIDO</Text>
+                          <Text style={styles.copyHint}>
+                            {copiedOrderId === order.orderId ? '✓ Copiado' : 'Tocar para copiar'}
+                          </Text>
+                        </View>
+                        <Text style={styles.detailText}>
+                          {buildOrderText(order)}
+                        </Text>
+                      </View>
+                    </TouchableOpacity>
 
                     {/* Productos */}
                     <View style={styles.productsSection}>
@@ -455,6 +476,17 @@ const styles = StyleSheet.create({
   },
   customerSection: {
     gap: 4,
+  },
+  copyBlockHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 2,
+  },
+  copyHint: {
+    fontSize: 10,
+    color: '#9ca3af',
+    fontStyle: 'italic',
   },
   sectionLabel: {
     fontSize: 10,
