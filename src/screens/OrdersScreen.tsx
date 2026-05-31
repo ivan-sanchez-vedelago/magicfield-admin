@@ -176,6 +176,13 @@ export const OrdersScreen: React.FC<Props> = ({ navigation }) => {
     }
   };
 
+  const skipWords = new Set(['de', 'del', 'la', 'las', 'los', 'el', 'y', 'a', 'en']);
+  const toTitleCase = (s: string | null | undefined) =>
+    s ? s.trim().toLowerCase().split(/\s+/)
+        .map(w => skipWords.has(w) ? w : w.charAt(0).toUpperCase() + w.slice(1))
+        .join(' ')
+      : '';
+
   const formatDate = (dateStr: string) =>
     new Date(dateStr).toLocaleDateString('es-ES', {
       day: '2-digit',
@@ -267,7 +274,7 @@ export const OrdersScreen: React.FC<Props> = ({ navigation }) => {
                       <Text style={styles.sectionLabel}>DATOS DEL PEDIDO</Text>
                       <Text selectable style={styles.detailText}>
                         {[
-                          `${order.customerName} ${order.customerLastName}`,
+                          `${toTitleCase(order.customerName)} ${toTitleCase(order.customerLastName)}`,  
                           order.customerDni ? `DNI: ${order.customerDni}` : null,
                           `Tel: ${order.customerPhone}`,
                           `Email: ${order.customerEmail}`,
@@ -276,9 +283,9 @@ export const OrdersScreen: React.FC<Props> = ({ navigation }) => {
                           order.deliveryType === 'ENVIO_DOMICILIO' ? 'Envío a domicilio' :
                           order.deliveryType === 'ENVIO_ANDREANI' ? 'Envío a sucursal Andreani' : null,
                           (order.shippingStreet || order.shippingCity)
-                            ? [order.shippingStreet, order.shippingStreetNumber].filter(Boolean).join(' ') +
-                              (order.shippingCity ? `, ${order.shippingCity}` : '') +
-                              (order.shippingProvince ? `, ${order.shippingProvince}` : '')
+                            ? [toTitleCase(order.shippingStreet), order.shippingStreetNumber].filter(Boolean).join(' ') +
+                              (order.shippingCity ? `, ${toTitleCase(order.shippingCity)}` : '') +
+                              (order.shippingProvince ? `, ${toTitleCase(order.shippingProvince)}` : '')
                             : null,
                           order.shippingPostalCode ? `CP: ${order.shippingPostalCode}` : null,
                         ].filter(Boolean).join('\n')}
