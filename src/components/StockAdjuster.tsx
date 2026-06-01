@@ -5,6 +5,7 @@ import {
   Text,
   StyleSheet,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 
 export interface StockAdjusterProps {
@@ -34,6 +35,7 @@ export const StockAdjuster: React.FC<StockAdjusterProps> = ({
       // Revert on error
       setStock(stock);
       console.error('Failed to update stock:', error);
+      Alert.alert('Error', 'No se pudo actualizar el stock');
     } finally {
       setLoading(false);
     }
@@ -52,6 +54,7 @@ export const StockAdjuster: React.FC<StockAdjusterProps> = ({
       // Revert on error
       setStock(stock);
       console.error('Failed to update stock:', error);
+      Alert.alert('Error', 'No se pudo actualizar el stock');
     } finally {
       setLoading(false);
     }

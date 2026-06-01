@@ -88,7 +88,9 @@ export const OrdersScreen: React.FC<Props> = ({ navigation }) => {
     setSeenOrderIds(updated);
     try {
       await AsyncStorage.setItem(SEEN_ORDERS_KEY, JSON.stringify([...updated]));
-    } catch {}
+    } catch {
+      console.warn('[OrdersScreen] AsyncStorage save failed for seen orders');
+    }
   };
 
   const fetchAudits = useCallback(async () => {
@@ -155,6 +157,7 @@ export const OrdersScreen: React.FC<Props> = ({ navigation }) => {
       await fetchAudits();
     } catch (error) {
       console.error('Error al finalizar pedido:', error);
+      Alert.alert('Error', 'No se pudo finalizar el pedido. Intenta nuevamente.');
     } finally {
       setActionLoading(null);
     }
@@ -167,6 +170,7 @@ export const OrdersScreen: React.FC<Props> = ({ navigation }) => {
       await fetchAudits();
     } catch (error) {
       console.error('Error al cancelar pedido:', error);
+      Alert.alert('Error', 'No se pudo cancelar el pedido. Intenta nuevamente.');
     } finally {
       setActionLoading(null);
     }

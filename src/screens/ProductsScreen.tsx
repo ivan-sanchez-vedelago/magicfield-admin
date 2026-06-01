@@ -133,11 +133,15 @@ export const ProductsScreen: React.FC<Props> = ({ navigation }) => {
   };
 
   const handleStockChange = async (productId: string, newStock: number) => {
-    await updateStock({ productId, stock: newStock });
-    if (newStock === 0) {
-      setHiddenIds(prev => { const s = new Set(prev); s.add(productId); return s; });
+    try {
+      await updateStock({ productId, stock: newStock });
+      if (newStock === 0) {
+        setHiddenIds(prev => { const s = new Set(prev); s.add(productId); return s; });
+      }
+      refetch();
+    } catch {
+      Alert.alert('Error', 'No se pudo actualizar el stock');
     }
-    refetch();
   };
 
   const handleRefresh = async () => {
