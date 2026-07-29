@@ -4,9 +4,9 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Image,
   ActivityIndicator,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { Product, Category } from '@types';
 import { StockAdjuster } from './StockAdjuster';
 import { SCRYFALL_IMAGE_HEADERS } from '@utils/getCardImage';
@@ -67,9 +67,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           <Image
             source={{ uri: product.imageUrls[0], headers: SCRYFALL_IMAGE_HEADERS }}
             style={styles.image}
-            resizeMode="cover"
+            contentFit="cover"
             onError={(e) =>
-              console.warn('[ProductCard] Error cargando imagen', product.imageUrls![0], e.nativeEvent.error)
+              console.warn('[ProductCard] Error cargando imagen', product.imageUrls![0], e.error)
             }
           />
         ) : (

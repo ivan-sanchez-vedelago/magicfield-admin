@@ -8,8 +8,8 @@ import {
   TouchableOpacity,
   RefreshControl,
   TextInput,
-  Image,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useRestorableProductsPaged } from '@hooks';
@@ -102,9 +102,9 @@ export const RestoreProductsScreen: React.FC<Props> = ({ navigation }) => {
               <Image
                 source={{ uri: item.imageUrls[0], headers: SCRYFALL_IMAGE_HEADERS }}
                 style={styles.image}
-                resizeMode="cover"
+                contentFit="cover"
                 onError={(e) =>
-                  console.warn('[RestoreProducts] Error cargando imagen', item.imageUrls![0], e.nativeEvent.error)
+                  console.warn('[RestoreProducts] Error cargando imagen', item.imageUrls![0], e.error)
                 }
               />
             ) : (

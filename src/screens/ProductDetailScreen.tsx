@@ -7,8 +7,8 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
-  Image,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { StockAdjuster } from '@components/index';
 import { useProductById, useDeleteProduct, useUpdateProductStock } from '@hooks/index';
@@ -90,9 +90,9 @@ export const ProductDetailScreen: React.FC<Props> = ({
           <Image
             source={{ uri: product.imageUrls![0], headers: SCRYFALL_IMAGE_HEADERS }}
             style={styles.image}
-            resizeMode="cover"
+            contentFit="cover"
             onError={(e) =>
-              console.warn('[ProductDetail] Error cargando imagen', product.imageUrls![0], e.nativeEvent.error)
+              console.warn('[ProductDetail] Error cargando imagen', product.imageUrls![0], e.error)
             }
           />
         </View>

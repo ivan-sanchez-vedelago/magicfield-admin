@@ -7,10 +7,10 @@ import {
   ScrollView,
   Text,
   StyleSheet,
-  Image,
   ActivityIndicator,
   Keyboard,
 } from 'react-native';
+import { Image } from 'expo-image';
 
 import { debounce } from '@utils';
 import { ScryfallCard } from '@types';
@@ -260,6 +260,7 @@ export const CardSearch: React.FC<CardSearchProps> = ({
                     <Image
                       source={{ uri: image, headers: SCRYFALL_IMAGE_HEADERS }}
                       style={styles.cardImage}
+                      contentFit="cover"
                     />
                   )}
 

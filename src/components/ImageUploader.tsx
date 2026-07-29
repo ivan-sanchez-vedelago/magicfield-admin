@@ -5,10 +5,10 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  Image,
   ActivityIndicator,
   Alert,
 } from 'react-native';
+import { Image } from 'expo-image';
 import * as ImagePicker from 'expo-image-picker';
 import { SCRYFALL_IMAGE_HEADERS } from '@utils/getCardImage';
 
@@ -112,9 +112,9 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
               <Image
                 source={{ uri: image.uri, headers: SCRYFALL_IMAGE_HEADERS }}
                 style={styles.image}
-                resizeMode="cover"
+                contentFit="cover"
                 onError={(e) =>
-                  console.warn('[ImageUploader] Error cargando imagen', image.uri, e.nativeEvent.error)
+                  console.warn('[ImageUploader] Error cargando imagen', image.uri, e.error)
                 }
               />
               {!readonly && (
