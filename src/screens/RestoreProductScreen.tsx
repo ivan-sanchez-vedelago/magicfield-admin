@@ -254,20 +254,22 @@ export const RestoreProductScreen = ({
         </View>
       )}
 
-      {/* Image Uploader */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Agregar Imágenes</Text>
-        <Text style={styles.sectionSubtitle}>
-          {currentImages.length > 0 ? `${currentImages.length} imagen(es) actual(es)` : 'Sin imágenes aún'}
-        </Text>
-        <ImageUploader
-          onImagesSelected={setImages}
-          selectedImages={images}
-          maxImages={5}
-          multiple={true}
-          allowsEditing={true}
-        />
-      </View>
+      {/* Image Uploader (no aplica a singles: sus imágenes vienen de Scryfall) */}
+      {product.type !== 'SIN' && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Agregar Imágenes</Text>
+          <Text style={styles.sectionSubtitle}>
+            {currentImages.length > 0 ? `${currentImages.length} imagen(es) actual(es)` : 'Sin imágenes aún'}
+          </Text>
+          <ImageUploader
+            onImagesSelected={setImages}
+            selectedImages={images}
+            maxImages={5}
+            multiple={true}
+            allowsEditing={true}
+          />
+        </View>
+      )}
 
       {/* Product Info */}
       <View style={styles.section}>
