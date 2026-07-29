@@ -10,6 +10,7 @@ import {
   Alert,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import { SCRYFALL_IMAGE_HEADERS } from '@utils/getCardImage';
 
 export interface ImageUploadResult {
   uri: string;
@@ -109,7 +110,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
           {selectedImages.map((image, index) => (
             <View key={index} style={styles.imageItem}>
               <Image
-                source={{ uri: image.uri }}
+                source={{ uri: image.uri, headers: SCRYFALL_IMAGE_HEADERS }}
                 style={styles.image}
                 resizeMode="cover"
                 onError={(e) =>

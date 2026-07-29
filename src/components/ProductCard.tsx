@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { Product, Category } from '@types';
 import { StockAdjuster } from './StockAdjuster';
+import { SCRYFALL_IMAGE_HEADERS } from '@utils/getCardImage';
 
 export interface ProductCardProps {
   product: Product;
@@ -64,7 +65,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         {/* LEFT: IMAGE */}
         {product.imageUrls?.[0] ? (
           <Image
-            source={{ uri: product.imageUrls[0] }}
+            source={{ uri: product.imageUrls[0], headers: SCRYFALL_IMAGE_HEADERS }}
             style={styles.image}
             resizeMode="cover"
             onError={(e) =>

@@ -14,6 +14,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useRestorableProductsPaged } from '@hooks';
 import { Product } from '@types';
+import { SCRYFALL_IMAGE_HEADERS } from '@utils/getCardImage';
 import type { RootStackParamList } from '@navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'RestoreProducts'>;
@@ -99,7 +100,7 @@ export const RestoreProductsScreen: React.FC<Props> = ({ navigation }) => {
           <TouchableOpacity style={styles.card} onPress={() => handlePress(item)} activeOpacity={0.7}>
             {item.imageUrls?.[0] ? (
               <Image
-                source={{ uri: item.imageUrls[0] }}
+                source={{ uri: item.imageUrls[0], headers: SCRYFALL_IMAGE_HEADERS }}
                 style={styles.image}
                 resizeMode="cover"
                 onError={(e) =>

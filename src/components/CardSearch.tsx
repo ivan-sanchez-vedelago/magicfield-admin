@@ -14,7 +14,7 @@ import {
 
 import { debounce } from '@utils';
 import { ScryfallCard } from '@types';
-import { getCardImage } from '@utils/getCardImage';
+import { getCardImage, SCRYFALL_IMAGE_HEADERS } from '@utils/getCardImage';
 
 const autocompleteCache: Record<string, string[]> = {};
 const editionsCache: Record<string, ScryfallCard[]> = {};
@@ -258,7 +258,7 @@ export const CardSearch: React.FC<CardSearchProps> = ({
 
                   {image && (
                     <Image
-                      source={{ uri: image }}
+                      source={{ uri: image, headers: SCRYFALL_IMAGE_HEADERS }}
                       style={styles.cardImage}
                     />
                   )}

@@ -1,5 +1,11 @@
 import { ScryfallCard } from '@types';
 
+// Scryfall bloquea (400) requests a su CDN de imágenes que no traigan un
+// User-Agent identificable, como el que manda por defecto OkHttp en Android.
+export const SCRYFALL_IMAGE_HEADERS = {
+  'User-Agent': 'MagicFieldApp/1.0 (contact@magicfield.com)',
+};
+
 export const getCardImage = (
   card: ScryfallCard,
   size: 'small' | 'normal' | 'large' | 'png' = 'png'

@@ -12,6 +12,7 @@ import {
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { StockAdjuster } from '@components/index';
 import { useProductById, useDeleteProduct, useUpdateProductStock } from '@hooks/index';
+import { SCRYFALL_IMAGE_HEADERS } from '@utils/getCardImage';
 import type { RootStackParamList } from '@navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ProductDetail'>;
@@ -87,7 +88,7 @@ export const ProductDetailScreen: React.FC<Props> = ({
       {product.imageUrls?.[0] && (
         <View style={styles.imageContainer}>
           <Image
-            source={{ uri: product.imageUrls![0] }}
+            source={{ uri: product.imageUrls![0], headers: SCRYFALL_IMAGE_HEADERS }}
             style={styles.image}
             resizeMode="cover"
             onError={(e) =>
