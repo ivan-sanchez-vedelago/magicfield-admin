@@ -225,12 +225,13 @@ export const ProductsScreen: React.FC<Props> = ({ navigation }) => {
             )}
             {levelCategories.map((cat) => {
               const isSelected = selectedPath[depth]?.id === cat.id;
+              const hasChildren = categories.some(c => c.parentId === cat.id);
               return (
                 <TouchableOpacity
                   key={cat.id}
                   style={[
                     styles.filterButton,
-                    depth > 0 && styles.filterButtonChild,
+                    depth > 0 && (hasChildren ? styles.filterButtonBranch : styles.filterButtonChild),
                     isSelected && styles.filterButtonActive,
                   ]}
                   onPress={() => handleSelectCategory(depth, cat)}
@@ -419,6 +420,10 @@ const styles = StyleSheet.create({
 
   filterButtonChild: {
     borderColor: '#3b82f6',
+  },
+
+  filterButtonBranch: {
+    borderColor: '#000000',
   },
 
   filterButtonActive: {
