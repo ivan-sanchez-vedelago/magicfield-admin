@@ -96,6 +96,29 @@ class ApiService {
     return response.data;
   }
 
+  // Productos agotados (stock = 0), candidatos a restaurar
+  async getRestorableProductsPaged(
+    page: number,
+    size: number,
+    search?: string
+  ): Promise<PagedProducts> {
+    const params: Record<string, string> = {
+      page: String(page),
+      size: String(size),
+    };
+    if (search) params.search = search;
+    const response = await this.client.get<PagedProducts>(ENDPOINTS.PRODUCTS.RESTORABLE, { params });
+    return response.data;
+  }
+
+  // Trae un producto sin filtrar por stock (incluye agotados), para la pantalla de restaurar
+  async getProductForAdmin(id: string): Promise<Product> {
+    const response = await this.client.get<Product>(
+      ENDPOINTS.PRODUCTS.GET_FOR_ADMIN(id)
+    );
+    return response.data;
+  }
+
   async createProduct(product: Omit<Product, 'id'>): Promise<Product> {
     const response = await this.client.post<Product>(
       ENDPOINTS.PRODUCTS.CREATE,

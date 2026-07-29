@@ -1,13 +1,15 @@
 export { useAsync, type UseAsyncState } from './useAsync';
-export { 
+export {
   useProducts,
   useProductsPaged,
-  useProductById, 
-  useCreateProduct, 
-  useUpdateProduct, 
+  useProductById,
+  useCreateProduct,
+  useUpdateProduct,
   useDeleteProduct,
   useUpdateProductStock,
-  useUpdateProductPrice 
+  useUpdateProductPrice,
+  useRestorableProductsPaged,
+  useProductForRestore
 } from './useProducts';
 export { useScryfallSearch } from './useScryfallSearch';
 export { useCategories, getAllDescendants } from './useCategories';

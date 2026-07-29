@@ -6,3 +6,5 @@ export { DashboardScreen } from './DashboardScreen';
 export { SettingsScreen } from './SettingsScreen';
 export { BannersScreen } from './BannersScreen';
 export { OrdersScreen } from './OrdersScreen';
+export { RestoreProductsScreen } from './RestoreProductsScreen';
+export { RestoreProductScreen } from './RestoreProductScreen';

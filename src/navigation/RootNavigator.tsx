@@ -16,6 +16,8 @@ import {
   SettingsScreen,
   BannersScreen,
   OrdersScreen,
+  RestoreProductsScreen,
+  RestoreProductScreen,
 } from '@screens/index';
 import { Text, View, StyleSheet } from 'react-native';
 import type { RootStackParamList, DrawerStackParamList } from './types';
@@ -139,6 +141,26 @@ const OrdersStackNavigator = () => (
   </Stack.Navigator>
 );
 
+// Restore Products Stack
+const RestoreProductsStackNavigator = () => (
+  <Stack.Navigator
+    screenOptions={{
+      headerShown: false,
+    }}
+  >
+    <Stack.Screen
+      name="RestoreProducts"
+      component={RestoreProductsScreen}
+      options={{ title: 'Restaurar Producto' }}
+    />
+    <Stack.Screen
+      name="RestoreProduct"
+      component={RestoreProductScreen}
+      options={{ title: 'Restaurar Producto' }}
+    />
+  </Stack.Navigator>
+);
+
 // Main Drawer Navigation
 const DrawerNavigator = () => (
   <Drawer.Navigator
@@ -222,6 +244,18 @@ const DrawerNavigator = () => (
         title: 'Pedidos',
         drawerIcon: ({ color, size }) => (
           <Text style={{ fontSize: size, color }}>🛒  </Text>
+        ),
+      }}
+    />
+
+    <Drawer.Screen
+      name="RestoreProductsStack"
+      component={RestoreProductsStackNavigator}
+      options={{
+        drawerLabel: 'Restaurar Producto',
+        title: 'Restaurar Producto',
+        drawerIcon: ({ color, size }) => (
+          <Text style={{ fontSize: size, color }}>♻️  </Text>
         ),
       }}
     />

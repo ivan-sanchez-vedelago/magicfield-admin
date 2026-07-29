@@ -31,7 +31,9 @@ export const ENDPOINTS = {
   PRODUCTS: {
     LIST: '/api/products',
     PAGED: '/api/products/paged',
+    RESTORABLE: '/api/products/restorable',
     GET: (id: string) => `/api/products/${id}`,
+    GET_FOR_ADMIN: (id: string) => `/api/products/${id}/admin`,
     CREATE: '/api/products',
     UPDATE: (id: string) => `/api/products/${id}`,
     DELETE: (id: string) => `/api/products/${id}`,

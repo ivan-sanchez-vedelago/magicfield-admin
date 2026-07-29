@@ -8,6 +8,8 @@ export type RootStackParamList = {
   Settings: undefined;
   Banners: undefined;
   Orders: undefined;
+  RestoreProducts: undefined;
+  RestoreProduct: { productId: string };
 };
 
 export type DrawerStackParamList = {
@@ -17,4 +19,5 @@ export type DrawerStackParamList = {
   BannersStack: undefined;
   SettingsStack: undefined;
   OrdersStack: undefined;
+  RestoreProductsStack: undefined;
 };

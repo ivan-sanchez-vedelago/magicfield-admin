@@ -40,6 +40,45 @@ export function useProductsPaged(
   };
 }
 
+export function useRestorableProductsPaged(
+  page: number,
+  size: number,
+  search: string
+) {
+  const { data, loading, error, execute } = useAsync(
+    () => apiService.getRestorableProductsPaged(page, size, search || undefined),
+    [page, size, search],
+    true
+  );
+
+  return {
+    products: data?.content ?? [],
+    totalPages: data?.totalPages ?? 0,
+    totalElements: data?.totalElements ?? 0,
+    loading,
+    error,
+    refetch: execute,
+  };
+}
+
+export function useProductForRestore(id: string | null) {
+  const { data, loading, error, execute } = useAsync(
+    () => {
+      if (!id) return Promise.resolve(null);
+      return apiService.getProductForAdmin(id);
+    },
+    [id],
+    !!id
+  );
+
+  return {
+    product: data as Product | null,
+    loading,
+    error,
+    refetch: execute,
+  };
+}
+
 export function useProductById(id: string | null) {
   const { data, loading, error, execute } = useAsync(
     () => {
