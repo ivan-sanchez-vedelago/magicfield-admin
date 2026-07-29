@@ -90,6 +90,9 @@ export const ProductDetailScreen: React.FC<Props> = ({
             source={{ uri: product.imageUrls![0] }}
             style={styles.image}
             resizeMode="cover"
+            onError={(e) =>
+              console.warn('[ProductDetail] Error cargando imagen', product.imageUrls![0], e.nativeEvent.error)
+            }
           />
         </View>
       )}

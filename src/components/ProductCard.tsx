@@ -67,6 +67,9 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             source={{ uri: product.imageUrls[0] }}
             style={styles.image}
             resizeMode="cover"
+            onError={(e) =>
+              console.warn('[ProductCard] Error cargando imagen', product.imageUrls![0], e.nativeEvent.error)
+            }
           />
         ) : (
           <View style={[styles.image, styles.imagePlaceholder]} />

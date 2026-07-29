@@ -98,7 +98,14 @@ export const RestoreProductsScreen: React.FC<Props> = ({ navigation }) => {
         renderItem={({ item }) => (
           <TouchableOpacity style={styles.card} onPress={() => handlePress(item)} activeOpacity={0.7}>
             {item.imageUrls?.[0] ? (
-              <Image source={{ uri: item.imageUrls[0] }} style={styles.image} resizeMode="cover" />
+              <Image
+                source={{ uri: item.imageUrls[0] }}
+                style={styles.image}
+                resizeMode="cover"
+                onError={(e) =>
+                  console.warn('[RestoreProducts] Error cargando imagen', item.imageUrls![0], e.nativeEvent.error)
+                }
+              />
             ) : (
               <View style={[styles.image, styles.imagePlaceholder]} />
             )}

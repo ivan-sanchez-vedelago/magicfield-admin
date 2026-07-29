@@ -112,6 +112,9 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
                 source={{ uri: image.uri }}
                 style={styles.image}
                 resizeMode="cover"
+                onError={(e) =>
+                  console.warn('[ImageUploader] Error cargando imagen', image.uri, e.nativeEvent.error)
+                }
               />
               {!readonly && (
                 <TouchableOpacity
