@@ -230,7 +230,10 @@ export const EditProductScreen = ({
           {currentImages.length > 0 ? `${currentImages.length} imagen(es) actual(es)` : 'Sin imágenes aún'}
         </Text>
         <ImageUploader
-          onImagesSelected={setImages}
+          onImagesSelected={(newImages) => {
+            setImages(newImages);
+            handleFieldChange();
+          }}
           selectedImages={images}
           maxImages={5}
           multiple={true}

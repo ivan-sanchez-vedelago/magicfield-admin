@@ -261,6 +261,8 @@ export const ProductsScreen: React.FC<Props> = ({ navigation }) => {
         />
       </View>
 
+      {totalPages > 1 && renderPagination()}
+
       <FlatList
         data={visibleProducts}
         keyExtractor={(item) => item.id}
@@ -286,33 +288,37 @@ export const ProductsScreen: React.FC<Props> = ({ navigation }) => {
             </TouchableOpacity>
           </View>
         }
-        ListFooterComponent={
-          <View style={styles.paginationContainer}>
-            <TouchableOpacity
-              style={[styles.paginationButton, currentPage === 0 && styles.paginationButtonDisabled]}
-              onPress={() => setCurrentPage(p => Math.max(0, p - 1))}
-              disabled={currentPage === 0}
-            >
-              <Text style={styles.paginationButtonText}>Anterior</Text>
-            </TouchableOpacity>
-            <Text style={styles.paginationInfo}>
-              {currentPage + 1} / {totalPages}  ({totalElements})
-            </Text>
-            <TouchableOpacity
-              style={[styles.paginationButton, currentPage >= totalPages - 1 && styles.paginationButtonDisabled]}
-              onPress={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
-              disabled={currentPage >= totalPages - 1}
-            >
-              <Text style={styles.paginationButtonText}>Siguiente</Text>
-            </TouchableOpacity>
-          </View>
-        }
+        ListFooterComponent={totalPages > 1 ? renderPagination() : null}
         contentContainerStyle={
           visibleProducts.length === 0 ? { flex: 1 } : undefined
         }
       />
     </View>
   );
+
+  function renderPagination() {
+    return (
+      <View style={styles.paginationContainer}>
+        <TouchableOpacity
+          style={[styles.paginationButton, currentPage === 0 && styles.paginationButtonDisabled]}
+          onPress={() => setCurrentPage(p => Math.max(0, p - 1))}
+          disabled={currentPage === 0}
+        >
+          <Text style={styles.paginationButtonText}>Anterior</Text>
+        </TouchableOpacity>
+        <Text style={styles.paginationInfo}>
+          {currentPage + 1} / {totalPages}  ({totalElements})
+        </Text>
+        <TouchableOpacity
+          style={[styles.paginationButton, currentPage >= totalPages - 1 && styles.paginationButtonDisabled]}
+          onPress={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
+          disabled={currentPage >= totalPages - 1}
+        >
+          <Text style={styles.paginationButtonText}>Siguiente</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 };
 
 const styles = StyleSheet.create({
