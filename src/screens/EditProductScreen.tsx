@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import {
   View,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -9,9 +8,12 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from 'react-native';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { ImageUploader, ImageUploadResult } from '@components';
+import { ImageUploader, ImageUploadResult, StockStepper } from '@components';
 import { useProductById, useUpdateProduct } from '@hooks';
 import { apiService } from '@services/api';
 import { Product, ProductImage } from '@types';
@@ -171,7 +173,15 @@ export const EditProductScreen = ({
   }
 
   return (
-    <ScrollView style={styles.container}>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+      <KeyboardAwareScrollView
+        style={styles.container}
+        enableOnAndroid={true}
+        extraScrollHeight={115}
+        enableAutomaticScroll={true}
+        keyboardShouldPersistTaps="handled"
+        nestedScrollEnabled={true}
+      >
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()}>
           <Text style={styles.backButtonText}>← Atrás</Text>
@@ -273,15 +283,13 @@ export const EditProductScreen = ({
             keyboardType="decimal-pad"
             editable={!updateLoading}
           />
-          <TextInput
-            style={[styles.input, styles.flex1, styles.marginLeft]}
-            placeholder="Stock"
+          <StockStepper
+            style={[styles.flex1, styles.marginLeft]}
             value={stock}
-            onChangeText={(text) => {
+            onChangeValue={(text) => {
               setStock(text);
               handleFieldChange();
             }}
-            keyboardType="number-pad"
             editable={!updateLoading}
           />
         </View>
@@ -350,7 +358,8 @@ export const EditProductScreen = ({
           )}
         </TouchableOpacity>
       </View>
-    </ScrollView>
+      </KeyboardAwareScrollView>
+    </TouchableWithoutFeedback>
   );
 };
 

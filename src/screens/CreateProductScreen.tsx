@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { ImageUploader, ImageUploadResult, CardSearch } from '@components';
+import { ImageUploader, ImageUploadResult, CardSearch, StockStepper } from '@components';
 import { useCreateProduct, useCategories } from '@hooks';
 import { apiService } from '@services/api';
 import { ScryfallCard, Category } from '@types';
@@ -90,7 +90,7 @@ export const CreateProductScreen = ({ navigation }: Props) => {
   const [priceUsd, setPriceUsd] = useState('');
   const [priceUsdFoil, setPriceUsdFoil] = useState('');
   const [price, setPrice] = useState('');
-  const [stock, setStock] = useState('');
+  const [stock, setStock] = useState('1');
 
   // Single-specific fields
   const [cardName, setCardName] = useState('');
@@ -116,7 +116,7 @@ export const CreateProductScreen = ({ navigation }: Props) => {
     setPriceUsd('');
     setPriceUsdFoil('');
     setPrice('');
-    setStock('');
+    setStock('1');
     setImages([]);
 
     // single
@@ -405,13 +405,10 @@ export const CreateProductScreen = ({ navigation }: Props) => {
                   keyboardType="decimal-pad"
                   editable={!loading}
                 />
-                <TextInput
-                  style={[styles.input, styles.flex1, styles.marginLeft]}
-                  placeholder="Stock"
-                  placeholderTextColor="#9ca3af"
+                <StockStepper
+                  style={[styles.flex1, styles.marginLeft]}
                   value={stock}
-                  onChangeText={setStock}
-                  keyboardType="number-pad"
+                  onChangeValue={setStock}
                   editable={!loading}
                 />
               </View>
@@ -446,13 +443,10 @@ export const CreateProductScreen = ({ navigation }: Props) => {
                   keyboardType="decimal-pad"
                   editable={!loading}
                 />
-                <TextInput
-                  style={[styles.input, styles.flex1, styles.marginLeft]}
-                  placeholder="Stock"
-                  placeholderTextColor="#9ca3af"
+                <StockStepper
+                  style={[styles.flex1, styles.marginLeft]}
                   value={stock}
-                  onChangeText={setStock}
-                  keyboardType="number-pad"
+                  onChangeValue={setStock}
                   editable={!loading}
                 />
               </View>

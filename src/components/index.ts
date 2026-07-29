@@ -1,6 +1,9 @@
 export { StockAdjuster } from './StockAdjuster';
 export type { StockAdjusterProps } from './StockAdjuster';
 
+export { StockStepper } from './StockStepper';
+export type { StockStepperProps } from './StockStepper';
+
 export { ProductCard } from './ProductCard';
 export type { ProductCardProps } from './ProductCard';
 
