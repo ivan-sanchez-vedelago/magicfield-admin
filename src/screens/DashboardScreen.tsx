@@ -56,7 +56,6 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
       }
     >
       <View style={styles.header}>
-        <Text style={styles.title}>Dashboard</Text>
         <Text style={styles.subtitle}>Negocio y analítica web</Text>
       </View>
 
@@ -186,12 +185,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#1f2937',
-    marginBottom: 4,
   },
   subtitle: {
     fontSize: 13,

@@ -14,6 +14,7 @@ export interface StockStepperProps {
   onChangeValue: (value: string) => void;
   min?: number;
   editable?: boolean;
+  placeholder?: string;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -22,6 +23,7 @@ export const StockStepper: React.FC<StockStepperProps> = ({
   onChangeValue,
   min = 0,
   editable = true,
+  placeholder,
   style,
 }) => {
   const step = (delta: number) => {
@@ -48,6 +50,8 @@ export const StockStepper: React.FC<StockStepperProps> = ({
         style={styles.input}
         value={value}
         onChangeText={onChangeValue}
+        placeholder={placeholder}
+        placeholderTextColor="#9ca3af"
         keyboardType="number-pad"
         editable={editable}
         textAlign="center"
@@ -67,7 +71,7 @@ export const StockStepper: React.FC<StockStepperProps> = ({
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    alignItems: 'stretch',
+    height: 42,
     borderWidth: 1,
     borderColor: '#e5e7eb',
     borderRadius: 8,
@@ -90,8 +94,9 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
+    height: '100%',
     paddingHorizontal: 4,
-    paddingVertical: 10,
+    paddingVertical: 0,
     fontSize: 13,
     color: '#1f2937',
     minWidth: 0,

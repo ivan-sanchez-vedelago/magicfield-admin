@@ -52,10 +52,6 @@ export const SettingsScreen: React.FC<Props> = ({ navigation }) => {
 
   return (
     <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Configuración</Text>
-      </View>
-
       {/* API Configuration */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Configuración de API</Text>
@@ -154,18 +150,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f9fafb',
-  },
-  header: {
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#1f2937',
   },
   section: {
     marginHorizontal: 16,

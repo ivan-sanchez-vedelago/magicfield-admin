@@ -176,8 +176,10 @@ export const EditProductScreen = ({
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <KeyboardAwareScrollView
         style={styles.container}
+        contentContainerStyle={styles.scrollContent}
         enableOnAndroid={true}
-        extraScrollHeight={115}
+        extraScrollHeight={150}
+        extraHeight={150}
         enableAutomaticScroll={true}
         keyboardShouldPersistTaps="handled"
         nestedScrollEnabled={true}
@@ -273,7 +275,7 @@ export const EditProductScreen = ({
 
         <View style={styles.row}>
           <TextInput
-            style={[styles.input, styles.flex1]}
+            style={[styles.input, styles.flex1, styles.rowInput]}
             placeholder="Precio"
             value={price}
             onChangeText={(text) => {
@@ -284,8 +286,9 @@ export const EditProductScreen = ({
             editable={!updateLoading}
           />
           <StockStepper
-            style={[styles.flex1, styles.marginLeft]}
+            style={[styles.flex1, styles.marginLeft, styles.rowInput]}
             value={stock}
+            placeholder="Stock"
             onChangeValue={(text) => {
               setStock(text);
               handleFieldChange();
@@ -367,6 +370,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f9fafb',
+  },
+  scrollContent: {
+    paddingBottom: 180,
   },
   centerContainer: {
     flex: 1,
@@ -465,6 +471,9 @@ const styles = StyleSheet.create({
   },
   marginLeft: {
     marginLeft: 8,
+  },
+  rowInput: {
+    height: 42,
   },
   currentImageContainer: {
     backgroundColor: '#f3f4f6',

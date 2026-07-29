@@ -90,7 +90,7 @@ export const CreateProductScreen = ({ navigation }: Props) => {
   const [priceUsd, setPriceUsd] = useState('');
   const [priceUsdFoil, setPriceUsdFoil] = useState('');
   const [price, setPrice] = useState('');
-  const [stock, setStock] = useState('1');
+  const [stock, setStock] = useState('');
 
   // Single-specific fields
   const [cardName, setCardName] = useState('');
@@ -116,7 +116,7 @@ export const CreateProductScreen = ({ navigation }: Props) => {
     setPriceUsd('');
     setPriceUsdFoil('');
     setPrice('');
-    setStock('1');
+    setStock('');
     setImages([]);
 
     // single
@@ -233,7 +233,7 @@ export const CreateProductScreen = ({ navigation }: Props) => {
       Alert.alert('Error', 'El precio debe ser un número válido');
       return;
     }
-    if (!stock || isNaN(parseInt(stock))) {
+    if (stock && isNaN(parseInt(stock))) {
       Alert.alert('Error', 'El stock debe ser un número válido');
       return;
     }
@@ -250,7 +250,7 @@ export const CreateProductScreen = ({ navigation }: Props) => {
         name: name.trim(),
         description: description.trim(),
         price: parseFloat(price),
-        stock: parseInt(stock),
+        stock: stock ? parseInt(stock) : 1,
         type: selectedLeaf.shortName,
       };
 
@@ -343,8 +343,10 @@ export const CreateProductScreen = ({ navigation }: Props) => {
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <KeyboardAwareScrollView
         style={styles.container}
+        contentContainerStyle={styles.scrollContent}
         enableOnAndroid={true}
-        extraScrollHeight={115}
+        extraScrollHeight={150}
+        extraHeight={150}
         enableAutomaticScroll={true}
         keyboardShouldPersistTaps="handled"
         nestedScrollEnabled={true}
@@ -397,7 +399,7 @@ export const CreateProductScreen = ({ navigation }: Props) => {
 
               <View style={styles.row}>
                 <TextInput
-                  style={[styles.input, styles.flex1]}
+                  style={[styles.input, styles.flex1, styles.rowInput]}
                   placeholder="Precio"
                   placeholderTextColor="#9ca3af"
                   value={price}
@@ -406,9 +408,10 @@ export const CreateProductScreen = ({ navigation }: Props) => {
                   editable={!loading}
                 />
                 <StockStepper
-                  style={[styles.flex1, styles.marginLeft]}
+                  style={[styles.flex1, styles.marginLeft, styles.rowInput]}
                   value={stock}
                   onChangeValue={setStock}
+                  placeholder="Stock"
                   editable={!loading}
                 />
               </View>
@@ -435,7 +438,7 @@ export const CreateProductScreen = ({ navigation }: Props) => {
 
               <View style={styles.row}>
                 <TextInput
-                  style={[styles.input, styles.flex1]}
+                  style={[styles.input, styles.flex1, styles.rowInput]}
                   placeholder="Precio"
                   placeholderTextColor="#9ca3af"
                   value={price}
@@ -444,9 +447,10 @@ export const CreateProductScreen = ({ navigation }: Props) => {
                   editable={!loading}
                 />
                 <StockStepper
-                  style={[styles.flex1, styles.marginLeft]}
+                  style={[styles.flex1, styles.marginLeft, styles.rowInput]}
                   value={stock}
                   onChangeValue={setStock}
+                  placeholder="Stock"
                   editable={!loading}
                 />
               </View>
@@ -524,6 +528,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f9fafb',
+  },
+  scrollContent: {
+    paddingBottom: 180,
   },
   typeSelectionHeader: {
     padding: 16,
@@ -637,6 +644,9 @@ const styles = StyleSheet.create({
   },
   marginLeft: {
     marginLeft: 8,
+  },
+  rowInput: {
+    height: 42,
   },
   foilToggle: {
     backgroundColor: '#f3f4f6',

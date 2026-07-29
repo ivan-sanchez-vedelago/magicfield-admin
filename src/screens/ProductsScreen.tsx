@@ -15,7 +15,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ProductCard } from '@components';
 import { useProductsPaged, useDeleteProduct, useUpdateProductStock, useCategories, getAllDescendants } from '@hooks';
-import { Product } from '@types';
+import { Product, Category } from '@types';
 import type { RootStackParamList } from '@navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Products'>;
@@ -27,16 +27,37 @@ export const ProductsScreen: React.FC<Props> = ({ navigation }) => {
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [selectedTypeFilter, setSelectedTypeFilter] = useState<string>('all');
+  const [selectedPath, setSelectedPath] = useState<Category[]>([]);
   const [currentPage, setCurrentPage] = useState(0);
   const [pageSize, setPageSize] = useState(20);
 
-  const PRODUCT_TYPES_FILTER = [
-    { label: 'Todos', value: 'all' },
-    ...categories
-      .filter(c => !categories.some(child => child.parentId === c.id))
-      .map(c => ({ label: c.name, value: c.shortName })),
-  ];
+  const rootCategories = useMemo(
+    () => categories.filter(c => c.parentId === 0),
+    [categories]
+  );
+
+  // Un slider por nivel: raíces, luego los hijos de cada categoría seleccionada
+  const categoryLevels = useMemo(() => {
+    const levels: Category[][] = [rootCategories];
+    for (const selected of selectedPath) {
+      const children = categories.filter(c => c.parentId === selected.id);
+      if (children.length > 0) levels.push(children);
+    }
+    return levels;
+  }, [rootCategories, selectedPath, categories]);
+
+  const handleSelectCategory = (depth: number, category: Category) => {
+    setSelectedPath(prev => {
+      // Tocar la ya seleccionada la deselecciona (y a sus hijos seleccionados)
+      if (prev[depth]?.id === category.id) return prev.slice(0, depth);
+      return [...prev.slice(0, depth), category];
+    });
+  };
+
+  const selectedTypeFilter = useMemo(
+    () => (selectedPath.length > 0 ? selectedPath[selectedPath.length - 1].shortName : 'all'),
+    [selectedPath]
+  );
 
   const getDescendantShortNames = useCallback((rootShortName: string): string[] => {
     const root = categories.find(c => c.shortName === rootShortName);
@@ -179,39 +200,55 @@ export const ProductsScreen: React.FC<Props> = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
-      
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Productos</Text>
-      </View>
-
-      {/* Botones de filtro por tipo */}
-      <View style={styles.filterContainer}>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.filterContentContainer}
-      >
-        {PRODUCT_TYPES_FILTER.map((type) => (
-          <TouchableOpacity
-            key={type.value}
-            style={[
-              styles.filterButton,
-              selectedTypeFilter === type.value && styles.filterButtonActive,
-            ]}
-            onPress={() => setSelectedTypeFilter(type.value)}
+      {/* Sliders de categorías: raíces primero, luego un slider por cada nivel de hijos */}
+      {categoryLevels.map((levelCategories, depth) => (
+        <View key={depth} style={styles.filterContainer}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.filterContentContainer}
           >
-            <Text
-              style={[
-                styles.filterButtonText,
-                selectedTypeFilter === type.value && styles.filterButtonTextActive,
-              ]}
-            >
-              {type.label}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-      </View>
+            {depth === 0 && (
+              <TouchableOpacity
+                style={[styles.filterButton, selectedPath.length === 0 && styles.filterButtonActive]}
+                onPress={() => setSelectedPath([])}
+              >
+                <Text
+                  style={[
+                    styles.filterButtonText,
+                    selectedPath.length === 0 && styles.filterButtonTextActive,
+                  ]}
+                >
+                  Todos
+                </Text>
+              </TouchableOpacity>
+            )}
+            {levelCategories.map((cat) => {
+              const isSelected = selectedPath[depth]?.id === cat.id;
+              return (
+                <TouchableOpacity
+                  key={cat.id}
+                  style={[
+                    styles.filterButton,
+                    depth > 0 && styles.filterButtonChild,
+                    isSelected && styles.filterButtonActive,
+                  ]}
+                  onPress={() => handleSelectCategory(depth, cat)}
+                >
+                  <Text
+                    style={[
+                      styles.filterButtonText,
+                      isSelected && styles.filterButtonTextActive,
+                    ]}
+                  >
+                    {cat.name}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
+      ))}
 
       <View style={styles.searchContainer}>
         <TextInput
@@ -289,23 +326,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#f9fafb',
-  },
-
-  header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
-  },
-
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#1f2937',
   },
 
   searchContainer: {
@@ -395,6 +415,10 @@ const styles = StyleSheet.create({
     borderColor: '#d1d5db',
     backgroundColor: '#f3f4f6',
     flexShrink: 0,
+  },
+
+  filterButtonChild: {
+    borderColor: '#3b82f6',
   },
 
   filterButtonActive: {

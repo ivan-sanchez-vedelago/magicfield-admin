@@ -242,14 +242,13 @@ export const OrdersScreen: React.FC<Props> = ({ navigation }) => {
       style={styles.container}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
     >
-      <View style={styles.header}>
-        <Text style={styles.title}>Pedidos</Text>
-        {newCount > 0 && (
+      {newCount > 0 && (
+        <View style={styles.header}>
           <View style={styles.newBadge}>
             <Text style={styles.newBadgeText}>{newCount} nuevos</Text>
           </View>
-        )}
-      </View>
+        </View>
+      )}
 
       {grouped.length === 0 ? (
         <View style={styles.emptyContainer}>
@@ -402,11 +401,6 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingHorizontal: 16,
     paddingVertical: 20,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#1f2937',
   },
   newBadge: {
     backgroundColor: '#ef4444',
