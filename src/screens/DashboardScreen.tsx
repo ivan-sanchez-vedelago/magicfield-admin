@@ -11,7 +11,7 @@ import {
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { useDashboardStats } from '@hooks/index';
 import {
-  UmamiStatsCard,
+  AnalyticsStatCard,
   TopPagesCard,
   ReferrersCard,
   CountriesCard,
@@ -46,7 +46,7 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
     );
   }
 
-  const umami = stats?.umamiAnalytics;
+  const analytics = stats?.siteAnalytics;
 
   return (
     <ScrollView
@@ -81,25 +81,34 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
       </View>
 
       {/* Analítica Web */}
-      {umami && (
-        <>
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Analítica Web</Text>
-            <View style={styles.metricsRow}>
-              <UmamiStatsCard label="Sesiones" value={umami.sessions.toLocaleString()} color="#3b82f6" />
-              <UmamiStatsCard label="Page Views" value={umami.pageViews.toLocaleString()} color="#22c55e" />
-              <UmamiStatsCard label="Bounce Rate" value={`${umami.bounceRate.toFixed(1)}%`} color="#f59e0b" />
+      {analytics && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Analítica Web</Text>
+          {analytics.available === false ? (
+            <View style={styles.analyticsUnavailableBox}>
+              <Text style={styles.analyticsUnavailableTitle}>Analítica no disponible</Text>
+              <Text style={styles.analyticsUnavailableText}>
+                {analytics.unavailableReason ?? 'No se pudo obtener la analítica del sitio.'}
+              </Text>
             </View>
-          </View>
-          {umami.topPages?.length > 0 && <TopPagesCard pages={umami.topPages} />}
-          {umami.referrers?.length > 0 && <ReferrersCard referrers={umami.referrers} />}
-          {umami.countries?.length > 0 && <CountriesCard countries={umami.countries} />}
-          <DeviceBreakdown
-            devices={umami.devices ?? []}
-            browsers={umami.browsers ?? []}
-            operatingSystems={umami.operatingSystems ?? []}
-          />
-        </>
+          ) : (
+            <>
+              <View style={styles.metricsRow}>
+                <AnalyticsStatCard label="Sesiones" value={analytics.sessions.toLocaleString()} color="#3b82f6" />
+                <AnalyticsStatCard label="Page Views" value={analytics.pageViews.toLocaleString()} color="#22c55e" />
+                <AnalyticsStatCard label="Bounce Rate" value={`${analytics.bounceRate.toFixed(1)}%`} color="#f59e0b" />
+              </View>
+              {analytics.topPages?.length > 0 && <TopPagesCard pages={analytics.topPages} />}
+              {analytics.referrers?.length > 0 && <ReferrersCard referrers={analytics.referrers} />}
+              {analytics.countries?.length > 0 && <CountriesCard countries={analytics.countries} />}
+              <DeviceBreakdown
+                devices={analytics.devices ?? []}
+                browsers={analytics.browsers ?? []}
+                operatingSystems={analytics.operatingSystems ?? []}
+              />
+            </>
+          )}
+        </View>
       )}
 
       {/* Acciones Rápidas */}
@@ -255,6 +264,23 @@ const styles = StyleSheet.create({
   metricsRow: {
     flexDirection: 'row',
     gap: 8,
+  },
+  analyticsUnavailableBox: {
+    backgroundColor: '#fffbeb',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#fde68a',
+    padding: 14,
+  },
+  analyticsUnavailableTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#92400e',
+    marginBottom: 4,
+  },
+  analyticsUnavailableText: {
+    fontSize: 12,
+    color: '#92400e',
   },
   actionButton: {
     backgroundColor: '#3b82f6',

@@ -6,7 +6,7 @@ export interface MetricItem {
   y: number;
 }
 
-export interface UmamiAnalytics {
+export interface SiteAnalytics {
   pageViews: number;
   sessions: number;
   bounceRate: number;
@@ -16,6 +16,8 @@ export interface UmamiAnalytics {
   browsers: MetricItem[];
   devices: MetricItem[];
   operatingSystems: MetricItem[];
+  available: boolean;
+  unavailableReason?: string;
 }
 
 export interface DashboardStats {
@@ -24,7 +26,7 @@ export interface DashboardStats {
   pendingOrders: number;
   completedOrders: number;
   cancelledOrders: number;
-  umamiAnalytics: UmamiAnalytics;
+  siteAnalytics: SiteAnalytics;
   period: string;
 }
 

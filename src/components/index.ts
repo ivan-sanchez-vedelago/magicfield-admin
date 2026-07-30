@@ -13,7 +13,7 @@ export type { ImageUploaderProps, ImageUploadResult } from './ImageUploader';
 export { CardSearch } from './CardSearch';
 export type { CardSearchProps } from './CardSearch';
 
-export { UmamiStatsCard } from './UmamiStatsCard';
+export { AnalyticsStatCard } from './AnalyticsStatCard';
 export { TopPagesCard } from './TopPagesCard';
 export { ReferrersCard } from './ReferrersCard';
 export { CountriesCard } from './CountriesCard';

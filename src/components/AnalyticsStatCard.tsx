@@ -7,7 +7,7 @@ interface Props {
   color: string;
 }
 
-export const UmamiStatsCard: React.FC<Props> = ({ label, value, color }) => (
+export const AnalyticsStatCard: React.FC<Props> = ({ label, value, color }) => (
   <View style={[styles.card, { borderLeftColor: color }]}>
     <Text style={styles.value}>{value}</Text>
     <Text style={styles.label}>{label}</Text>
