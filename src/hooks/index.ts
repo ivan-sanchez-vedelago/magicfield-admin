@@ -9,7 +9,8 @@ export {
   useUpdateProductStock,
   useUpdateProductPrice,
   useRestorableProductsPaged,
-  useProductForRestore
+  useProductForRestore,
+  useImportSinglesCsv
 } from './useProducts';
 export { useScryfallSearch } from './useScryfallSearch';
 export { useCategories, getAllDescendants } from './useCategories';

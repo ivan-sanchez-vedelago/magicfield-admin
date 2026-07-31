@@ -1,5 +1,5 @@
 import { apiService } from '@services/api';
-import { Product } from '@types';
+import { Product, CsvImportResult } from '@types';
 import { useAsync, useAsyncMutation } from './useAsync';
 
 export function useProducts() {
@@ -125,6 +125,14 @@ export function useUpdateProductStock(
   return useAsyncMutation(
     ({ productId, stock }: { productId: string; stock: number }) =>
       apiService.updateProductStock(productId, stock),
+    onSuccess
+  );
+}
+
+export function useImportSinglesCsv(onSuccess?: (result: CsvImportResult) => void) {
+  return useAsyncMutation(
+    ({ uri, name }: { uri: string; name: string }) =>
+      apiService.importSinglesCsv(uri, name),
     onSuccess
   );
 }

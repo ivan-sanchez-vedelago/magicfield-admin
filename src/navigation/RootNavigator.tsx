@@ -18,6 +18,7 @@ import {
   OrdersScreen,
   RestoreProductsScreen,
   RestoreProductScreen,
+  ImportSinglesScreen,
 } from '@screens/index';
 import { Text, View, StyleSheet } from 'react-native';
 import type { RootStackParamList, DrawerStackParamList } from './types';
@@ -161,6 +162,21 @@ const RestoreProductsStackNavigator = () => (
   </Stack.Navigator>
 );
 
+// Import Singles Stack
+const ImportSinglesStackNavigator = () => (
+  <Stack.Navigator
+    screenOptions={{
+      headerShown: false,
+    }}
+  >
+    <Stack.Screen
+      name="ImportSingles"
+      component={ImportSinglesScreen}
+      options={{ title: 'Importar CSV' }}
+    />
+  </Stack.Navigator>
+);
+
 // Main Drawer Navigation
 const DrawerNavigator = () => (
   <Drawer.Navigator
@@ -256,6 +272,18 @@ const DrawerNavigator = () => (
         title: 'Restaurar Producto',
         drawerIcon: ({ color, size }) => (
           <Text style={{ fontSize: size, color }}>♻️  </Text>
+        ),
+      }}
+    />
+
+    <Drawer.Screen
+      name="ImportSinglesStack"
+      component={ImportSinglesStackNavigator}
+      options={{
+        drawerLabel: 'Importar CSV',
+        title: 'Importar CSV',
+        drawerIcon: ({ color, size }) => (
+          <Text style={{ fontSize: size, color }}>📄  </Text>
         ),
       }}
     />

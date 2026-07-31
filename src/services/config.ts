@@ -38,6 +38,7 @@ export const ENDPOINTS = {
     UPDATE: (id: string) => `/api/products/${id}`,
     DELETE: (id: string) => `/api/products/${id}`,
     IMAGES: (id: string) => `/api/products/${id}/images`,
+    IMPORT_SINGLES_CSV: '/api/products/import-singles-csv',
   },
   CATEGORIES: {
     LIST: '/api/categories',

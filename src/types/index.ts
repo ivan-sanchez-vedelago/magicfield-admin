@@ -74,6 +74,19 @@ export interface BannerRequest {
   sortOrder: number;
 }
 
+export interface CsvImportRowError {
+  row: number;
+  cardName: string;
+  reason: string;
+}
+
+export interface CsvImportResult {
+  totalRows: number;
+  created: number;
+  updatedExisting: number;
+  errors: CsvImportRowError[];
+}
+
 // API Response Types
 export interface ApiResponse<T> {
   data: T;

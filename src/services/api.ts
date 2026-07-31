@@ -15,6 +15,7 @@ import {
   Banner,
   BannerRequest,
   Category,
+  CsvImportResult,
 } from '@types';
 
 class ApiService {
@@ -137,6 +138,27 @@ class ApiService {
 
   async deleteProduct(id: string): Promise<void> {
     await this.client.delete(ENDPOINTS.PRODUCTS.DELETE(id));
+  }
+
+  // Importación masiva de singles desde un CSV de ManaBox
+  async importSinglesCsv(fileUri: string, fileName: string): Promise<CsvImportResult> {
+    const formData = new FormData();
+    formData.append('file', {
+      uri: fileUri,
+      name: fileName,
+      type: 'text/csv',
+    } as any);
+
+    const response = await this.client.post<CsvImportResult>(
+      ENDPOINTS.PRODUCTS.IMPORT_SINGLES_CSV,
+      formData,
+      {
+        headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 120000, // archivos grandes / muchas filas
+      }
+    );
+
+    return response.data;
   }
 
   // Quick stock update

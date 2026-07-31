@@ -8,3 +8,4 @@ export { BannersScreen } from './BannersScreen';
 export { OrdersScreen } from './OrdersScreen';
 export { RestoreProductsScreen } from './RestoreProductsScreen';
 export { RestoreProductScreen } from './RestoreProductScreen';
+export { ImportSinglesScreen } from './ImportSinglesScreen';

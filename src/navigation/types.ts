@@ -10,6 +10,7 @@ export type RootStackParamList = {
   Orders: undefined;
   RestoreProducts: undefined;
   RestoreProduct: { productId: string };
+  ImportSingles: undefined;
 };
 
 export type DrawerStackParamList = {
@@ -20,4 +21,5 @@ export type DrawerStackParamList = {
   SettingsStack: undefined;
   OrdersStack: undefined;
   RestoreProductsStack: undefined;
+  ImportSinglesStack: undefined;
 };
