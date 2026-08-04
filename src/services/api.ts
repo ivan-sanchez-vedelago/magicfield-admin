@@ -302,6 +302,11 @@ class ApiService {
     await this.client.post(`/api/orders/${orderId}/cancel`, { isAdmin: 'true' });
   }
 
+  // Push Notifications
+  async registerPushToken(token: string, platform: string): Promise<void> {
+    await this.client.post(ENDPOINTS.PUSH.REGISTER, { token, platform });
+  }
+
   // Dashboard Stats
   async getDashboardStats(period: string = '7days') {
     const response = await this.client.get(ENDPOINTS.DASHBOARD.STATS, {

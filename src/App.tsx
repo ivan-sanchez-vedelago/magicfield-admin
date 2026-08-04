@@ -1,10 +1,15 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, SafeAreaView, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { RootNavigator } from '@navigation/RootNavigator';
+import { registerForPushNotifications } from '@services/pushNotifications';
 
 export default function App() {
+  useEffect(() => {
+    registerForPushNotifications();
+  }, []);
+
   return (
     <GestureHandlerRootView style={styles.root}>
       <SafeAreaView style={styles.safeArea}>

@@ -32,6 +32,13 @@
           "photosPermission": "The app accesses your photos to upload product images.",
           "cameraPermission": "The app accesses your camera to take product photos."
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/favicon.png",
+          "color": "#3b82f6"
+        }
       ]
     ],
     "extra": {

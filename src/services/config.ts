@@ -61,6 +61,9 @@ export const ENDPOINTS = {
   DASHBOARD: {
     STATS: '/api/admin/dashboard-stats',
   },
+  PUSH: {
+    REGISTER: '/api/push-tokens',
+  },
 };
 
 // For development, you can override the BASE_URL
