@@ -13,6 +13,7 @@ import { useDashboardStats } from '@hooks/index';
 import {
   AnalyticsStatCard,
   TopPagesCard,
+  TopProductsCard,
   ReferrersCard,
   CountriesCard,
   DeviceBreakdown,
@@ -98,7 +99,8 @@ export const DashboardScreen: React.FC<Props> = ({ navigation }) => {
                 <AnalyticsStatCard label="Page Views" value={analytics.pageViews.toLocaleString()} color="#22c55e" />
                 <AnalyticsStatCard label="Bounce Rate" value={`${analytics.bounceRate.toFixed(1)}%`} color="#f59e0b" />
               </View>
-              {analytics.topPages?.length > 0 && <TopPagesCard pages={analytics.topPages} />}
+              {analytics.topFrontPages?.length > 0 && <TopPagesCard pages={analytics.topFrontPages} />}
+              {analytics.topProducts?.length > 0 && <TopProductsCard products={analytics.topProducts} />}
               {analytics.referrers?.length > 0 && <ReferrersCard referrers={analytics.referrers} />}
               {analytics.countries?.length > 0 && <CountriesCard countries={analytics.countries} />}
               <DeviceBreakdown

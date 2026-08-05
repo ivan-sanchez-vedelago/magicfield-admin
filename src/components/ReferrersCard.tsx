@@ -6,21 +6,12 @@ interface Props {
   referrers: MetricItem[];
 }
 
-const extractDomain = (url: string): string => {
-  if (!url || url.trim() === '') return 'Directo';
-  try {
-    return new URL(url).hostname || url;
-  } catch {
-    return url;
-  }
-};
-
 export const ReferrersCard: React.FC<Props> = ({ referrers }) => (
   <View style={styles.card}>
     <Text style={styles.title}>Fuentes de tráfico</Text>
-    {referrers.slice(0, 10).map((r, i) => (
+    {referrers.map((r, i) => (
       <View key={i} style={styles.row}>
-        <Text style={styles.name} numberOfLines={1}>{extractDomain(r.x)}</Text>
+        <Text style={styles.name} numberOfLines={1}>{r.x}</Text>
         <View style={styles.badge}>
           <Text style={styles.badgeText}>{r.y}</Text>
         </View>

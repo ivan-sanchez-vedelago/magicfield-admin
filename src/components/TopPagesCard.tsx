@@ -8,8 +8,8 @@ interface Props {
 
 export const TopPagesCard: React.FC<Props> = ({ pages }) => (
   <View style={styles.card}>
-    <Text style={styles.title}>Páginas más visitadas</Text>
-    {pages.slice(0, 10).map((p, i) => (
+    <Text style={styles.title}>Páginas del sitio</Text>
+    {pages.map((p, i) => (
       <View key={i} style={styles.row}>
         <Text style={styles.rank}>{i + 1}</Text>
         <Text style={styles.name} numberOfLines={1}>{p.x}</Text>

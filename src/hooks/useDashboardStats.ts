@@ -6,11 +6,19 @@ export interface MetricItem {
   y: number;
 }
 
+export interface ProductMetricItem {
+  productId: string;
+  name: string;
+  imageUrl: string | null;
+  count: number;
+}
+
 export interface SiteAnalytics {
   pageViews: number;
   sessions: number;
   bounceRate: number;
-  topPages: MetricItem[];
+  topFrontPages: MetricItem[];
+  topProducts: ProductMetricItem[];
   referrers: MetricItem[];
   countries: MetricItem[];
   browsers: MetricItem[];

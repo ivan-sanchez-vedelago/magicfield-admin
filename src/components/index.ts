@@ -15,6 +15,7 @@ export type { CardSearchProps } from './CardSearch';
 
 export { AnalyticsStatCard } from './AnalyticsStatCard';
 export { TopPagesCard } from './TopPagesCard';
+export { TopProductsCard } from './TopProductsCard';
 export { ReferrersCard } from './ReferrersCard';
 export { CountriesCard } from './CountriesCard';
 export { DeviceBreakdown } from './DeviceBreakdown';
