@@ -37,3 +37,6 @@ dist/
 # Dependencies
 package-lock.json
 yarn.lock
+
+# Firebase
+magicfield-935bc-firebase-adminsdk-fbsvc-dbc020999b.json
