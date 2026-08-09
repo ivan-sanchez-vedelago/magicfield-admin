@@ -21,6 +21,10 @@ interface SalesAudit {
   orderId: string;
   productId: string;
   productName: string;
+  set: string | null;
+  conditionName: string | null;
+  languageName: string | null;
+  finishName: string | null;
   quantity: number;
   unitPrice: number;
   subtotal: number;
@@ -332,17 +336,27 @@ export const OrdersScreen: React.FC<Props> = ({ navigation }) => {
                     {/* Productos */}
                     <View style={styles.productsSection}>
                       <Text style={styles.sectionLabel}>PRODUCTOS</Text>
-                      {order.items.map((item) => (
-                        <View key={item.id} style={styles.productRow}>
-                          <View style={styles.productInfo}>
-                            <Text style={styles.productName}>{item.productName}</Text>
-                            <Text style={styles.productQty}>x{item.quantity}</Text>
+                      {order.items.map((item) => {
+                        const variantLabel = [item.set, item.conditionName, item.languageName, item.finishName]
+                          .filter(Boolean)
+                          .join(' · ');
+                        return (
+                          <View key={item.id} style={styles.productRow}>
+                            <View style={styles.productInfo}>
+                              <View style={{ flex: 1 }}>
+                                <Text style={styles.productName}>{item.productName}</Text>
+                                {variantLabel && (
+                                  <Text style={styles.productVariant}>{variantLabel}</Text>
+                                )}
+                              </View>
+                              <Text style={styles.productQty}>x{item.quantity}</Text>
+                            </View>
+                            <Text style={styles.productPrice}>
+                              {formatPrice(item.unitPrice)}
+                            </Text>
                           </View>
-                          <Text style={styles.productPrice}>
-                            {formatPrice(item.unitPrice)}
-                          </Text>
-                        </View>
-                      ))}
+                        );
+                      })}
                     </View>
 
                     {/* Total */}
@@ -530,7 +544,11 @@ const styles = StyleSheet.create({
   productName: {
     fontSize: 14,
     color: '#1f2937',
-    flex: 1,
+  },
+  productVariant: {
+    fontSize: 12,
+    color: '#9ca3af',
+    marginTop: 1,
   },
   productQty: {
     fontSize: 13,
