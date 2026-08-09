@@ -11,6 +11,7 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   ScrollView,
+  Modal,
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -508,24 +509,24 @@ export const CreateProductScreen = ({ navigation }: Props) => {
                 />
               </View>
 
-              <Text style={styles.chipGroupLabel}>Condición</Text>
-              <ChipRow
-                options={conditions.map(c => ({ key: String(c.id), label: c.shortName }))}
+              <SelectField
+                label="Condición"
+                options={conditions.map(c => ({ key: String(c.id), label: c.longName }))}
                 selectedKey={conditionId !== null ? String(conditionId) : null}
                 onSelect={(key) => setConditionId(Number(key))}
                 disabled={loading}
               />
 
-              <Text style={styles.chipGroupLabel}>Idioma</Text>
-              <ChipRow
-                options={languages.map(l => ({ key: String(l.id), label: l.shortName }))}
+              <SelectField
+                label="Idioma"
+                options={languages.map(l => ({ key: String(l.id), label: l.longName }))}
                 selectedKey={languageId !== null ? String(languageId) : null}
                 onSelect={(key) => setLanguageId(Number(key))}
                 disabled={loading}
               />
 
-              <Text style={styles.chipGroupLabel}>Finish</Text>
-              <ChipRow
+              <SelectField
+                label="Finish"
                 options={availableFinishes.map(f => ({
                   key: f,
                   label: finishes.find(cf => cf.shortName === f)?.longName ?? f,
@@ -556,37 +557,78 @@ export const CreateProductScreen = ({ navigation }: Props) => {
   );
 };
 
-interface ChipOption {
+interface SelectOption {
   key: string;
   label: string;
 }
 
-const ChipRow = ({
+// Input que al tocarlo despliega un modal con la lista de opciones (en vez de una fila de
+// chips) -- el valor elegido queda mostrado como texto legible dentro del campo cerrado.
+const SelectField = ({
+  label,
   options,
   selectedKey,
   onSelect,
   disabled,
 }: {
-  options: ChipOption[];
+  label: string;
+  options: SelectOption[];
   selectedKey: string | null;
   onSelect: (key: string) => void;
   disabled?: boolean;
-}) => (
-  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow}>
-    {options.map(opt => (
+}) => {
+  const [open, setOpen] = useState(false);
+  const selectedLabel = options.find(o => o.key === selectedKey)?.label;
+
+  return (
+    <View style={styles.selectGroup}>
+      <Text style={styles.chipGroupLabel}>{label}</Text>
       <TouchableOpacity
-        key={opt.key}
-        style={[styles.chip, selectedKey === opt.key && styles.chipActive]}
-        onPress={() => onSelect(opt.key)}
+        style={[styles.input, styles.selectInput, disabled && styles.disabled]}
+        onPress={() => setOpen(true)}
         disabled={disabled}
       >
-        <Text style={[styles.chipText, selectedKey === opt.key && styles.chipTextActive]}>
-          {opt.label}
+        <Text style={selectedLabel ? styles.selectValueText : styles.selectPlaceholderText}>
+          {selectedLabel ?? 'Seleccionar...'}
         </Text>
+        <Text style={styles.selectChevron}>▾</Text>
       </TouchableOpacity>
-    ))}
-  </ScrollView>
-);
+
+      <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
+        <TouchableOpacity
+          style={styles.selectModalBackdrop}
+          activeOpacity={1}
+          onPress={() => setOpen(false)}
+        >
+          <View style={styles.selectModalContent}>
+            <Text style={styles.selectModalTitle}>{label}</Text>
+            <ScrollView>
+              {options.map(opt => (
+                <TouchableOpacity
+                  key={opt.key}
+                  style={[styles.selectOption, opt.key === selectedKey && styles.selectOptionActive]}
+                  onPress={() => {
+                    onSelect(opt.key);
+                    setOpen(false);
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.selectOptionText,
+                      opt.key === selectedKey && styles.selectOptionTextActive,
+                    ]}
+                  >
+                    {opt.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -719,29 +761,62 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     marginTop: 4,
   },
-  chipRow: {
-    marginBottom: 8,
+  selectGroup: {
+    marginBottom: 4,
   },
-  chip: {
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    marginRight: 8,
-    backgroundColor: '#fff',
+  selectInput: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
-  chipActive: {
-    backgroundColor: '#dbeafe',
-    borderColor: '#3b82f6',
-  },
-  chipText: {
+  selectValueText: {
     fontSize: 13,
+    color: '#1f2937',
     fontWeight: '600',
-    color: '#6b7280',
   },
-  chipTextActive: {
+  selectPlaceholderText: {
+    fontSize: 13,
+    color: '#9ca3af',
+  },
+  selectChevron: {
+    fontSize: 13,
+    color: '#9ca3af',
+  },
+  selectModalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    padding: 24,
+  },
+  selectModalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    maxHeight: '70%',
+    paddingVertical: 8,
+  },
+  selectModalTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#1f2937',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  selectOption: {
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+  },
+  selectOptionActive: {
+    backgroundColor: '#eff6ff',
+  },
+  selectOptionText: {
+    fontSize: 14,
+    color: '#374151',
+  },
+  selectOptionTextActive: {
     color: '#3b82f6',
+    fontWeight: '700',
   },
   createSection: {
     marginHorizontal: 16,
