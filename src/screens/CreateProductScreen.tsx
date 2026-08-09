@@ -11,7 +11,6 @@ import {
   TouchableWithoutFeedback,
   Keyboard,
   ScrollView,
-  Modal,
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
@@ -562,8 +561,9 @@ interface SelectOption {
   label: string;
 }
 
-// Input que al tocarlo despliega un modal con la lista de opciones (en vez de una fila de
-// chips) -- el valor elegido queda mostrado como texto legible dentro del campo cerrado.
+// Mismo patrón que el dropdown de CardSearch (lista inline debajo del input, no un modal
+// superpuesto): tocar el input despliega la lista de opciones justo debajo, tocar de nuevo
+// la cierra. No es editable como texto -- solo se puede elegir una opción de la lista.
 const SelectField = ({
   label,
   options,
@@ -585,47 +585,42 @@ const SelectField = ({
       <Text style={styles.chipGroupLabel}>{label}</Text>
       <TouchableOpacity
         style={[styles.input, styles.selectInput, disabled && styles.disabled]}
-        onPress={() => setOpen(true)}
+        onPress={() => setOpen(o => !o)}
         disabled={disabled}
       >
         <Text style={selectedLabel ? styles.selectValueText : styles.selectPlaceholderText}>
           {selectedLabel ?? 'Seleccionar...'}
         </Text>
-        <Text style={styles.selectChevron}>▾</Text>
+        <Text style={styles.selectChevron}>{open ? '▴' : '▾'}</Text>
       </TouchableOpacity>
 
-      <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
-        <TouchableOpacity
-          style={styles.selectModalBackdrop}
-          activeOpacity={1}
-          onPress={() => setOpen(false)}
+      {open && (
+        <ScrollView
+          style={styles.selectOptionsList}
+          nestedScrollEnabled
+          keyboardShouldPersistTaps="handled"
         >
-          <View style={styles.selectModalContent}>
-            <Text style={styles.selectModalTitle}>{label}</Text>
-            <ScrollView>
-              {options.map(opt => (
-                <TouchableOpacity
-                  key={opt.key}
-                  style={[styles.selectOption, opt.key === selectedKey && styles.selectOptionActive]}
-                  onPress={() => {
-                    onSelect(opt.key);
-                    setOpen(false);
-                  }}
-                >
-                  <Text
-                    style={[
-                      styles.selectOptionText,
-                      opt.key === selectedKey && styles.selectOptionTextActive,
-                    ]}
-                  >
-                    {opt.label}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </View>
-        </TouchableOpacity>
-      </Modal>
+          {options.map(opt => (
+            <TouchableOpacity
+              key={opt.key}
+              style={[styles.selectOption, opt.key === selectedKey && styles.selectOptionActive]}
+              onPress={() => {
+                onSelect(opt.key);
+                setOpen(false);
+              }}
+            >
+              <Text
+                style={[
+                  styles.selectOptionText,
+                  opt.key === selectedKey && styles.selectOptionTextActive,
+                ]}
+              >
+                {opt.label}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      )}
     </View>
   );
 };
@@ -782,26 +777,13 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#9ca3af',
   },
-  selectModalBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'center',
-    padding: 24,
-  },
-  selectModalContent: {
+  selectOptionsList: {
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 8,
+    maxHeight: 220,
     backgroundColor: '#fff',
-    borderRadius: 12,
-    maxHeight: '70%',
-    paddingVertical: 8,
-  },
-  selectModalTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#1f2937',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    marginBottom: 8,
   },
   selectOption: {
     paddingHorizontal: 16,
