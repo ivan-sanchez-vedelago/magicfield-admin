@@ -325,23 +325,23 @@ export const EditProductScreen = ({
           </View>
 
           <View style={styles.row}>
-            {product.condition && (
+            {product.conditionName && (
               <View style={[styles.infoBox, styles.flex1]}>
                 <Text style={styles.label}>Condición</Text>
-                <Text style={styles.infoValue}>{product.condition}</Text>
+                <Text style={styles.infoValue}>{product.conditionName}</Text>
               </View>
             )}
-            {product.language && (
+            {product.languageName && (
               <View style={[styles.infoBox, styles.flex1, styles.marginLeft]}>
                 <Text style={styles.label}>Idioma</Text>
-                <Text style={styles.infoValue}>{product.language}</Text>
+                <Text style={styles.infoValue}>{product.languageName}</Text>
               </View>
             )}
           </View>
 
-          {product.isFoil && (
+          {product.finishShortName && product.finishShortName !== 'NONFOIL' && (
             <View style={styles.foilBadge}>
-              <Text style={styles.foilBadgeText}>✨ Foil</Text>
+              <Text style={styles.foilBadgeText}>✨ {product.finishName ?? product.finishShortName}</Text>
             </View>
           )}
         </View>

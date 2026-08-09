@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useEffect } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import {
   View,
@@ -15,7 +15,7 @@ import {
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { ImageUploader, ImageUploadResult, CardSearch, StockStepper } from '@components';
-import { useCreateProduct, useCategories } from '@hooks';
+import { useCreateProduct, useCategories, useConditions, useLanguages, useFinishes } from '@hooks';
 import { apiService } from '@services/api';
 import { ScryfallCard, Category } from '@types';
 import type { RootStackParamList } from '@navigation/types';
@@ -25,6 +25,9 @@ type Props = NativeStackScreenProps<RootStackParamList, 'CreateProduct'>;
 
 export const CreateProductScreen = ({ navigation }: Props) => {
   const { categories, loading: loadingCategories } = useCategories();
+  const { conditions } = useConditions();
+  const { languages } = useLanguages();
+  const { finishes } = useFinishes();
 
   // Category tree selection state
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
@@ -96,11 +99,26 @@ export const CreateProductScreen = ({ navigation }: Props) => {
   const [cardName, setCardName] = useState('');
   const [set, setSet] = useState('');
   const [collectorNumber, setCollectorNumber] = useState('');
-  const [condition, setCondition] = useState('');
-  const [language, setLanguage] = useState('');
-  const [hasFoil, setHasFoil] = useState(false);
-  const [isFoil, setIsFoil] = useState(false);
+  const [conditionId, setConditionId] = useState<number | null>(null);
+  const [languageId, setLanguageId] = useState<number | null>(null);
+  const [availableFinishes, setAvailableFinishes] = useState<string[]>(['NONFOIL']);
+  const [finish, setFinish] = useState('NONFOIL');
+  const [priceUsdEtched, setPriceUsdEtched] = useState('');
   const [scryfallId, setScryfallId] = useState('');
+
+  // Apenas cargan las listas, se preselecciona el primer registro de cada una
+  // (menor id -- NM e English con la semilla actual) en vez de un string fijo.
+  useEffect(() => {
+    if (conditions.length > 0 && conditionId === null) {
+      setConditionId(conditions[0].id);
+    }
+  }, [conditions, conditionId]);
+
+  useEffect(() => {
+    if (languages.length > 0 && languageId === null) {
+      setLanguageId(languages[0].id);
+    }
+  }, [languages, languageId]);
 
   // Sealed-specific fields
   const [releaseDate, setReleaseDate] = useState('');
@@ -123,10 +141,11 @@ export const CreateProductScreen = ({ navigation }: Props) => {
     setCardName('');
     setSet('');
     setCollectorNumber('');
-    setCondition('');
-    setLanguage('');
-    setIsFoil(false);
-    setHasFoil(false);
+    setConditionId(null);
+    setLanguageId(null);
+    setAvailableFinishes(['NONFOIL']);
+    setFinish('NONFOIL');
+    setPriceUsdEtched('');
     setScryfallId('');
 
     // sealed
@@ -142,15 +161,21 @@ export const CreateProductScreen = ({ navigation }: Props) => {
   );
 
   const { execute: createProduct, loading } = useCreateProduct((product) => {
-    Alert.alert('Éxito', 'Producto creado correctamente', [
-      {
-        text: 'OK',
-        onPress: () => {
-          resetForm();
-          navigation.goBack();
+    Alert.alert(
+      'Éxito',
+      product.merged
+        ? 'Ya existía ese producto: se sumó el stock al existente'
+        : 'Producto creado correctamente',
+      [
+        {
+          text: 'OK',
+          onPress: () => {
+            resetForm();
+            navigation.goBack();
+          },
         },
-      },
-    ]);
+      ]
+    );
   });
 
   const getPrice = (usd: string | undefined) => {
@@ -167,18 +192,23 @@ export const CreateProductScreen = ({ navigation }: Props) => {
     return String(price);
   };
 
-  const handleFoilChange = () => {
-    if(hasFoil && !isFoil) {
-      setPrice(priceUsdFoil);
-    } else {
-      setPrice(priceUsd);
-    }
-    setIsFoil(!isFoil);
+  // Precio estimado para mostrar en el form según el finish elegido -- el precio real
+  // que termina quedando en el producto lo recalcula el backend contra Scryfall al crear.
+  const priceForFinish = (f: string, usd = priceUsd, foil = priceUsdFoil, etched = priceUsdEtched) => {
+    if (f === 'ETCHED') return etched || foil;
+    if (f === 'FOIL' || f === 'GLOSSY') return foil;
+    return usd || foil; // fallback: cartas solo-foil no tienen precio nonfoil
+  };
+
+  const handleFinishChange = (newFinish: string) => {
+    setFinish(newFinish);
+    setPrice(priceForFinish(newFinish));
   };
 
   const handleSelectCard = (card: ScryfallCard) => {
     const newPriceUsd = getPrice(card.prices?.usd);
     const newPriceUsdFoil = getPrice(card.prices?.usd_foil);
+    const newPriceUsdEtched = getPrice(card.prices?.usd_etched);
 
     setName(card.name);
     setCardName(card.name);
@@ -191,22 +221,20 @@ export const CreateProductScreen = ({ navigation }: Props) => {
       card.card_faces?.map(f => f.oracle_text).filter(Boolean).join('\n---\n') ||
       ''
     );
-    setHasFoil(card.foil || false);
     setPriceUsd(newPriceUsd);
     setPriceUsdFoil(newPriceUsdFoil);
-    if (card.foil && isFoil) {
-      setPrice(newPriceUsdFoil);
-    } else if (newPriceUsd) {
-      setIsFoil(false);
-      setPrice(newPriceUsd);
-    } else {
-      // solo tiene precio foil (carta solo-foil)
-      setIsFoil(true);
-      setPrice(newPriceUsdFoil);
-    }
+    setPriceUsdEtched(newPriceUsdEtched);
+
+    // El array `finishes` de Scryfall es la fuente real de qué acabados existen para
+    // esta impresión puntual (fallback a foil/nonfoil por si algún día no viniera).
+    const finishes = card.finishes && card.finishes.length > 0
+      ? card.finishes.map(f => f.toUpperCase())
+      : (card.foil ? ['NONFOIL', 'FOIL'] : ['NONFOIL']);
+    const defaultFinish = finishes.includes('NONFOIL') ? 'NONFOIL' : finishes[0];
+    setAvailableFinishes(finishes);
+    setFinish(defaultFinish);
+    setPrice(priceForFinish(defaultFinish, newPriceUsd, newPriceUsdFoil, newPriceUsdEtched));
     setStock('1');
-    setCondition('Near Mint');
-    setLanguage('English');
 
     const cardImages = getAllCardImages(card);
     if (cardImages.length > 0) {
@@ -238,9 +266,15 @@ export const CreateProductScreen = ({ navigation }: Props) => {
       return;
     }
 
+    const selectedFinishId = finishes.find(f => f.shortName === finish)?.id;
+
     if (isSingleType) {
       if (!cardName.trim() || !set.trim()) {
         Alert.alert('Error', 'Para singles debes especificar la carta y el set');
+        return;
+      }
+      if (conditionId === null || languageId === null || selectedFinishId === undefined) {
+        Alert.alert('Error', 'Debes seleccionar condición, idioma y finish');
         return;
       }
     }
@@ -259,9 +293,9 @@ export const CreateProductScreen = ({ navigation }: Props) => {
         productData.cardName = cardName.trim();
         productData.set = set.trim();
         productData.collectorNumber = collectorNumber.trim();
-        if (condition) productData.condition = condition;
-        if (language) productData.language = language;
-        productData.isFoil = isFoil;
+        productData.conditionId = conditionId;
+        productData.languageId = languageId;
+        productData.finishId = selectedFinishId;
         if (scryfallId) productData.scryfallId = scryfallId;
       }
 
@@ -474,34 +508,32 @@ export const CreateProductScreen = ({ navigation }: Props) => {
                 />
               </View>
 
-              <View style={styles.row}>
-                <TextInput
-                  style={[styles.input, styles.flex1]}
-                  placeholder="Condición"
-                  placeholderTextColor="#9ca3af"
-                  value={condition}
-                  onChangeText={setCondition}
-                  editable={!loading}
-                />
-                <TextInput
-                  style={[styles.input, styles.flex1, styles.marginLeft]}
-                  placeholder="Idioma"
-                  placeholderTextColor="#9ca3af"
-                  value={language}
-                  onChangeText={setLanguage}
-                  editable={!loading}
-                />
-              </View>
+              <Text style={styles.chipGroupLabel}>Condición</Text>
+              <ChipRow
+                options={conditions.map(c => ({ key: String(c.id), label: c.shortName }))}
+                selectedKey={conditionId !== null ? String(conditionId) : null}
+                onSelect={(key) => setConditionId(Number(key))}
+                disabled={loading}
+              />
 
-              <TouchableOpacity
-                style={[styles.input, styles.foilToggle, isFoil && styles.foilActive, !hasFoil && styles.disabled]}
-                onPress={handleFoilChange}
-                disabled={loading || !hasFoil}
-              >
-                <Text style={styles.foilToggleText}>
-                  {isFoil ? '✓' : '○'} Foil
-                </Text>
-              </TouchableOpacity>
+              <Text style={styles.chipGroupLabel}>Idioma</Text>
+              <ChipRow
+                options={languages.map(l => ({ key: String(l.id), label: l.shortName }))}
+                selectedKey={languageId !== null ? String(languageId) : null}
+                onSelect={(key) => setLanguageId(Number(key))}
+                disabled={loading}
+              />
+
+              <Text style={styles.chipGroupLabel}>Finish</Text>
+              <ChipRow
+                options={availableFinishes.map(f => ({
+                  key: f,
+                  label: finishes.find(cf => cf.shortName === f)?.longName ?? f,
+                }))}
+                selectedKey={finish}
+                onSelect={handleFinishChange}
+                disabled={loading}
+              />
             </View>
           )}
 
@@ -523,6 +555,38 @@ export const CreateProductScreen = ({ navigation }: Props) => {
     </TouchableWithoutFeedback>
   );
 };
+
+interface ChipOption {
+  key: string;
+  label: string;
+}
+
+const ChipRow = ({
+  options,
+  selectedKey,
+  onSelect,
+  disabled,
+}: {
+  options: ChipOption[];
+  selectedKey: string | null;
+  onSelect: (key: string) => void;
+  disabled?: boolean;
+}) => (
+  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chipRow}>
+    {options.map(opt => (
+      <TouchableOpacity
+        key={opt.key}
+        style={[styles.chip, selectedKey === opt.key && styles.chipActive]}
+        onPress={() => onSelect(opt.key)}
+        disabled={disabled}
+      >
+        <Text style={[styles.chipText, selectedKey === opt.key && styles.chipTextActive]}>
+          {opt.label}
+        </Text>
+      </TouchableOpacity>
+    ))}
+  </ScrollView>
+);
 
 const styles = StyleSheet.create({
   container: {
@@ -648,19 +712,36 @@ const styles = StyleSheet.create({
   rowInput: {
     height: 42,
   },
-  foilToggle: {
-    backgroundColor: '#f3f4f6',
-    justifyContent: 'center',
+  chipGroupLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#6b7280',
+    marginBottom: 6,
+    marginTop: 4,
   },
-  foilActive: {
+  chipRow: {
+    marginBottom: 8,
+  },
+  chip: {
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    marginRight: 8,
+    backgroundColor: '#fff',
+  },
+  chipActive: {
     backgroundColor: '#dbeafe',
     borderColor: '#3b82f6',
   },
-  foilToggleText: {
-    fontSize: 14,
+  chipText: {
+    fontSize: 13,
     fontWeight: '600',
+    color: '#6b7280',
+  },
+  chipTextActive: {
     color: '#3b82f6',
-    textAlign: 'center',
   },
   createSection: {
     marginHorizontal: 16,

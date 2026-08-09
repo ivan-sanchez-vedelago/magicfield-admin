@@ -165,22 +165,22 @@ export const ProductDetailScreen: React.FC<Props> = ({
             <DetailRow label="Set" value={product.set} />
             <Divider />
             <DetailRow label="Collector #" value={product.collectorNumber} />
-            {product.condition && (
+            {product.conditionName && (
               <>
                 <Divider />
-                <DetailRow label="Condición" value={product.condition} />
+                <DetailRow label="Condición" value={product.conditionName} />
               </>
             )}
-            {product.language && (
+            {product.languageName && (
               <>
                 <Divider />
-                <DetailRow label="Idioma" value={product.language} />
+                <DetailRow label="Idioma" value={product.languageName} />
               </>
             )}
-            {product.isFoil && (
+            {product.finishShortName && product.finishShortName !== 'NONFOIL' && (
               <>
                 <Divider />
-                <DetailRow label="Foil" value="✨ Sí" />
+                <DetailRow label="Finish" value={`✨ ${product.finishName ?? product.finishShortName}`} />
               </>
             )}
           </View>

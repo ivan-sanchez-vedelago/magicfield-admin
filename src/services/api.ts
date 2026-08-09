@@ -15,6 +15,9 @@ import {
   Banner,
   BannerRequest,
   Category,
+  Condition,
+  Language,
+  Finish,
   CsvImportResult,
 } from '@types';
 
@@ -65,6 +68,22 @@ class ApiService {
   // Categories
   async getCategories(): Promise<Category[]> {
     const response = await this.client.get<Category[]>(ENDPOINTS.CATEGORIES.LIST);
+    return response.data;
+  }
+
+  // Condiciones e idiomas de singles
+  async getConditions(): Promise<Condition[]> {
+    const response = await this.client.get<Condition[]>(ENDPOINTS.CONDITIONS.LIST);
+    return response.data;
+  }
+
+  async getLanguages(): Promise<Language[]> {
+    const response = await this.client.get<Language[]>(ENDPOINTS.LANGUAGES.LIST);
+    return response.data;
+  }
+
+  async getFinishes(): Promise<Finish[]> {
+    const response = await this.client.get<Finish[]>(ENDPOINTS.FINISHES.LIST);
     return response.data;
   }
 

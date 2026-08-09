@@ -43,6 +43,15 @@ export const ENDPOINTS = {
   CATEGORIES: {
     LIST: '/api/categories',
   },
+  CONDITIONS: {
+    LIST: '/api/conditions',
+  },
+  LANGUAGES: {
+    LIST: '/api/languages',
+  },
+  FINISHES: {
+    LIST: '/api/finishes',
+  },
   IMAGES: {
     UPLOAD: '/api/images/upload',
     DELETE: (id: string) => `/api/images/${id}`,

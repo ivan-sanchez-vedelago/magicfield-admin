@@ -8,6 +8,25 @@ export interface Category {
   parentId: number;
 }
 
+export interface Condition {
+  id: number;
+  shortName: string;
+  longName: string;
+  priceMultiplier: number;
+}
+
+export interface Language {
+  id: number;
+  shortName: string;
+  longName: string;
+}
+
+export interface Finish {
+  id: number;
+  shortName: string;
+  longName: string;
+}
+
 export interface BaseProduct {
   id: string;
   name: string;
@@ -18,6 +37,9 @@ export interface BaseProduct {
   imageUrls?: string[];
   createdAt?: string;
   updatedAt?: string;
+  // Solo viene lleno en la respuesta de crear un producto: true si en vez de crear una
+  // fila nueva se sumó el stock pedido a una variante ya existente.
+  merged?: boolean;
 }
 
 export interface SingleProduct extends BaseProduct {
@@ -25,9 +47,13 @@ export interface SingleProduct extends BaseProduct {
   cardName: string;
   set: string;
   collectorNumber: string;
-  condition?: string;
-  language?: string;
-  isFoil?: boolean;
+  conditionId?: number;
+  conditionName?: string;
+  languageId?: number;
+  languageName?: string;
+  finishId?: number;
+  finishShortName?: string;
+  finishName?: string;
   scryfallId?: string;
 }
 
@@ -110,6 +136,9 @@ export interface ScryfallCard {
   oracle_text?: string;
   foil?: boolean;
   nonfoil?: boolean;
+  // Scryfall real: 'nonfoil' | 'foil' | 'etched' | 'glossy' — reemplaza a foil/nonfoil
+  // como fuente de verdad de qué finishes existen para esta impresión puntual.
+  finishes?: string[];
   image_uris?: {
     small: string;
     normal: string;
@@ -119,6 +148,7 @@ export interface ScryfallCard {
   prices?: {
     usd?: string;
     usd_foil?: string;
+    usd_etched?: string;
   };
   card_faces?: {
     name?: string;
