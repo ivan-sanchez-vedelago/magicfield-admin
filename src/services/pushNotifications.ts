@@ -1,15 +1,17 @@
 import { Platform } from 'react-native';
-import * as Device from 'expo-device';
-import * as Notifications from 'expo-notifications';
 import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { apiService } from './api';
 
 // Desde el SDK 53, expo-notifications no soporta push remoto dentro de Expo Go (solo en
-// dev builds/standalone armados con EAS) y tira error apenas se llama cualquier API suya.
-// Como para desarrollar seguimos usando Expo Go, ni siquiera tocamos el módulo en ese caso.
+// dev builds/standalone armados con EAS). El warning lo tira el propio módulo apenas se
+// carga (no al llamar una de sus funciones), así que la guarda tiene que estar en el
+// import: por eso NO hay un `import * as Notifications from 'expo-notifications'` estático
+// arriba -- eso ya alcanzaría para dispararlo -- sino un require() adentro del `if`, para
+// que Expo Go ni siquiera llegue a cargar el módulo.
 const isExpoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
 
 if (!isExpoGo) {
+  const Notifications = require('expo-notifications');
   Notifications.setNotificationHandler({
     handleNotification: async () => ({
       shouldShowBanner: true,
@@ -26,6 +28,9 @@ export async function registerForPushNotifications(): Promise<void> {
     console.log('Expo Go no soporta push remoto (SDK 53+): se omite el registro. Para probar notificaciones usá un dev build de EAS.');
     return;
   }
+
+  const Device = require('expo-device');
+  const Notifications = require('expo-notifications');
 
   if (!Device.isDevice) {
     console.log('Las notificaciones push requieren un dispositivo físico.');
