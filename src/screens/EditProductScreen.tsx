@@ -568,11 +568,11 @@ const styles = StyleSheet.create({
     borderColor: '#e5e7eb',
   },
   label: {
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '600',
-    color: '#9ca3af',
-    textTransform: 'uppercase',
-    marginBottom: 4,
+    color: '#6b7280',
+    marginBottom: 6,
+    marginTop: 4,
   },
   infoValue: {
     fontSize: 13,
