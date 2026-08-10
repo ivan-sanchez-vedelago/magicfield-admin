@@ -22,6 +22,7 @@ interface SalesAudit {
   productId: string;
   productName: string;
   set: string | null;
+  collectorNumber: string | null;
   conditionName: string | null;
   languageName: string | null;
   finishName: string | null;
@@ -337,7 +338,13 @@ export const OrdersScreen: React.FC<Props> = ({ navigation }) => {
                     <View style={styles.productsSection}>
                       <Text style={styles.sectionLabel}>PRODUCTOS</Text>
                       {order.items.map((item) => {
-                        const variantLabel = [item.set, item.conditionName, item.languageName, item.finishName]
+                        const variantLabel = [
+                          item.set,
+                          item.collectorNumber ? `#${item.collectorNumber}` : null,
+                          item.conditionName,
+                          item.languageName,
+                          item.finishName,
+                        ]
                           .filter(Boolean)
                           .join(' · ');
                         return (
