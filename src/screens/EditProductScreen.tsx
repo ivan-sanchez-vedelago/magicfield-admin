@@ -284,70 +284,82 @@ export const EditProductScreen = ({
         </View>
       )}
 
-      {/* Product Info */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Información del Producto</Text>
+      {/* Product Info -- solo para no-singles; los singles tienen su propia sección más
+          abajo con Nombre inmutable, así que no tiene sentido repetir "Información del
+          Producto" con un Nombre editable duplicado. */}
+      {!isSingleType && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Información del Producto</Text>
 
-        <View style={styles.infoBox}>
-          <Text style={styles.label}>Tipo</Text>
-          <Text style={styles.infoValue}>
-            {product.type.toUpperCase()}
-          </Text>
-        </View>
+          <View style={styles.infoBox}>
+            <Text style={styles.label}>Tipo</Text>
+            <Text style={styles.infoValue}>
+              {product.type.toUpperCase()}
+            </Text>
+          </View>
 
-        <TextInput
-          style={styles.input}
-          placeholder="Nombre del producto"
-          value={name}
-          onChangeText={(text) => {
-            setName(text);
-            handleFieldChange();
-          }}
-          editable={!updateLoading}
-        />
-
-        <TextInput
-          style={[styles.input, styles.multilineInput]}
-          placeholder="Descripción"
-          value={description}
-          onChangeText={(text) => {
-            setDescription(text);
-            handleFieldChange();
-          }}
-          multiline
-          numberOfLines={3}
-          editable={!updateLoading}
-        />
-
-        <View style={styles.row}>
           <TextInput
-            style={[styles.input, styles.flex1, styles.rowInput]}
-            placeholder="Precio"
-            value={price}
+            style={styles.input}
+            placeholder="Nombre del producto"
+            value={name}
             onChangeText={(text) => {
-              setPrice(text);
-              handleFieldChange();
-            }}
-            keyboardType="decimal-pad"
-            editable={!updateLoading}
-          />
-          <StockStepper
-            style={[styles.flex1, styles.marginLeft, styles.rowInput]}
-            value={stock}
-            placeholder="Stock"
-            onChangeValue={(text) => {
-              setStock(text);
+              setName(text);
               handleFieldChange();
             }}
             editable={!updateLoading}
           />
-        </View>
-      </View>
 
-      {/* Type-specific Info */}
+          <TextInput
+            style={[styles.input, styles.multilineInput]}
+            placeholder="Descripción"
+            value={description}
+            onChangeText={(text) => {
+              setDescription(text);
+              handleFieldChange();
+            }}
+            multiline
+            numberOfLines={3}
+            editable={!updateLoading}
+          />
+
+          <View style={styles.row}>
+            <TextInput
+              style={[styles.input, styles.flex1, styles.rowInput]}
+              placeholder="Precio"
+              value={price}
+              onChangeText={(text) => {
+                setPrice(text);
+                handleFieldChange();
+              }}
+              keyboardType="decimal-pad"
+              editable={!updateLoading}
+            />
+            <StockStepper
+              style={[styles.flex1, styles.marginLeft, styles.rowInput]}
+              value={stock}
+              placeholder="Stock"
+              onChangeValue={(text) => {
+                setStock(text);
+                handleFieldChange();
+              }}
+              editable={!updateLoading}
+            />
+          </View>
+        </View>
+      )}
+
+      {/* Info de la carta -- todo en una sola sección para singles: Tipo y Nombre quedan
+          inmutables (mismo estilo que ya tenían), Set/Collector # van antes de la
+          Descripción, y cada campo ahora tiene su label (antes varios solo se distinguían
+          por el placeholder, que desaparece apenas el campo tiene un valor cargado). */}
       {isSingleType && 'set' in product && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Información de la Carta</Text>
+
+          <View style={styles.infoBox}>
+            <Text style={styles.label}>Tipo</Text>
+            <Text style={styles.infoValue}>{product.type.toUpperCase()}</Text>
+          </View>
 
           <View style={styles.infoBox}>
             <Text style={styles.label}>Nombre de la Carta</Text>
@@ -355,26 +367,76 @@ export const EditProductScreen = ({
           </View>
 
           <View style={styles.row}>
-            <TextInput
-              style={[styles.input, styles.flex1]}
-              placeholder="Set"
-              value={set}
-              onChangeText={(text) => {
-                setSet(text);
-                handleFieldChange();
-              }}
-              editable={!updateLoading}
-            />
-            <TextInput
-              style={[styles.input, styles.flex1, styles.marginLeft]}
-              placeholder="Collector #"
-              value={collectorNumber}
-              onChangeText={(text) => {
-                setCollectorNumber(text);
-                handleFieldChange();
-              }}
-              editable={!updateLoading}
-            />
+            <View style={styles.flex1}>
+              <Text style={styles.label}>Set</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Set"
+                value={set}
+                onChangeText={(text) => {
+                  setSet(text);
+                  handleFieldChange();
+                }}
+                editable={!updateLoading}
+              />
+            </View>
+            <View style={[styles.flex1, styles.marginLeft]}>
+              <Text style={styles.label}>Collector #</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Collector #"
+                value={collectorNumber}
+                onChangeText={(text) => {
+                  setCollectorNumber(text);
+                  handleFieldChange();
+                }}
+                editable={!updateLoading}
+              />
+            </View>
+          </View>
+
+          <Text style={styles.label}>Descripción</Text>
+          <TextInput
+            style={[styles.input, styles.multilineInput]}
+            placeholder="Descripción"
+            value={description}
+            onChangeText={(text) => {
+              setDescription(text);
+              handleFieldChange();
+            }}
+            multiline
+            numberOfLines={3}
+            editable={!updateLoading}
+          />
+
+          <View style={styles.row}>
+            <View style={styles.flex1}>
+              <Text style={styles.label}>Precio</Text>
+              <TextInput
+                style={[styles.input, styles.rowInput]}
+                placeholder="Precio"
+                value={price}
+                onChangeText={(text) => {
+                  setPrice(text);
+                  handleFieldChange();
+                }}
+                keyboardType="decimal-pad"
+                editable={!updateLoading}
+              />
+            </View>
+            <View style={[styles.flex1, styles.marginLeft]}>
+              <Text style={styles.label}>Stock</Text>
+              <StockStepper
+                style={styles.rowInput}
+                value={stock}
+                placeholder="Stock"
+                onChangeValue={(text) => {
+                  setStock(text);
+                  handleFieldChange();
+                }}
+                editable={!updateLoading}
+              />
+            </View>
           </View>
 
           <SelectField
