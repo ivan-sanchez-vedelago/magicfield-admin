@@ -155,12 +155,12 @@ export const ProductDetailScreen: React.FC<Props> = ({
       </View>
 
       {/* Type-specific Information */}
-      {product.type === 'SIN' && 'cardName' in product && (
+      {product.type === 'SIN' && 'set' in product && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Información de la Carta</Text>
 
           <View style={styles.detailBox}>
-            <DetailRow label="Nombre de Carta" value={product.cardName} />
+            <DetailRow label="Nombre de Carta" value={product.name} />
             <Divider />
             <DetailRow label="Set" value={product.set} />
             <Divider />

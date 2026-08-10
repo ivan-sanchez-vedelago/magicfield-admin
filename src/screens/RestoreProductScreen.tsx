@@ -320,13 +320,13 @@ export const RestoreProductScreen = ({
       </View>
 
       {/* Type-specific Info */}
-      {product.type === 'SIN' && 'cardName' in product && (
+      {product.type === 'SIN' && 'set' in product && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Información de la Carta</Text>
 
           <View style={styles.infoBox}>
             <Text style={styles.label}>Nombre de la Carta</Text>
-            <Text style={styles.infoValue}>{product.cardName}</Text>
+            <Text style={styles.infoValue}>{product.name}</Text>
           </View>
 
           <View style={styles.row}>

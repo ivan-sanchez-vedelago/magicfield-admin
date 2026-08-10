@@ -59,7 +59,11 @@ export const EditProductScreen = ({
   const [languageId, setLanguageId] = useState<number | null>(null);
   const [finish, setFinish] = useState<string | null>(null);
 
-  const isSingleType = !!product && product.type === 'SIN' && 'cardName' in product;
+  // 'set' (no 'cardName': ProductResponse nunca manda ese campo -- chequear contra él
+  // siempre daba false y por eso esta sección nunca se mostraba) es un campo real que sí
+  // viene siempre para singles, así que sirve tanto para angostar el tipo en TS como para
+  // el chequeo en runtime.
+  const isSingleType = !!product && product.type === 'SIN' && 'set' in product;
 
   useEffect(() => {
     if (product) {
@@ -68,7 +72,7 @@ export const EditProductScreen = ({
       setPrice(product.price.toString());
       setStock(product.stock.toString());
 
-      if (product.type === 'SIN' && 'cardName' in product) {
+      if (product.type === 'SIN' && 'set' in product) {
         setSet(product.set ?? '');
         setCollectorNumber(product.collectorNumber ?? '');
         setConditionId(product.conditionId ?? null);
@@ -341,13 +345,13 @@ export const EditProductScreen = ({
       </View>
 
       {/* Type-specific Info */}
-      {isSingleType && 'cardName' in product && (
+      {isSingleType && 'set' in product && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Información de la Carta</Text>
 
           <View style={styles.infoBox}>
             <Text style={styles.label}>Nombre de la Carta</Text>
-            <Text style={styles.infoValue}>{product.cardName}</Text>
+            <Text style={styles.infoValue}>{product.name}</Text>
           </View>
 
           <View style={styles.row}>

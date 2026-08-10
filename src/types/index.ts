@@ -44,7 +44,6 @@ export interface BaseProduct {
 
 export interface SingleProduct extends BaseProduct {
   type: 'SIN';
-  cardName: string;
   set: string;
   collectorNumber: string;
   conditionId?: number;
