@@ -13,6 +13,9 @@ export type { ImageUploaderProps, ImageUploadResult } from './ImageUploader';
 export { CardSearch } from './CardSearch';
 export type { CardSearchProps } from './CardSearch';
 
+export { SelectField } from './SelectField';
+export type { SelectFieldProps, SelectOption } from './SelectField';
+
 export { AnalyticsStatCard } from './AnalyticsStatCard';
 export { TopPagesCard } from './TopPagesCard';
 export { TopProductsCard } from './TopProductsCard';

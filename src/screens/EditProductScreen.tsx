@@ -13,8 +13,8 @@ import {
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { ImageUploader, ImageUploadResult, StockStepper } from '@components';
-import { useProductById, useUpdateProduct } from '@hooks';
+import { ImageUploader, ImageUploadResult, StockStepper, SelectField } from '@components';
+import { useProductById, useUpdateProduct, useConditions, useLanguages, useFinishes } from '@hooks';
 import { apiService } from '@services/api';
 import { Product, ProductImage } from '@types';
 import type { RootStackParamList } from '@navigation/types';
@@ -27,6 +27,9 @@ export const EditProductScreen = ({
 }: Props) => {
   const { productId } = route.params;
   const { product, loading: loadingProduct, error } = useProductById(productId);
+  const { conditions } = useConditions();
+  const { languages } = useLanguages();
+  const { finishes } = useFinishes();
   const { execute: updateProduct, loading: updateLoading } = useUpdateProduct(
     () => {
       Alert.alert('Éxito', 'Producto actualizado correctamente', [
@@ -48,12 +51,31 @@ export const EditProductScreen = ({
   const [loadingImages, setLoadingImages] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
 
+  // Single-specific fields -- antes solo se mostraban de solo lectura, ni siquiera se
+  // mandaban al actualizar (update() en el backend los ignoraba por completo).
+  const [set, setSet] = useState('');
+  const [collectorNumber, setCollectorNumber] = useState('');
+  const [conditionId, setConditionId] = useState<number | null>(null);
+  const [languageId, setLanguageId] = useState<number | null>(null);
+  const [finish, setFinish] = useState<string | null>(null);
+
+  const isSingleType = !!product && product.type === 'SIN' && 'cardName' in product;
+
   useEffect(() => {
     if (product) {
       setName(product.name);
       setDescription(product.description);
       setPrice(product.price.toString());
       setStock(product.stock.toString());
+
+      if (product.type === 'SIN' && 'cardName' in product) {
+        setSet(product.set ?? '');
+        setCollectorNumber(product.collectorNumber ?? '');
+        setConditionId(product.conditionId ?? null);
+        setLanguageId(product.languageId ?? null);
+        setFinish(product.finishShortName ?? null);
+      }
+
       setHasChanges(false);
       loadProductImages(product.id);
     }
@@ -116,14 +138,29 @@ export const EditProductScreen = ({
       return;
     }
 
+    if (isSingleType) {
+      if (conditionId === null || languageId === null || !finish) {
+        Alert.alert('Error', 'Debes seleccionar condición, idioma y finish');
+        return;
+      }
+    }
+
     try {
-      const updates: Partial<Product> = {
+      const updates: any = {
         name: name.trim(),
         description: description.trim(),
         price: parseFloat(price),
         stock: parseInt(stock),
         type: product.type,
       };
+
+      if (isSingleType) {
+        updates.set = set.trim();
+        updates.collectorNumber = collectorNumber.trim();
+        updates.conditionId = conditionId;
+        updates.languageId = languageId;
+        updates.finishId = finishes.find(f => f.shortName === finish)?.id;
+      }
 
       // Upload new images
       if (images.length > 0) {
@@ -304,7 +341,7 @@ export const EditProductScreen = ({
       </View>
 
       {/* Type-specific Info */}
-      {product.type === 'SIN' && 'cardName' in product && (
+      {isSingleType && 'cardName' in product && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Información de la Carta</Text>
 
@@ -314,36 +351,60 @@ export const EditProductScreen = ({
           </View>
 
           <View style={styles.row}>
-            <View style={[styles.infoBox, styles.flex1]}>
-              <Text style={styles.label}>Set</Text>
-              <Text style={styles.infoValue}>{product.set}</Text>
-            </View>
-            <View style={[styles.infoBox, styles.flex1, styles.marginLeft]}>
-              <Text style={styles.label}>Collector #</Text>
-              <Text style={styles.infoValue}>{product.collectorNumber}</Text>
-            </View>
+            <TextInput
+              style={[styles.input, styles.flex1]}
+              placeholder="Set"
+              value={set}
+              onChangeText={(text) => {
+                setSet(text);
+                handleFieldChange();
+              }}
+              editable={!updateLoading}
+            />
+            <TextInput
+              style={[styles.input, styles.flex1, styles.marginLeft]}
+              placeholder="Collector #"
+              value={collectorNumber}
+              onChangeText={(text) => {
+                setCollectorNumber(text);
+                handleFieldChange();
+              }}
+              editable={!updateLoading}
+            />
           </View>
 
-          <View style={styles.row}>
-            {product.conditionName && (
-              <View style={[styles.infoBox, styles.flex1]}>
-                <Text style={styles.label}>Condición</Text>
-                <Text style={styles.infoValue}>{product.conditionName}</Text>
-              </View>
-            )}
-            {product.languageName && (
-              <View style={[styles.infoBox, styles.flex1, styles.marginLeft]}>
-                <Text style={styles.label}>Idioma</Text>
-                <Text style={styles.infoValue}>{product.languageName}</Text>
-              </View>
-            )}
-          </View>
+          <SelectField
+            label="Condición"
+            options={conditions.map(c => ({ key: String(c.id), label: c.longName }))}
+            selectedKey={conditionId !== null ? String(conditionId) : null}
+            onSelect={(key) => {
+              setConditionId(Number(key));
+              handleFieldChange();
+            }}
+            disabled={updateLoading}
+          />
 
-          {product.finishShortName && product.finishShortName !== 'NONFOIL' && (
-            <View style={styles.foilBadge}>
-              <Text style={styles.foilBadgeText}>✨ {product.finishName ?? product.finishShortName}</Text>
-            </View>
-          )}
+          <SelectField
+            label="Idioma"
+            options={languages.map(l => ({ key: String(l.id), label: l.longName }))}
+            selectedKey={languageId !== null ? String(languageId) : null}
+            onSelect={(key) => {
+              setLanguageId(Number(key));
+              handleFieldChange();
+            }}
+            disabled={updateLoading}
+          />
+
+          <SelectField
+            label="Finish"
+            options={finishes.map(f => ({ key: f.shortName, label: f.longName }))}
+            selectedKey={finish}
+            onSelect={(key) => {
+              setFinish(key);
+              handleFieldChange();
+            }}
+            disabled={updateLoading}
+          />
         </View>
       )}
 
@@ -492,19 +553,6 @@ const styles = StyleSheet.create({
   currentImagePlaceholder: {
     color: '#6b7280',
     fontSize: 13,
-  },
-  foilBadge: {
-    backgroundColor: '#dbeafe',
-    borderRadius: 6,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  foilBadgeText: {
-    color: '#3b82f6',
-    fontSize: 13,
-    fontWeight: '600',
   },
   updateSection: {
     marginHorizontal: 16,
