@@ -58,6 +58,9 @@ export const EditProductScreen = ({
   const [conditionId, setConditionId] = useState<number | null>(null);
   const [languageId, setLanguageId] = useState<number | null>(null);
   const [finish, setFinish] = useState<string | null>(null);
+  // Vacío = todavía no se consultó Scryfall (o falló): mientras tanto se muestran las 4
+  // opciones fijas de `finishes` para no dejar el selector sin nada.
+  const [availableFinishes, setAvailableFinishes] = useState<string[]>([]);
 
   // 'set' (no 'cardName': ProductResponse nunca manda ese campo -- chequear contra él
   // siempre daba false y por eso esta sección nunca se mostraba) es un campo real que sí
@@ -83,6 +86,30 @@ export const EditProductScreen = ({
       setHasChanges(false);
       loadProductImages(product.id);
     }
+  }, [product]);
+
+  // La carta puede no tener las 4 variantes de finish (hay promos foil-only, por ejemplo):
+  // se consulta Scryfall con el scryfallId ya guardado para saber cuáles existen realmente,
+  // mismo criterio que ya usa CreateProductScreen al elegir la carta por primera vez.
+  useEffect(() => {
+    if (!product || product.type !== 'SIN' || !('scryfallId' in product) || !product.scryfallId) {
+      return;
+    }
+    let cancelled = false;
+    apiService.getScryfallCardById(product.scryfallId)
+      .then(card => {
+        if (cancelled) return;
+        const scryfallFinishes = card.finishes && card.finishes.length > 0
+          ? card.finishes.map(f => f.toUpperCase())
+          : (card.foil ? ['NONFOIL', 'FOIL'] : ['NONFOIL']);
+        setAvailableFinishes(scryfallFinishes);
+      })
+      .catch(err => {
+        console.warn('No se pudieron obtener los finishes de Scryfall:', err);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [product]);
 
   const loadProductImages = async (productId: string) => {
@@ -463,7 +490,20 @@ export const EditProductScreen = ({
 
           <SelectField
             label="Finish"
-            options={finishes.map(f => ({ key: f.shortName, label: f.longName }))}
+            options={(() => {
+              const shortNames = availableFinishes.length > 0
+                ? availableFinishes
+                : finishes.map(f => f.shortName);
+              // El finish ya guardado siempre queda seleccionable, aunque por algún dato
+              // viejo no esté entre los que Scryfall reporta hoy para la carta.
+              const withCurrent = finish && !shortNames.includes(finish)
+                ? [...shortNames, finish]
+                : shortNames;
+              return withCurrent.map(shortName => ({
+                key: shortName,
+                label: finishes.find(cf => cf.shortName === shortName)?.longName ?? shortName,
+              }));
+            })()}
             selectedKey={finish}
             onSelect={(key) => {
               setFinish(key);

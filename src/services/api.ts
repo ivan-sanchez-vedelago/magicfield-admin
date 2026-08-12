@@ -252,6 +252,27 @@ class ApiService {
     }
   }
 
+  // Usado en edición de singles para saber qué finishes existen realmente para la carta ya
+  // guardada (no todas tienen las 4 variantes) y así no ofrecer opciones imposibles.
+  async getScryfallCardById(scryfallId: string): Promise<ScryfallCard> {
+    try {
+      const response = await axios.get<ScryfallCard>(
+        `https://api.scryfall.com/cards/${scryfallId}`,
+        {
+          headers: {
+            'Accept': 'application/json',
+            'User-Agent': 'MagicFieldApp/1.0 (your-email@example.com)'
+          },
+          timeout: 30000,
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Scryfall get card error:', error);
+      throw error;
+    }
+  }
+
   // Health check
   async healthCheck(): Promise<boolean> {
     try {
