@@ -111,7 +111,7 @@ export const RestoreProductsScreen: React.FC<Props> = ({ navigation }) => {
               <View style={[styles.image, styles.imagePlaceholder]} />
             )}
             <View style={styles.cardContent}>
-              <Text style={styles.productName} numberOfLines={2}>{item.name}</Text>
+              <Text style={styles.productName} numberOfLines={2}>{item.displayName ?? item.name}</Text>
               <Text style={styles.price}>${item.price.toFixed(2)}</Text>
               <View style={styles.soldOutBadge}>
                 <Text style={styles.soldOutBadgeText}>Agotado</Text>

@@ -156,7 +156,7 @@ export const RestoreProductScreen = ({
     if (!product) return;
     Alert.alert(
       'Eliminar Producto',
-      `¿Estás seguro de que deseas eliminar "${product.name}" definitivamente? Esta acción no se puede deshacer.`,
+      `¿Estás seguro de que deseas eliminar "${product.displayName ?? product.name}" definitivamente? Esta acción no se puede deshacer.`,
       [
         { text: 'Cancelar', style: 'cancel' },
         {
@@ -326,7 +326,7 @@ export const RestoreProductScreen = ({
 
           <View style={styles.infoBox}>
             <Text style={styles.label}>Nombre de la Carta</Text>
-            <Text style={styles.infoValue}>{product.name}</Text>
+            <Text style={styles.infoValue}>{product.displayName ?? product.name}</Text>
           </View>
 
           <View style={styles.row}>

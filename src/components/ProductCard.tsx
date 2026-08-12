@@ -81,7 +81,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
           <View style={styles.header}>
             <Text style={styles.productName} numberOfLines={2}>
-              {product.name}
+              {product.displayName ?? product.name}
             </Text>
             {getProductTypeBadge()}
           </View>

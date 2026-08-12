@@ -30,6 +30,11 @@ export interface Finish {
 export interface BaseProduct {
   id: string;
   name: string;
+  // Nombre + tags de variante de arte/marco concatenados (ej. "Lightning Bolt (Borderless)"),
+  // calculado por el backend. Usar esto para mostrar al usuario; `name` queda puro para los
+  // campos editables (viaja de vuelta tal cual al guardar, no debe llevar el sufijo pegado).
+  displayName?: string;
+  variantTags?: string[];
   description: string;
   price: number;
   stock: number;

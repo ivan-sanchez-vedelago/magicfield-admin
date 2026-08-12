@@ -101,7 +101,7 @@ export const ProductDetailScreen: React.FC<Props> = ({
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerContent}>
-          <Text style={styles.productName}>{product.name}</Text>
+          <Text style={styles.productName}>{product.displayName ?? product.name}</Text>
           <View
             style={[
               styles.typeBadge,
@@ -160,7 +160,7 @@ export const ProductDetailScreen: React.FC<Props> = ({
           <Text style={styles.sectionTitle}>Información de la Carta</Text>
 
           <View style={styles.detailBox}>
-            <DetailRow label="Nombre de Carta" value={product.name} />
+            <DetailRow label="Nombre de Carta" value={product.displayName ?? product.name} />
             <Divider />
             <DetailRow label="Set" value={product.set} />
             <Divider />
