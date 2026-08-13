@@ -86,6 +86,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             {getProductTypeBadge()}
           </View>
 
+          {product.type === 'SIN' && 'set' in product && (
+            <Text style={styles.variantSubtitle} numberOfLines={1}>
+              {product.set}{product.collectorNumber ? ` · #${product.collectorNumber}` : ''}
+            </Text>
+          )}
+
           <Text style={styles.price}>${product.price.toFixed(2)}</Text>
 
           <StockAdjuster
@@ -190,6 +196,13 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 10,
     fontWeight: '700',
+  },
+
+  variantSubtitle: {
+    fontSize: 12,
+    fontStyle: 'italic',
+    color: '#6b7280',
+    marginBottom: 4,
   },
 
   price: {

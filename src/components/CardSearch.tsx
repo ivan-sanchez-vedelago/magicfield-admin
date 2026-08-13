@@ -15,6 +15,7 @@ import { Image } from 'expo-image';
 import { debounce } from '@utils';
 import { ScryfallCard } from '@types';
 import { getCardImage, SCRYFALL_IMAGE_HEADERS } from '@utils/getCardImage';
+import { getCardDisplayName } from '@utils/scryfallVariantTags';
 
 const autocompleteCache: Record<string, string[]> = {};
 const editionsCache: Record<string, ScryfallCard[]> = {};
@@ -246,7 +247,10 @@ export const CardSearch: React.FC<CardSearchProps> = ({
         >
           {editions.map((card) => {
 
-            const image = getCardImage(card);
+            // 'small' alcanza y sobra para un thumbnail de 50x70 -- pedir 'png' (el default,
+            // full-res) es lo que hacía que las imágenes tardaran mucho más que los nombres
+            // en aparecer en esta lista.
+            const image = getCardImage(card, 'small');
 
             return (
               <TouchableOpacity
@@ -267,7 +271,7 @@ export const CardSearch: React.FC<CardSearchProps> = ({
                   <View style={{ flex: 1 }}>
 
                     <Text style={styles.cardName}>
-                      {card.name}
+                      {getCardDisplayName(card)}
                     </Text>
 
                     <Text style={styles.cardSet}>
@@ -281,6 +285,10 @@ export const CardSearch: React.FC<CardSearchProps> = ({
                     ) : card.prices?.usd_foil ? (
                       <Text style={[styles.cardPrice, styles.foilPrice]}>
                         ${card.prices.usd_foil} (foil)
+                      </Text>
+                    ) : card.prices?.usd_etched ? (
+                      <Text style={[styles.cardPrice, styles.etchedPrice]}>
+                        ${card.prices.usd_etched} (etched)
                       </Text>
                     ) : null}
 
@@ -379,6 +387,10 @@ const styles = StyleSheet.create({
 
   foilPrice: {
     color: '#7c3aed',
+  },
+
+  etchedPrice: {
+    color: '#b91c1c',
   },
 
 });

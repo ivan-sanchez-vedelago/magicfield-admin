@@ -36,7 +36,7 @@ export const ProductDetailScreen: React.FC<Props> = ({
   const handleDelete = () => {
     Alert.alert(
       'Eliminar Producto',
-      `¿Estás seguro de que deseas eliminar "${product?.name}"?`,
+      `¿Estás seguro de que deseas eliminar "${product?.displayName ?? product?.name}"?`,
       [
         { text: 'Cancelar', style: 'cancel' },
         {

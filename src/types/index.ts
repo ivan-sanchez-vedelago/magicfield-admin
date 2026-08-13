@@ -143,6 +143,11 @@ export interface ScryfallCard {
   // Scryfall real: 'nonfoil' | 'foil' | 'etched' | 'glossy' — reemplaza a foil/nonfoil
   // como fuente de verdad de qué finishes existen para esta impresión puntual.
   finishes?: string[];
+  // Variantes de arte/marco de esta impresión puntual -- ver utils/scryfallVariantTags.ts,
+  // espejo de ScryfallService.extractVariantTags en el backend.
+  border_color?: string;
+  frame_effects?: string[];
+  full_art?: boolean;
   image_uris?: {
     small: string;
     normal: string;
