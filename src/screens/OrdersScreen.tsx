@@ -22,6 +22,7 @@ interface SalesAudit {
   orderId: string;
   productId: string;
   productName: string;
+  variantTags: string | null;
   set: string | null;
   collectorNumber: string | null;
   conditionName: string | null;
@@ -339,6 +340,9 @@ export const OrdersScreen: React.FC<Props> = ({ navigation }) => {
                     <View style={styles.productsSection}>
                       <Text style={styles.sectionLabel}>PRODUCTOS</Text>
                       {order.items.map((item) => {
+                        const variantTagsSuffix = item.variantTags
+                          ? item.variantTags.split(', ').map(tag => ` (${tag})`).join('')
+                          : '';
                         const variantLabel = [
                           item.set,
                           item.collectorNumber ? `#${item.collectorNumber}` : null,
@@ -352,7 +356,7 @@ export const OrdersScreen: React.FC<Props> = ({ navigation }) => {
                           <View key={item.id} style={styles.productRow}>
                             <View style={styles.productInfo}>
                               <View style={{ flex: 1 }}>
-                                <Text style={styles.productName}>{item.productName}</Text>
+                                <Text style={styles.productName}>{item.productName}{variantTagsSuffix}</Text>
                                 {variantLabel && (
                                   <Text style={styles.productVariant}>{variantLabel}</Text>
                                 )}
