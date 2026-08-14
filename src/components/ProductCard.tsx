@@ -62,19 +62,41 @@ export const ProductCard: React.FC<ProductCardProps> = ({
     >
       <View style={styles.row}>
 
-        {/* LEFT: IMAGE */}
-        {product.imageUrls?.[0] ? (
-          <Image
-            source={{ uri: product.imageUrls[0], headers: SCRYFALL_IMAGE_HEADERS }}
-            style={styles.image}
-            contentFit="cover"
-            onError={(e) =>
-              console.warn('[ProductCard] Error cargando imagen', product.imageUrls![0], e.error)
-            }
-          />
-        ) : (
-          <View style={[styles.image, styles.imagePlaceholder]} />
-        )}
+        {/* LEFT: IMAGE + VARIANT BUBBLES */}
+        <View style={styles.imageColumn}>
+          {product.imageUrls?.[0] ? (
+            <Image
+              source={{ uri: product.imageUrls[0], headers: SCRYFALL_IMAGE_HEADERS }}
+              style={styles.image}
+              contentFit="cover"
+              onError={(e) =>
+                console.warn('[ProductCard] Error cargando imagen', product.imageUrls![0], e.error)
+              }
+            />
+          ) : (
+            <View style={[styles.image, styles.imagePlaceholder]} />
+          )}
+
+          {product.type === 'SIN' && 'set' in product && (
+            <View style={styles.variantBubbles}>
+              {product.conditionName && (
+                <View style={[styles.bubble, styles.bubbleCondition]}>
+                  <Text style={styles.bubbleText}>{product.conditionName}</Text>
+                </View>
+              )}
+              {product.languageName && (
+                <View style={[styles.bubble, styles.bubbleLanguage]}>
+                  <Text style={styles.bubbleText}>{product.languageName}</Text>
+                </View>
+              )}
+              {product.finishShortName && product.finishShortName !== 'NONFOIL' && (
+                <View style={[styles.bubble, styles.bubbleFinish]}>
+                  <Text style={styles.bubbleText}>{product.finishName ?? product.finishShortName}</Text>
+                </View>
+              )}
+            </View>
+          )}
+        </View>
 
         {/* RIGHT: CONTENT */}
         <View style={styles.content}>
@@ -155,6 +177,11 @@ const styles = StyleSheet.create({
     gap: 12,
   },
 
+  imageColumn: {
+    width: 80,
+    flexShrink: 0,
+  },
+
   image: {
     width: 80,
     height: 110,
@@ -164,6 +191,36 @@ const styles = StyleSheet.create({
 
   imagePlaceholder: {
     backgroundColor: '#f3f4f6',
+  },
+
+  variantBubbles: {
+    marginTop: 6,
+    gap: 4,
+    alignItems: 'flex-start',
+  },
+
+  bubble: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+
+  bubbleText: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: '700',
+  },
+
+  bubbleCondition: {
+    backgroundColor: '#6b7280',
+  },
+
+  bubbleLanguage: {
+    backgroundColor: '#0d9488',
+  },
+
+  bubbleFinish: {
+    backgroundColor: '#7c3aed',
   },
 
   content: {
