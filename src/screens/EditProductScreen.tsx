@@ -13,11 +13,12 @@ import {
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { ImageUploader, ImageUploadResult, StockStepper, SelectField } from '@components';
-import { useProductById, useUpdateProduct, useConditions, useLanguages, useFinishes } from '@hooks';
+import { ImageUploader, ImageUploadResult, StockStepper, SelectField, SetPicker } from '@components';
+import { useProductById, useUpdateProduct, useConditions, useLanguages, useFinishes, useCategories } from '@hooks';
 import { apiService } from '@services/api';
 import { Product, ProductImage } from '@types';
 import type { RootStackParamList } from '@navigation/types';
+import { findRootCategory } from '@utils/categoryTree';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'EditProduct'>;
 
@@ -27,7 +28,20 @@ export const EditProductScreen = ({
 }: Props) => {
   const { productId } = route.params;
   const { product, loading: loadingProduct, error } = useProductById(productId);
-  const { conditions } = useConditions();
+  const { categories } = useCategories();
+
+  // product.type es el shortName de la subcategoría hoja (ej. "PRECON" bajo Sellados), nunca
+  // literalmente "SIN"/"PSL" -- hay que subir hasta la raíz para saber de qué rama es. Es
+  // obligatorio hacerlo por categoría (no por presencia de datos, como en otras pantallas):
+  // un sellado viejo sin set/condición/idioma todavía es indistinguible de un accesorio si
+  // solo miramos los campos.
+  const productCategory = product ? categories.find(c => c.shortName === product.type) : undefined;
+  const rootShortName = productCategory ? findRootCategory(productCategory, categories).shortName : null;
+  const isSingleType = rootShortName === 'SIN';
+  const isSealedType = rootShortName === 'PSL';
+
+  const conditionScope = isSingleType ? 'SIN' : isSealedType ? 'PSL' : undefined;
+  const { conditions } = useConditions(conditionScope);
   const { languages } = useLanguages();
   const { finishes } = useFinishes();
   const { execute: updateProduct, loading: updateLoading } = useUpdateProduct(
@@ -62,12 +76,6 @@ export const EditProductScreen = ({
   // opciones fijas de `finishes` para no dejar el selector sin nada.
   const [availableFinishes, setAvailableFinishes] = useState<string[]>([]);
 
-  // 'set' (no 'cardName': ProductResponse nunca manda ese campo -- chequear contra él
-  // siempre daba false y por eso esta sección nunca se mostraba) es un campo real que sí
-  // viene siempre para singles, así que sirve tanto para angostar el tipo en TS como para
-  // el chequeo en runtime.
-  const isSingleType = !!product && product.type === 'SIN' && 'set' in product;
-
   useEffect(() => {
     if (product) {
       setName(product.name);
@@ -75,24 +83,31 @@ export const EditProductScreen = ({
       setPrice(product.price.toString());
       setStock(product.stock.toString());
 
-      if (product.type === 'SIN' && 'set' in product) {
+      if (isSingleType && 'collectorNumber' in product) {
         setSet(product.set ?? '');
         setCollectorNumber(product.collectorNumber ?? '');
         setConditionId(product.conditionId ?? null);
         setLanguageId(product.languageId ?? null);
         setFinish(product.finishShortName ?? null);
+      } else if (isSealedType && 'conditionId' in product) {
+        // Sin preseleccionar defaults acá (a diferencia de Create): si el sellado es viejo y
+        // todavía no tiene set/condición/idioma, el picker/selects arrancan vacíos y el admin
+        // los completa a mano -- ver validación obligatoria en handleUpdateProduct.
+        setSet(product.set ?? '');
+        setConditionId(product.conditionId ?? null);
+        setLanguageId(product.languageId ?? null);
       }
 
       setHasChanges(false);
       loadProductImages(product.id);
     }
-  }, [product]);
+  }, [product, isSingleType, isSealedType]);
 
   // La carta puede no tener las 4 variantes de finish (hay promos foil-only, por ejemplo):
   // se consulta Scryfall con el scryfallId ya guardado para saber cuáles existen realmente,
   // mismo criterio que ya usa CreateProductScreen al elegir la carta por primera vez.
   useEffect(() => {
-    if (!product || product.type !== 'SIN' || !('scryfallId' in product) || !product.scryfallId) {
+    if (!product || !isSingleType || !('scryfallId' in product) || !product.scryfallId) {
       return;
     }
     let cancelled = false;
@@ -110,7 +125,7 @@ export const EditProductScreen = ({
     return () => {
       cancelled = true;
     };
-  }, [product]);
+  }, [product, isSingleType]);
 
   const loadProductImages = async (productId: string) => {
     try {
@@ -176,6 +191,16 @@ export const EditProductScreen = ({
       }
     }
 
+    // A diferencia de singles, esto se exige en TODA edición de un sellado, incluso si el
+    // admin solo quería ajustar precio/stock de uno viejo -- decisión explícita, sin
+    // excepción "solo si los toca".
+    if (isSealedType) {
+      if (!set.trim() || conditionId === null || languageId === null) {
+        Alert.alert('Error', 'Debes completar set, condición e idioma');
+        return;
+      }
+    }
+
     try {
       const updates: any = {
         name: name.trim(),
@@ -191,6 +216,10 @@ export const EditProductScreen = ({
         updates.conditionId = conditionId;
         updates.languageId = languageId;
         updates.finishId = finishes.find(f => f.shortName === finish)?.id;
+      } else if (isSealedType) {
+        updates.set = set.trim();
+        updates.conditionId = conditionId;
+        updates.languageId = languageId;
       }
 
       // Upload new images
@@ -292,7 +321,7 @@ export const EditProductScreen = ({
       )}
 
       {/* Image Uploader (no aplica a singles: sus imágenes vienen de Scryfall) */}
-      {product.type !== 'SIN' && (
+      {!isSingleType && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Agregar Imágenes</Text>
           <Text style={styles.sectionSubtitle}>
@@ -311,10 +340,103 @@ export const EditProductScreen = ({
         </View>
       )}
 
-      {/* Product Info -- solo para no-singles; los singles tienen su propia sección más
-          abajo con Nombre inmutable, así que no tiene sentido repetir "Información del
-          Producto" con un Nombre editable duplicado. */}
-      {!isSingleType && (
+      {/* Información del Sellado -- Set/Condición/Idioma se exigen completos en cualquier
+          edición (ver validación en handleUpdateProduct), aunque el producto sea viejo y
+          todavía no los tenga. */}
+      {isSealedType && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Información del Sellado</Text>
+
+          <View style={styles.infoBox}>
+            <Text style={styles.label}>Tipo</Text>
+            <Text style={styles.infoValue}>{product.type.toUpperCase()}</Text>
+          </View>
+
+          <TextInput
+            style={styles.input}
+            placeholder="Nombre del producto"
+            value={name}
+            onChangeText={(text) => {
+              setName(text);
+              handleFieldChange();
+            }}
+            editable={!updateLoading}
+          />
+
+          <TextInput
+            style={[styles.input, styles.multilineInput]}
+            placeholder="Descripción"
+            value={description}
+            onChangeText={(text) => {
+              setDescription(text);
+              handleFieldChange();
+            }}
+            multiline
+            numberOfLines={3}
+            editable={!updateLoading}
+          />
+
+          <View style={styles.row}>
+            <TextInput
+              style={[styles.input, styles.flex1, styles.rowInput]}
+              placeholder="Precio"
+              value={price}
+              onChangeText={(text) => {
+                setPrice(text);
+                handleFieldChange();
+              }}
+              keyboardType="decimal-pad"
+              editable={!updateLoading}
+            />
+            <StockStepper
+              style={[styles.flex1, styles.marginLeft, styles.rowInput]}
+              value={stock}
+              placeholder="Stock"
+              onChangeValue={(text) => {
+                setStock(text);
+                handleFieldChange();
+              }}
+              editable={!updateLoading}
+            />
+          </View>
+
+          <Text style={styles.label}>Set</Text>
+          <SetPicker
+            value={set}
+            onSelect={(newSet) => {
+              setSet(newSet);
+              handleFieldChange();
+            }}
+            disabled={updateLoading}
+          />
+
+          <SelectField
+            label="Condición"
+            options={conditions.map(c => ({ key: String(c.id), label: c.longName }))}
+            selectedKey={conditionId !== null ? String(conditionId) : null}
+            onSelect={(key) => {
+              setConditionId(Number(key));
+              handleFieldChange();
+            }}
+            disabled={updateLoading}
+          />
+
+          <SelectField
+            label="Idioma"
+            options={languages.map(l => ({ key: String(l.id), label: l.longName }))}
+            selectedKey={languageId !== null ? String(languageId) : null}
+            onSelect={(key) => {
+              setLanguageId(Number(key));
+              handleFieldChange();
+            }}
+            disabled={updateLoading}
+          />
+        </View>
+      )}
+
+      {/* Product Info -- solo para accesorios; singles y sellados tienen su propia sección
+          más abajo/arriba. */}
+      {!isSingleType && !isSealedType && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Información del Producto</Text>
 
@@ -379,7 +501,7 @@ export const EditProductScreen = ({
           inmutables (mismo estilo que ya tenían), Set/Collector # van antes de la
           Descripción, y cada campo ahora tiene su label (antes varios solo se distinguían
           por el placeholder, que desaparece apenas el campo tiene un valor cargado). */}
-      {isSingleType && 'set' in product && (
+      {isSingleType && 'collectorNumber' in product && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Información de la Carta</Text>
 

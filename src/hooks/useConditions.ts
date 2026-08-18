@@ -2,10 +2,12 @@ import { apiService } from '@services/api';
 import { Condition } from '@types';
 import { useAsync } from './useAsync';
 
-export function useConditions() {
+// applicableType ("SIN"/"PSL") filtra del lado del backend qué condiciones tiene sentido
+// ofrecer -- NM/LP/... no aplica a sellados, ni NEW/USD a singles. Sin el param, trae todo.
+export function useConditions(applicableType?: string) {
   const { data, loading, error } = useAsync(
-    () => apiService.getConditions(),
-    [],
+    () => apiService.getConditions(applicableType),
+    [applicableType],
     true
   );
 

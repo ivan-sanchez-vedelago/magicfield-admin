@@ -16,6 +16,9 @@ export type { CardSearchProps } from './CardSearch';
 export { SelectField } from './SelectField';
 export type { SelectFieldProps, SelectOption } from './SelectField';
 
+export { SetPicker } from './SetPicker';
+export type { SetPickerProps } from './SetPicker';
+
 export { AnalyticsStatCard } from './AnalyticsStatCard';
 export { TopPagesCard } from './TopPagesCard';
 export { TopProductsCard } from './TopProductsCard';

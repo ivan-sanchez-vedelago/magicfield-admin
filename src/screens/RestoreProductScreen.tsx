@@ -319,8 +319,9 @@ export const RestoreProductScreen = ({
         </View>
       </View>
 
-      {/* Type-specific Info */}
-      {product.type === 'SIN' && 'set' in product && (
+      {/* Type-specific Info (la lista de restaurables excluye singles por diseño -- ver
+          findRestorablePaged en el backend -- pero se deja el chequeo defensivo) */}
+      {product.type === 'SIN' && 'collectorNumber' in product && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Información de la Carta</Text>
 

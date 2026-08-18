@@ -52,6 +52,9 @@ export const ENDPOINTS = {
   FINISHES: {
     LIST: '/api/finishes',
   },
+  SCRYFALL_SETS: {
+    LIST: '/api/scryfall/sets',
+  },
   IMAGES: {
     UPLOAD: '/api/images/upload',
     DELETE: (id: string) => `/api/images/${id}`,

@@ -14,20 +14,18 @@ import {
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { ImageUploader, ImageUploadResult, CardSearch, StockStepper, SelectField } from '@components';
+import { ImageUploader, ImageUploadResult, CardSearch, StockStepper, SelectField, SetPicker } from '@components';
 import { useCreateProduct, useCategories, useConditions, useLanguages, useFinishes } from '@hooks';
 import { apiService } from '@services/api';
 import { ScryfallCard, Category } from '@types';
 import type { RootStackParamList } from '@navigation/types';
 import { getAllCardImages } from '@utils/getCardImage';
+import { findRootCategory } from '@utils/categoryTree';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CreateProduct'>;
 
 export const CreateProductScreen = ({ navigation }: Props) => {
   const { categories, loading: loadingCategories } = useCategories();
-  const { conditions } = useConditions();
-  const { languages } = useLanguages();
-  const { finishes } = useFinishes();
 
   // Category tree selection state
   const [expandedIds, setExpandedIds] = useState<Set<number>>(new Set());
@@ -54,16 +52,18 @@ export const CreateProductScreen = ({ navigation }: Props) => {
     return result;
   }, [categories, expandedIds]);
 
-  const findRoot = useCallback(
-    (category: Category): Category => {
-      if (category.parentId === 0) return category;
-      const parent = categories.find(c => c.id === category.parentId);
-      return parent ? findRoot(parent) : category;
-    },
-    [categories]
-  );
+  // shortName de la hoja elegida NUNCA es literalmente "SIN"/"PSL" si tiene subcategorías
+  // (ej. "PRECON" bajo Sellados) -- hay que subir hasta la raíz para saber de qué rama es.
+  const rootShortName = selectedLeaf ? findRootCategory(selectedLeaf, categories).shortName : null;
+  const isSingleType = rootShortName === 'SIN';
+  const isSealedType = rootShortName === 'PSL';
 
-  const isSingleType = selectedLeaf?.shortName === 'SIN';
+  // Condiciones scoped por tipo de producto (NM/LP/... solo para singles, NEW/USD solo para
+  // sellados) -- un solo hook, re-fetchea solo cuando cambia el scope efectivo.
+  const conditionScope = isSingleType ? 'SIN' : isSealedType ? 'PSL' : undefined;
+  const { conditions } = useConditions(conditionScope);
+  const { languages } = useLanguages();
+  const { finishes } = useFinishes();
 
   const handleCategoryPress = (cat: Category) => {
     const children = getChildren(cat.id);
@@ -95,7 +95,8 @@ export const CreateProductScreen = ({ navigation }: Props) => {
   const [price, setPrice] = useState('');
   const [stock, setStock] = useState('');
 
-  // Single-specific fields
+  // Single-specific fields (set/conditionId/languageId también los usa el bloque de sellados
+  // más abajo -- son mutuamente excluyentes, nunca se muestran los dos formularios juntos)
   const [cardName, setCardName] = useState('');
   const [set, setSet] = useState('');
   const [collectorNumber, setCollectorNumber] = useState('');
@@ -106,22 +107,25 @@ export const CreateProductScreen = ({ navigation }: Props) => {
   const [priceUsdEtched, setPriceUsdEtched] = useState('');
   const [scryfallId, setScryfallId] = useState('');
 
-  // Apenas cargan las listas, se preselecciona el primer registro de cada una
-  // (menor id -- NM e English con la semilla actual) en vez de un string fijo.
+  // Apenas cargan las listas, se preselecciona un default. Para singles, el primer registro
+  // (menor id -- NM con la semilla actual) como siempre. Para sellados, la decisión explícita
+  // es "Nuevo"/Inglés (con fallback al primero si por algún motivo no aparecen con ese
+  // short_name), no simplemente el primer registro devuelto.
   useEffect(() => {
-    if (conditions.length > 0 && conditionId === null) {
-      setConditionId(conditions[0].id);
-    }
-  }, [conditions, conditionId]);
+    if (conditions.length === 0 || conditionId !== null) return;
+    const def = isSealedType
+      ? conditions.find(c => c.shortName === 'NEW') ?? conditions[0]
+      : conditions[0];
+    setConditionId(def.id);
+  }, [conditions, conditionId, isSealedType]);
 
   useEffect(() => {
-    if (languages.length > 0 && languageId === null) {
-      setLanguageId(languages[0].id);
-    }
-  }, [languages, languageId]);
-
-  // Sealed-specific fields
-  const [releaseDate, setReleaseDate] = useState('');
+    if (languages.length === 0 || languageId !== null) return;
+    const def = isSealedType
+      ? languages.find(l => l.shortName.toLowerCase() === 'en') ?? languages[0]
+      : languages[0];
+    setLanguageId(def.id);
+  }, [languages, languageId, isSealedType]);
 
   const resetForm = () => {
     // tipo
@@ -137,7 +141,7 @@ export const CreateProductScreen = ({ navigation }: Props) => {
     setStock('');
     setImages([]);
 
-    // single
+    // single (set/conditionId/languageId también los usa el bloque de sellados, ver arriba)
     setCardName('');
     setSet('');
     setCollectorNumber('');
@@ -147,9 +151,6 @@ export const CreateProductScreen = ({ navigation }: Props) => {
     setFinish('NONFOIL');
     setPriceUsdEtched('');
     setScryfallId('');
-
-    // sealed
-    setReleaseDate('');
   };
 
   useFocusEffect(
@@ -279,6 +280,17 @@ export const CreateProductScreen = ({ navigation }: Props) => {
       }
     }
 
+    if (isSealedType) {
+      if (!set.trim()) {
+        Alert.alert('Error', 'Debes especificar el set');
+        return;
+      }
+      if (conditionId === null || languageId === null) {
+        Alert.alert('Error', 'Debes seleccionar condición e idioma');
+        return;
+      }
+    }
+
     try {
       const productData: any = {
         name: name.trim(),
@@ -297,6 +309,10 @@ export const CreateProductScreen = ({ navigation }: Props) => {
         productData.languageId = languageId;
         productData.finishId = selectedFinishId;
         if (scryfallId) productData.scryfallId = scryfallId;
+      } else if (isSealedType) {
+        productData.set = set.trim();
+        productData.conditionId = conditionId;
+        productData.languageId = languageId;
       }
 
       const createdProduct = await createProduct(productData);
@@ -406,8 +422,72 @@ export const CreateProductScreen = ({ navigation }: Props) => {
             />
           </View>
 
-          {/* Common Fields */}
-          {!isSingleType && (
+          {/* Sealed Product Fields */}
+          {isSealedType && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Información del Sellado</Text>
+
+              <TextInput
+                style={styles.input}
+                placeholder="Nombre del producto"
+                placeholderTextColor="#9ca3af"
+                value={name}
+                onChangeText={setName}
+                editable={!loading}
+              />
+
+              <TextInput
+                style={[styles.input, styles.multilineInput]}
+                placeholder="Descripción"
+                placeholderTextColor="#9ca3af"
+                value={description}
+                onChangeText={setDescription}
+                multiline
+                numberOfLines={3}
+                editable={!loading}
+              />
+
+              <View style={styles.row}>
+                <TextInput
+                  style={[styles.input, styles.flex1, styles.rowInput]}
+                  placeholder="Precio"
+                  placeholderTextColor="#9ca3af"
+                  value={price}
+                  onChangeText={setPrice}
+                  keyboardType="decimal-pad"
+                  editable={!loading}
+                />
+                <StockStepper
+                  style={[styles.flex1, styles.marginLeft, styles.rowInput]}
+                  value={stock}
+                  onChangeValue={setStock}
+                  placeholder="Stock"
+                  editable={!loading}
+                />
+              </View>
+
+              <SetPicker value={set} onSelect={setSet} disabled={loading} />
+
+              <SelectField
+                label="Condición"
+                options={conditions.map(c => ({ key: String(c.id), label: c.longName }))}
+                selectedKey={conditionId !== null ? String(conditionId) : null}
+                onSelect={(key) => setConditionId(Number(key))}
+                disabled={loading}
+              />
+
+              <SelectField
+                label="Idioma"
+                options={languages.map(l => ({ key: String(l.id), label: l.longName }))}
+                selectedKey={languageId !== null ? String(languageId) : null}
+                onSelect={(key) => setLanguageId(Number(key))}
+                disabled={loading}
+              />
+            </View>
+          )}
+
+          {/* Common Fields (accesorios) */}
+          {!isSingleType && !isSealedType && (
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Información básica</Text>
 

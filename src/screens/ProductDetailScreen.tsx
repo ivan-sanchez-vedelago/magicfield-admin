@@ -11,8 +11,9 @@ import {
 import { Image } from 'expo-image';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { StockAdjuster } from '@components/index';
-import { useProductById, useDeleteProduct, useUpdateProductStock } from '@hooks/index';
+import { useProductById, useDeleteProduct, useUpdateProductStock, useCategories } from '@hooks/index';
 import { SCRYFALL_IMAGE_HEADERS } from '@utils/getCardImage';
+import { findRootCategory } from '@utils/categoryTree';
 import type { RootStackParamList } from '@navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ProductDetail'>;
@@ -23,6 +24,7 @@ export const ProductDetailScreen: React.FC<Props> = ({
 }) => {
   const { productId } = route.params;
   const { product, loading: loadingProduct } = useProductById(productId);
+  const { categories } = useCategories();
   const { execute: deleteProduct } = useDeleteProduct(() => {
     Alert.alert('Éxito', 'Producto eliminado', [
       {
@@ -82,6 +84,11 @@ export const ProductDetailScreen: React.FC<Props> = ({
     ACC: '#6b7280',
   };
 
+  // product.type es el shortName de la subcategoría hoja (ej. "PRECON" bajo Sellados), nunca
+  // literalmente "SIN"/"PSL" -- hay que subir hasta la raíz para saber de qué rama es.
+  const productCategory = categories.find(c => c.shortName === product.type);
+  const rootShortName = productCategory ? findRootCategory(productCategory, categories).shortName : null;
+
   return (
     <ScrollView style={styles.container}>
       {/* Product Image */}
@@ -105,7 +112,7 @@ export const ProductDetailScreen: React.FC<Props> = ({
           <View
             style={[
               styles.typeBadge,
-              { backgroundColor: typeColors[product.type] || typeColors.ACC },
+              { backgroundColor: typeColors[rootShortName ?? ''] || typeColors.ACC },
             ]}
           >
             <Text style={styles.typeBadgeText}>{product.type.toUpperCase()}</Text>
@@ -154,8 +161,8 @@ export const ProductDetailScreen: React.FC<Props> = ({
         />
       </View>
 
-      {/* Type-specific Information */}
-      {product.type === 'SIN' && 'set' in product && (
+      {/* Type-specific Information -- Singles */}
+      {rootShortName === 'SIN' && 'collectorNumber' in product && (
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Información de la Carta</Text>
 
@@ -181,6 +188,35 @@ export const ProductDetailScreen: React.FC<Props> = ({
               <>
                 <Divider />
                 <DetailRow label="Finish" value={`✨ ${product.finishName ?? product.finishShortName}`} />
+              </>
+            )}
+          </View>
+        </View>
+      )}
+
+      {/* Type-specific Information -- Sellados (sin Collector #/Finish, que nunca tiene) */}
+      {rootShortName === 'PSL' && 'conditionId' in product && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Información del Sellado</Text>
+
+          <View style={styles.detailBox}>
+            <DetailRow label="Nombre" value={product.displayName ?? product.name} />
+            {product.set && (
+              <>
+                <Divider />
+                <DetailRow label="Set" value={product.set} />
+              </>
+            )}
+            {product.conditionName && (
+              <>
+                <Divider />
+                <DetailRow label="Condición" value={product.conditionName} />
+              </>
+            )}
+            {product.languageName && (
+              <>
+                <Divider />
+                <DetailRow label="Idioma" value={product.languageName} />
               </>
             )}
           </View>

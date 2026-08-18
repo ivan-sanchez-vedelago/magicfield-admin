@@ -18,6 +18,7 @@ import {
   Condition,
   Language,
   Finish,
+  ScryfallSet,
   CsvImportResult,
 } from '@types';
 
@@ -71,9 +72,11 @@ class ApiService {
     return response.data;
   }
 
-  // Condiciones e idiomas de singles
-  async getConditions(): Promise<Condition[]> {
-    const response = await this.client.get<Condition[]>(ENDPOINTS.CONDITIONS.LIST);
+  // Condiciones (opcionalmente filtradas por tipo de producto: "SIN" o "PSL") e idiomas.
+  async getConditions(applicableType?: string): Promise<Condition[]> {
+    const response = await this.client.get<Condition[]>(ENDPOINTS.CONDITIONS.LIST, {
+      params: applicableType ? { applicableType } : {},
+    });
     return response.data;
   }
 
@@ -84,6 +87,13 @@ class ApiService {
 
   async getFinishes(): Promise<Finish[]> {
     const response = await this.client.get<Finish[]>(ENDPOINTS.FINISHES.LIST);
+    return response.data;
+  }
+
+  // Sets curados de Scryfall (sin promos/variantes/digitales) para el picker de "set" de
+  // sellados -- ya cacheados/filtrados del lado del backend.
+  async getScryfallSets(): Promise<ScryfallSet[]> {
+    const response = await this.client.get<ScryfallSet[]>(ENDPOINTS.SCRYFALL_SETS.LIST);
     return response.data;
   }
 

@@ -10,6 +10,7 @@ import { Image } from 'expo-image';
 import { Product, Category } from '@types';
 import { StockAdjuster } from './StockAdjuster';
 import { SCRYFALL_IMAGE_HEADERS } from '@utils/getCardImage';
+import { findRootCategory } from '@utils/categoryTree';
 
 export interface ProductCardProps {
   product: Product;
@@ -32,6 +33,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 }) => {
   const isDeleting = deletingId === product.id;
 
+  // product.type es el shortName de la subcategoría hoja (ej. "PRECON" bajo Sellados), nunca
+  // literalmente "SIN"/"PSL"/"ACC" -- hay que subir hasta la raíz para saber de qué rama es.
+  const productCategory = categories.find(c => c.shortName === product.type);
+  const rootShortName = productCategory ? findRootCategory(productCategory, categories).shortName : null;
+
   const getProductTypeBadge = () => {
     const typeColors: Record<string, string> = {
       SIN: '#3b82f6',
@@ -46,7 +52,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       <View
         style={[
           styles.typeBadge,
-          { backgroundColor: typeColors[product.type] || typeColors.ACC },
+          { backgroundColor: typeColors[rootShortName ?? ''] || typeColors.ACC },
         ]}
       >
         <Text style={styles.typeBadgeText}>{categoryName}</Text>
@@ -77,7 +83,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             <View style={[styles.image, styles.imagePlaceholder]} />
           )}
 
-          {product.type === 'SIN' && 'set' in product && (
+          {rootShortName === 'SIN' && 'collectorNumber' in product && (
             <View style={styles.variantBubbles}>
               {product.conditionName && (
                 <View style={[styles.bubble, styles.bubbleCondition]}>
@@ -96,6 +102,21 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               )}
             </View>
           )}
+
+          {rootShortName === 'PSL' && 'conditionId' in product && (
+            <View style={styles.variantBubbles}>
+              {product.conditionName && (
+                <View style={[styles.bubble, styles.bubbleCondition]}>
+                  <Text style={styles.bubbleText}>{product.conditionName}</Text>
+                </View>
+              )}
+              {product.languageName && (
+                <View style={[styles.bubble, styles.bubbleLanguage]}>
+                  <Text style={styles.bubbleText}>{product.languageName}</Text>
+                </View>
+              )}
+            </View>
+          )}
         </View>
 
         {/* RIGHT: CONTENT */}
@@ -108,9 +129,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             {getProductTypeBadge()}
           </View>
 
-          {product.type === 'SIN' && 'set' in product && (
+          {rootShortName === 'SIN' && 'collectorNumber' in product && (
             <Text style={styles.variantSubtitle} numberOfLines={1}>
               {product.set}{product.collectorNumber ? ` · #${product.collectorNumber}` : ''}
+            </Text>
+          )}
+
+          {rootShortName === 'PSL' && 'conditionId' in product && product.set && (
+            <Text style={styles.variantSubtitle} numberOfLines={1}>
+              {product.set}
             </Text>
           )}
 

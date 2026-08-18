@@ -27,6 +27,14 @@ export interface Finish {
   longName: string;
 }
 
+// Set curado de Scryfall para el picker de "set" de productos sellados -- ya viene filtrado
+// desde el backend (sin promos/variantes/digitales), ver GET /api/scryfall/sets.
+export interface ScryfallSet {
+  code: string;
+  name: string;
+  iconSvgUri?: string;
+}
+
 export interface BaseProduct {
   id: string;
   name: string;
@@ -62,15 +70,21 @@ export interface SingleProduct extends BaseProduct {
 }
 
 export interface SealedProduct extends BaseProduct {
-  type: 'PSL';
-  releaseDate?: string;
+  // NUNCA literalmente 'PSL' en un producto real: es el shortName de la subcategoría hoja
+  // (ej. "PRECON"), ver src/utils/categoryTree.ts. No sirve como discriminante de tipo.
+  type: string;
+  set?: string;
+  conditionId?: number;
+  conditionName?: string;
+  languageId?: number;
+  languageName?: string;
 }
 
 export interface OtherProduct extends BaseProduct {
   type: 'ACC';
 }
 
-export type Product = SingleProduct | BaseProduct;
+export type Product = SingleProduct | SealedProduct | OtherProduct | BaseProduct;
 
 export interface PagedProducts {
   content: Product[];

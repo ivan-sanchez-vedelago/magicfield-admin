@@ -17,5 +17,6 @@ export { useCategories, getAllDescendants } from './useCategories';
 export { useConditions } from './useConditions';
 export { useLanguages } from './useLanguages';
 export { useFinishes } from './useFinishes';
+export { useScryfallSets } from './useScryfallSets';
 export { useDashboardStats } from './useDashboardStats';
 export type { DashboardStats } from './useDashboardStats';
