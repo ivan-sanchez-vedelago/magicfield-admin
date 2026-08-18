@@ -102,6 +102,40 @@ export const EditProductScreen = ({
     }
   }, [product, isSingleType, isSealedType]);
 
+  // Si el producto no tenía condición/idioma/finish cargados (fila vieja, previa a que ese
+  // campo existiera), se precompletan acá con el mismo default que usa creación para este
+  // tipo -- y eso habilita "Guardar" de una, ya que el producto pasa a necesitar guardar ese
+  // valor (sobre todo sellados, que exigen los 3 campos completos en toda edición). Si el
+  // producto ya traía su propio valor, no hace nada: eso ya lo cargó el efecto de arriba.
+  useEffect(() => {
+    if (!product || conditions.length === 0 || conditionId !== null) return;
+    if (!isSingleType && !isSealedType) return;
+    if ('conditionId' in product && product.conditionId != null) return;
+    const def = isSealedType
+      ? conditions.find(c => c.shortName === 'NEW') ?? conditions[0]
+      : conditions[0];
+    setConditionId(def.id);
+    setHasChanges(true);
+  }, [product, conditions, conditionId, isSingleType, isSealedType]);
+
+  useEffect(() => {
+    if (!product || languages.length === 0 || languageId !== null) return;
+    if (!isSingleType && !isSealedType) return;
+    if ('languageId' in product && product.languageId != null) return;
+    const def = isSealedType
+      ? languages.find(l => l.shortName.toLowerCase() === 'en') ?? languages[0]
+      : languages[0];
+    setLanguageId(def.id);
+    setHasChanges(true);
+  }, [product, languages, languageId, isSingleType, isSealedType]);
+
+  useEffect(() => {
+    if (!product || !isSingleType || finish !== null) return;
+    if ('finishShortName' in product && product.finishShortName != null) return;
+    setFinish('NONFOIL');
+    setHasChanges(true);
+  }, [product, isSingleType, finish]);
+
   // La carta puede no tener las 4 variantes de finish (hay promos foil-only, por ejemplo):
   // se consulta Scryfall con el scryfallId ya guardado para saber cuáles existen realmente,
   // mismo criterio que ya usa CreateProductScreen al elegir la carta por primera vez.
