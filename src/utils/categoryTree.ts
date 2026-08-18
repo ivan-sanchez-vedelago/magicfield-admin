@@ -1,23 +1,27 @@
 import { Category } from '@types';
 
-// Extraído de CreateProductScreen.tsx (antes "findRoot", declarado ahí solo) para poder
-// reusarlo desde EditProductScreen/ProductCard/ProductDetailScreen: sube por parentId hasta
-// la categoría de primer nivel (parentId === 0), sin importar cuántas subcategorías hoja se
-// hayan creado a mano desde el árbol del admin (ej. "Precons" bajo Sellados). shortName de una
-// hoja NUNCA es literalmente "SIN"/"PSL"/"ACC" -- solo el de la raíz lo es.
-export function findRootCategory(category: Category, categories: Category[]): Category {
-  if (category.parentId === 0) return category;
-  const parent = categories.find(c => c.id === category.parentId);
-  return parent ? findRootCategory(parent, categories) : category;
-}
-
-// Azúcar para el caso común "¿esta categoría (id o shortName) cuelga de esta raíz?".
-export function resolveRootShortName(
-  categoryIdOrShortName: number | string,
+// shortName es único por categoría -- un producto sellado nunca tiene category.shortName ===
+// "PSL" directamente, sino el de su subcategoría hoja (ej. "PRE" bajo Sellados, creada a mano
+// desde el árbol del admin), y puede haber más de un nivel de anidamiento en el medio (en este
+// catálogo real, "Singles"/"Sellados" cuelgan de "Magic the gathering", no de la raíz
+// directamente -- asumir un solo nivel fue el bug original). Sube por parentId hasta encontrar
+// targetShortName en algún ancestro (o en la propia categoría).
+//
+// La categoría raíz real está auto-referenciada (su propio parentId apunta a su propio id, en
+// vez de no tener padre) -- sin el corte de "parent.id === current.id" de abajo, cualquier
+// categoría fuera de la rama buscada (ej. accesorios buscando "SIN") recorrería en loop
+// infinito. Mismo criterio que Category.isDescendantOfOrSelf en el backend.
+export function isDescendantOfOrSelf(
+  category: Category,
+  targetShortName: string,
   categories: Category[]
-): string | null {
-  const leaf = typeof categoryIdOrShortName === 'number'
-    ? categories.find(c => c.id === categoryIdOrShortName)
-    : categories.find(c => c.shortName === categoryIdOrShortName);
-  return leaf ? findRootCategory(leaf, categories).shortName : null;
+): boolean {
+  let current: Category | undefined = category;
+  while (current) {
+    if (current.shortName === targetShortName) return true;
+    const parent = categories.find(c => c.id === current!.parentId);
+    if (!parent || parent.id === current.id) return false;
+    current = parent;
+  }
+  return false;
 }

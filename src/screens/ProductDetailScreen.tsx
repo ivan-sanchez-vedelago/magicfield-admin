@@ -13,7 +13,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { StockAdjuster } from '@components/index';
 import { useProductById, useDeleteProduct, useUpdateProductStock, useCategories } from '@hooks/index';
 import { SCRYFALL_IMAGE_HEADERS } from '@utils/getCardImage';
-import { findRootCategory } from '@utils/categoryTree';
+import { isDescendantOfOrSelf } from '@utils/categoryTree';
 import type { RootStackParamList } from '@navigation/types';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ProductDetail'>;
@@ -84,10 +84,19 @@ export const ProductDetailScreen: React.FC<Props> = ({
     ACC: '#6b7280',
   };
 
-  // product.type es el shortName de la subcategoría hoja (ej. "PRECON" bajo Sellados), nunca
-  // literalmente "SIN"/"PSL" -- hay que subir hasta la raíz para saber de qué rama es.
+  // product.type es el shortName de la subcategoría hoja (ej. "PRE" bajo Sellados), nunca
+  // literalmente "SIN"/"PSL" -- hay que subir por la cadena de ancestros buscando cada uno
+  // (puede haber más de un nivel de anidamiento en el medio).
   const productCategory = categories.find(c => c.shortName === product.type);
-  const rootShortName = productCategory ? findRootCategory(productCategory, categories).shortName : null;
+  const rootShortName = !productCategory
+    ? null
+    : isDescendantOfOrSelf(productCategory, 'SIN', categories)
+      ? 'SIN'
+      : isDescendantOfOrSelf(productCategory, 'PSL', categories)
+        ? 'PSL'
+        : isDescendantOfOrSelf(productCategory, 'ACC', categories)
+          ? 'ACC'
+          : null;
 
   return (
     <ScrollView style={styles.container}>

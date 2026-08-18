@@ -10,7 +10,7 @@ import { Image } from 'expo-image';
 import { Product, Category } from '@types';
 import { StockAdjuster } from './StockAdjuster';
 import { SCRYFALL_IMAGE_HEADERS } from '@utils/getCardImage';
-import { findRootCategory } from '@utils/categoryTree';
+import { isDescendantOfOrSelf } from '@utils/categoryTree';
 
 export interface ProductCardProps {
   product: Product;
@@ -33,10 +33,20 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 }) => {
   const isDeleting = deletingId === product.id;
 
-  // product.type es el shortName de la subcategoría hoja (ej. "PRECON" bajo Sellados), nunca
-  // literalmente "SIN"/"PSL"/"ACC" -- hay que subir hasta la raíz para saber de qué rama es.
+  // product.type es el shortName de la subcategoría hoja (ej. "PRE" bajo Sellados), nunca
+  // literalmente "SIN"/"PSL"/"ACC" -- hay que subir por la cadena de ancestros buscando cada
+  // uno (puede haber más de un nivel de anidamiento en el medio, ej. "Singles"/"Sellados"
+  // cuelgan de "Magic the gathering", no de la raíz directamente).
   const productCategory = categories.find(c => c.shortName === product.type);
-  const rootShortName = productCategory ? findRootCategory(productCategory, categories).shortName : null;
+  const rootShortName = !productCategory
+    ? null
+    : isDescendantOfOrSelf(productCategory, 'SIN', categories)
+      ? 'SIN'
+      : isDescendantOfOrSelf(productCategory, 'PSL', categories)
+        ? 'PSL'
+        : isDescendantOfOrSelf(productCategory, 'ACC', categories)
+          ? 'ACC'
+          : null;
 
   const getProductTypeBadge = () => {
     const typeColors: Record<string, string> = {

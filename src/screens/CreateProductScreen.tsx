@@ -20,7 +20,7 @@ import { apiService } from '@services/api';
 import { ScryfallCard, Category } from '@types';
 import type { RootStackParamList } from '@navigation/types';
 import { getAllCardImages } from '@utils/getCardImage';
-import { findRootCategory } from '@utils/categoryTree';
+import { isDescendantOfOrSelf } from '@utils/categoryTree';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CreateProduct'>;
 
@@ -53,10 +53,10 @@ export const CreateProductScreen = ({ navigation }: Props) => {
   }, [categories, expandedIds]);
 
   // shortName de la hoja elegida NUNCA es literalmente "SIN"/"PSL" si tiene subcategorías
-  // (ej. "PRECON" bajo Sellados) -- hay que subir hasta la raíz para saber de qué rama es.
-  const rootShortName = selectedLeaf ? findRootCategory(selectedLeaf, categories).shortName : null;
-  const isSingleType = rootShortName === 'SIN';
-  const isSealedType = rootShortName === 'PSL';
+  // (ej. "PRE" bajo Sellados) -- hay que subir por la cadena de ancestros buscando "SIN"/"PSL"
+  // en vez de comparar directo (puede haber más de un nivel de anidamiento en el medio).
+  const isSingleType = !!selectedLeaf && isDescendantOfOrSelf(selectedLeaf, 'SIN', categories);
+  const isSealedType = !!selectedLeaf && isDescendantOfOrSelf(selectedLeaf, 'PSL', categories);
 
   // Condiciones scoped por tipo de producto (NM/LP/... solo para singles, NEW/USD solo para
   // sellados) -- un solo hook, re-fetchea solo cuando cambia el scope efectivo.

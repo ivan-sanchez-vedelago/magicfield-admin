@@ -18,7 +18,7 @@ import { useProductById, useUpdateProduct, useConditions, useLanguages, useFinis
 import { apiService } from '@services/api';
 import { Product, ProductImage } from '@types';
 import type { RootStackParamList } from '@navigation/types';
-import { findRootCategory } from '@utils/categoryTree';
+import { isDescendantOfOrSelf } from '@utils/categoryTree';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'EditProduct'>;
 
@@ -30,15 +30,14 @@ export const EditProductScreen = ({
   const { product, loading: loadingProduct, error } = useProductById(productId);
   const { categories } = useCategories();
 
-  // product.type es el shortName de la subcategoría hoja (ej. "PRECON" bajo Sellados), nunca
-  // literalmente "SIN"/"PSL" -- hay que subir hasta la raíz para saber de qué rama es. Es
-  // obligatorio hacerlo por categoría (no por presencia de datos, como en otras pantallas):
-  // un sellado viejo sin set/condición/idioma todavía es indistinguible de un accesorio si
-  // solo miramos los campos.
+  // product.type es el shortName de la subcategoría hoja (ej. "PRE" bajo Sellados), nunca
+  // literalmente "SIN"/"PSL" -- hay que subir por la cadena de ancestros buscando "SIN"/"PSL"
+  // (puede haber más de un nivel de anidamiento en el medio). Es obligatorio hacerlo por
+  // categoría (no por presencia de datos, como en otras pantallas): un sellado viejo sin
+  // set/condición/idioma todavía es indistinguible de un accesorio si solo miramos los campos.
   const productCategory = product ? categories.find(c => c.shortName === product.type) : undefined;
-  const rootShortName = productCategory ? findRootCategory(productCategory, categories).shortName : null;
-  const isSingleType = rootShortName === 'SIN';
-  const isSealedType = rootShortName === 'PSL';
+  const isSingleType = !!productCategory && isDescendantOfOrSelf(productCategory, 'SIN', categories);
+  const isSealedType = !!productCategory && isDescendantOfOrSelf(productCategory, 'PSL', categories);
 
   const conditionScope = isSingleType ? 'SIN' : isSealedType ? 'PSL' : undefined;
   const { conditions } = useConditions(conditionScope);
