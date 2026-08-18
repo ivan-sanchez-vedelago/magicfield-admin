@@ -21,7 +21,10 @@ import type { RootStackParamList } from '@navigation/types';
 type Props = NativeStackScreenProps<RootStackParamList, 'Products'>;
 
 export const ProductsScreen: React.FC<Props> = ({ navigation }) => {
-  const { categories } = useCategories();
+  // Solo categorías con al menos un producto en stock en su subárbol -- oculta ramas vacías
+  // en los chips de filtro. A diferencia de CreateProductScreen (que debe seguir mostrando
+  // el árbol completo para poder crear el primer producto de una categoría).
+  const { categories } = useCategories(true);
 
   const [deletingId, setDeletingId] = useState<string | undefined>();
   const [refreshing, setRefreshing] = useState(false);

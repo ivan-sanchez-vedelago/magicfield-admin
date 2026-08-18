@@ -2,10 +2,10 @@ import { apiService } from '@services/api';
 import { Category } from '@types';
 import { useAsync } from './useAsync';
 
-export function useCategories() {
+export function useCategories(onlyWithProducts?: boolean) {
   const { data, loading, error } = useAsync(
-    () => apiService.getCategories(),
-    [],
+    () => apiService.getCategories(onlyWithProducts),
+    [onlyWithProducts],
     true
   );
 

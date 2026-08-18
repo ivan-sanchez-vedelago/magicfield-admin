@@ -66,9 +66,11 @@ class ApiService {
     );
   }
 
-  // Categories
-  async getCategories(): Promise<Category[]> {
-    const response = await this.client.get<Category[]>(ENDPOINTS.CATEGORIES.LIST);
+  // Categories (opcionalmente solo las que tienen al menos un producto en stock en su subárbol)
+  async getCategories(onlyWithProducts?: boolean): Promise<Category[]> {
+    const response = await this.client.get<Category[]>(ENDPOINTS.CATEGORIES.LIST, {
+      params: onlyWithProducts ? { onlyWithProducts: true } : {},
+    });
     return response.data;
   }
 

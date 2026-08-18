@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 export interface UseAsyncState<T> {
   data: T | null;
@@ -17,11 +17,19 @@ export function useAsync<T>(
     error: null,
   });
 
+  // Cada llamada a execute() se identifica con un número creciente: si para cuando la
+  // promesa resuelve ya se disparó una llamada más nueva (ej. el usuario cambió de
+  // categoría rápido), esta respuesta quedó obsoleta y se descarta en vez de pisar el
+  // estado con datos de una selección anterior.
+  const requestIdRef = useRef(0);
+
   const execute = useCallback(async () => {
+    const requestId = ++requestIdRef.current;
     setState((prev) => ({ ...prev, loading: true, error: null }));
 
     try {
       const result = await asyncFunction();
+      if (requestIdRef.current !== requestId) return;
 
       setState({
         data: result,
@@ -29,6 +37,8 @@ export function useAsync<T>(
         error: null,
       });
     } catch (err) {
+      if (requestIdRef.current !== requestId) return;
+
       setState({
         data: null,
         loading: false,
