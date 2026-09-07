@@ -13,11 +13,19 @@ import {
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { ImageUploader, ImageUploadResult, StockStepper } from '@components';
-import { useProductForRestore, useUpdateProduct, useDeleteProduct } from '@hooks';
+import { ImageUploader, ImageUploadResult, StockStepper, SelectField, SetPicker } from '@components';
+import {
+  useProductForRestore,
+  useUpdateProduct,
+  useDeleteProduct,
+  useCategories,
+  useConditions,
+  useLanguages,
+} from '@hooks';
 import { apiService } from '@services/api';
 import { Product, ProductImage } from '@types';
 import type { RootStackParamList } from '@navigation/types';
+import { isDescendantOfOrSelf } from '@utils/categoryTree';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'RestoreProduct'>;
 
@@ -27,6 +35,18 @@ export const RestoreProductScreen = ({
 }: Props) => {
   const { productId } = route.params;
   const { product, loading: loadingProduct, error } = useProductForRestore(productId);
+  const { categories } = useCategories();
+
+  // product.type es el shortName de la subcategoría hoja (ej. "PRE" bajo Sellados), nunca
+  // literalmente "SIN"/"PSL" -- mismo criterio que Create/EditProductScreen. La lista de
+  // restaurables excluye singles por diseño (ver findRestorablePaged en el backend), así que en
+  // la práctica todo lo que llega acá es PSL, pero se calcula igual por las dudas.
+  const productCategory = product ? categories.find(c => c.shortName === product.type) : undefined;
+  const isSealedType = !!productCategory && isDescendantOfOrSelf(productCategory, 'PSL', categories);
+
+  const { conditions } = useConditions(isSealedType ? 'PSL' : undefined);
+  const { languages } = useLanguages();
+
   const { execute: restoreProduct, loading: restoreLoading } = useUpdateProduct(
     () => {
       Alert.alert('Éxito', 'Producto restaurado y publicado correctamente', [
@@ -52,20 +72,48 @@ export const RestoreProductScreen = ({
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
-  const [stock, setStock] = useState('');
+  const [stock, setStock] = useState('1');
   const [images, setImages] = useState<ImageUploadResult[]>([]);
   const [currentImages, setCurrentImages] = useState<ProductImage[]>([]);
   const [loadingImages, setLoadingImages] = useState(false);
+
+  // Sellado -- antes esta pantalla ni mostraba ni mandaba estos 3 campos al restaurar, y el
+  // backend los exige en TODA edición de un sellado (ver updateSealedFields), así que la
+  // restauración fallaba siempre con un 400. Se cargan del producto existente si ya los tiene;
+  // si es un sellado viejo sin set/condición/idioma, arrancan vacíos (set) o con el mismo
+  // default que Create/Edit (condición "Nuevo"/idioma inglés) para no dejar el form sin nada.
+  const [set, setSet] = useState('');
+  const [conditionId, setConditionId] = useState<number | null>(null);
+  const [languageId, setLanguageId] = useState<number | null>(null);
 
   useEffect(() => {
     if (product) {
       setName(product.name);
       setDescription(product.description);
       setPrice(product.price.toString());
-      setStock('');
+      setStock('1');
+      if (isSealedType && 'conditionId' in product) {
+        setSet(product.set ?? '');
+        setConditionId(product.conditionId ?? null);
+        setLanguageId(product.languageId ?? null);
+      }
       loadProductImages(product.id);
     }
-  }, [product]);
+  }, [product, isSealedType]);
+
+  useEffect(() => {
+    if (!product || !isSealedType || conditions.length === 0 || conditionId !== null) return;
+    if ('conditionId' in product && product.conditionId != null) return;
+    const def = conditions.find(c => c.shortName === 'NEW') ?? conditions[0];
+    setConditionId(def.id);
+  }, [product, isSealedType, conditions, conditionId]);
+
+  useEffect(() => {
+    if (!product || !isSealedType || languages.length === 0 || languageId !== null) return;
+    if ('languageId' in product && product.languageId != null) return;
+    const def = languages.find(l => l.shortName.toLowerCase() === 'en') ?? languages[0];
+    setLanguageId(def.id);
+  }, [product, isSealedType, languages, languageId]);
 
   const loadProductImages = async (productId: string) => {
     try {
@@ -121,14 +169,30 @@ export const RestoreProductScreen = ({
       return;
     }
 
+    // Mismo criterio que EditProductScreen: el backend exige set/condición/idioma completos en
+    // TODA edición de un sellado (updateSealedFields), no solo al crearlo.
+    if (isSealedType && (!set.trim() || conditionId === null || languageId === null)) {
+      Alert.alert('Error', 'Debes completar set, condición e idioma');
+      return;
+    }
+
     try {
-      const updates: Partial<Product> = {
+      // any, no Partial<Product>: Product es un discriminated union (Single/Sealed/Other/Base)
+      // y set/conditionId/languageId solo existen en la variante Sealed -- mismo criterio que
+      // EditProductScreen.
+      const updates: any = {
         name: name.trim(),
         description: description.trim(),
         price: parseFloat(price),
         stock: stock ? parseInt(stock) : 1,
         type: product.type,
       };
+
+      if (isSealedType) {
+        updates.set = set.trim();
+        updates.conditionId = conditionId;
+        updates.languageId = languageId;
+      }
 
       if (images.length > 0) {
         for (const img of images) {
@@ -361,6 +425,37 @@ export const RestoreProductScreen = ({
               <Text style={styles.foilBadgeText}>✨ {product.finishName ?? product.finishShortName}</Text>
             </View>
           )}
+        </View>
+      )}
+
+      {/* Sellado -- Set/Condición/Idioma se exigen completos para restaurar (mismo criterio
+          que EditProductScreen), así que tienen que ser editables acá y no solo de lectura. */}
+      {isSealedType && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Set, Condición e Idioma</Text>
+
+          <Text style={styles.label}>Set</Text>
+          <SetPicker
+            value={set}
+            onSelect={setSet}
+            disabled={busy}
+          />
+
+          <SelectField
+            label="Condición"
+            options={conditions.map(c => ({ key: String(c.id), label: c.longName }))}
+            selectedKey={conditionId !== null ? String(conditionId) : null}
+            onSelect={(key) => setConditionId(Number(key))}
+            disabled={busy}
+          />
+
+          <SelectField
+            label="Idioma"
+            options={languages.map(l => ({ key: String(l.id), label: l.longName }))}
+            selectedKey={languageId !== null ? String(languageId) : null}
+            onSelect={(key) => setLanguageId(Number(key))}
+            disabled={busy}
+          />
         </View>
       )}
 

@@ -22,6 +22,43 @@ if (!isExpoGo) {
   });
 }
 
+/**
+ * Se suscribe a los taps sobre notificaciones push (recibidas mientras la app está abierta o en
+ * segundo plano) y llama a `onOrderId` con el `orderId` que viaja en el `data` del mensaje.
+ * No cubre el cold-start (app cerrada del todo, se abre tocando la notificación) -- para eso
+ * hay que consultar `Notifications.getLastNotificationResponseAsync()` aparte (ver App.tsx).
+ * No-op en Expo Go, misma guarda que el resto del archivo.
+ */
+export function subscribeToOrderNotifications(onOrderId: (orderId: string) => void): () => void {
+  if (isExpoGo) {
+    return () => {};
+  }
+
+  const Notifications = require('expo-notifications');
+  const subscription = Notifications.addNotificationResponseReceivedListener(
+    (response: any) => {
+      const orderId = response?.notification?.request?.content?.data?.orderId;
+      if (typeof orderId === 'string' && orderId) {
+        onOrderId(orderId);
+      }
+    }
+  );
+
+  return () => subscription.remove();
+}
+
+/** Cold-start: si la app se abrió tocando una notificación, devuelve su orderId (o null). */
+export async function getInitialOrderIdFromNotification(): Promise<string | null> {
+  if (isExpoGo) {
+    return null;
+  }
+
+  const Notifications = require('expo-notifications');
+  const response = await Notifications.getLastNotificationResponseAsync();
+  const orderId = response?.notification?.request?.content?.data?.orderId;
+  return typeof orderId === 'string' && orderId ? orderId : null;
+}
+
 /** Pide permisos, obtiene el push token de Expo y lo registra en el backend. */
 export async function registerForPushNotifications(): Promise<void> {
   if (isExpoGo) {

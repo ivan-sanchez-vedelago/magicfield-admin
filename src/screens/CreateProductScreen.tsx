@@ -93,7 +93,7 @@ export const CreateProductScreen = ({ navigation }: Props) => {
   const [priceUsd, setPriceUsd] = useState('');
   const [priceUsdFoil, setPriceUsdFoil] = useState('');
   const [price, setPrice] = useState('');
-  const [stock, setStock] = useState('');
+  const [stock, setStock] = useState('1');
 
   // Single-specific fields (set/conditionId/languageId también los usa el bloque de sellados
   // más abajo -- son mutuamente excluyentes, nunca se muestran los dos formularios juntos)
@@ -107,25 +107,23 @@ export const CreateProductScreen = ({ navigation }: Props) => {
   const [priceUsdEtched, setPriceUsdEtched] = useState('');
   const [scryfallId, setScryfallId] = useState('');
 
-  // Apenas cargan las listas, se preselecciona un default. Para singles, el primer registro
-  // (menor id -- NM con la semilla actual) como siempre. Para sellados, la decisión explícita
-  // es "Nuevo"/Inglés (con fallback al primero si por algún motivo no aparecen con ese
-  // short_name), no simplemente el primer registro devuelto.
+  // Apenas cargan las listas, se preselecciona un default explícito por shortName en vez de
+  // confiar en el orden en que la API devuelve la lista (findByApplicableType no tenía ORDER
+  // BY): "Near Mint"/Inglés para singles, "Nuevo"/Inglés para sellados, con fallback al primer
+  // registro si por algún motivo no aparecen con ese short_name.
   useEffect(() => {
     if (conditions.length === 0 || conditionId !== null) return;
     const def = isSealedType
       ? conditions.find(c => c.shortName === 'NEW') ?? conditions[0]
-      : conditions[0];
+      : conditions.find(c => c.shortName === 'NM') ?? conditions[0];
     setConditionId(def.id);
   }, [conditions, conditionId, isSealedType]);
 
   useEffect(() => {
     if (languages.length === 0 || languageId !== null) return;
-    const def = isSealedType
-      ? languages.find(l => l.shortName.toLowerCase() === 'en') ?? languages[0]
-      : languages[0];
+    const def = languages.find(l => l.shortName.toLowerCase() === 'en') ?? languages[0];
     setLanguageId(def.id);
-  }, [languages, languageId, isSealedType]);
+  }, [languages, languageId]);
 
   const resetForm = () => {
     // tipo
@@ -138,7 +136,7 @@ export const CreateProductScreen = ({ navigation }: Props) => {
     setPriceUsd('');
     setPriceUsdFoil('');
     setPrice('');
-    setStock('');
+    setStock('1');
     setImages([]);
 
     // single (set/conditionId/languageId también los usa el bloque de sellados, ver arriba)

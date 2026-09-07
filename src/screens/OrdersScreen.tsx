@@ -71,7 +71,7 @@ interface GroupedOrder {
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Orders'>;
 
-export const OrdersScreen: React.FC<Props> = ({ navigation }) => {
+export const OrdersScreen: React.FC<Props> = ({ navigation, route }) => {
   const [audits, setAudits] = useState<SalesAudit[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -119,6 +119,18 @@ export const OrdersScreen: React.FC<Props> = ({ navigation }) => {
     };
     init();
   }, []);
+
+  // Si se llegó a esta pantalla desde el tap de una notificación de "Pedido recibido" (ver
+  // navigateToOrder en App.tsx), dejar ese pedido específico ya desplegado apenas carguen los
+  // pedidos, en vez de que el admin tenga que buscarlo y tocarlo a mano.
+  const targetOrderId = route.params?.orderId;
+  useEffect(() => {
+    if (!targetOrderId || audits.length === 0) return;
+    if (!audits.some((a) => a.orderId === targetOrderId)) return;
+    setExpandedOrder(targetOrderId);
+    markOrderAsSeen(targetOrderId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [targetOrderId, audits]);
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
