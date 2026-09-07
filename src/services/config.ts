@@ -66,6 +66,7 @@ export const ENDPOINTS = {
     UPDATE: (id: number) => `/api/banners/${id}`,
     DELETE: (id: number) => `/api/banners/${id}`,
     UPLOAD_IMAGE: (id: number) => `/api/banners/${id}/image`,
+    REORDER: '/api/banners/reorder',
   },
   ORDERS: {
     ALL: '/api/sales-audit',

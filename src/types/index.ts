@@ -115,7 +115,6 @@ export interface BannerRequest {
   title: string;
   subtitle?: string;
   active: boolean;
-  sortOrder: number;
 }
 
 export interface CsvImportRowError {

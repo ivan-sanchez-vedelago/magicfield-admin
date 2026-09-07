@@ -340,6 +340,11 @@ class ApiService {
     await this.client.delete(ENDPOINTS.BANNERS.DELETE(id));
   }
 
+  async reorderBanners(orderedIds: number[]): Promise<Banner[]> {
+    const response = await this.client.put<Banner[]>(ENDPOINTS.BANNERS.REORDER, { orderedIds });
+    return response.data;
+  }
+
   // Orders / Sales Audit
   async getAllSalesAudits() {
     const response = await this.client.get(ENDPOINTS.ORDERS.ALL);

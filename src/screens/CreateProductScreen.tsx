@@ -107,17 +107,30 @@ export const CreateProductScreen = ({ navigation }: Props) => {
   const [priceUsdEtched, setPriceUsdEtched] = useState('');
   const [scryfallId, setScryfallId] = useState('');
 
-  // Apenas cargan las listas, se preselecciona un default explícito por shortName en vez de
-  // confiar en el orden en que la API devuelve la lista (findByApplicableType no tenía ORDER
-  // BY): "Near Mint"/Inglés para singles, "Nuevo"/Inglés para sellados, con fallback al primer
-  // registro si por algún motivo no aparecen con ese short_name.
+  // Antes de elegir una categoría, conditionScope es undefined y useConditions trae TODAS las
+  // condiciones sin scope (mezcla NM/LP/... de singles con NEW/USD de sellados) -- si el efecto
+  // de abajo llegara a correr en ese momento, fijaría un default sacado de esa lista mezclada y
+  // nunca se corregiría después (queda "trabado" por el chequeo conditionId !== null ni bien el
+  // admin elige el tipo real). Este efecto resetea la selección cada vez que cambia el scope
+  // efectivo (undefined -> "SIN"/"PSL", o al cambiar de un tipo a otro) para que el de abajo
+  // vuelva a correr con la lista ya filtrada correcta.
+  useEffect(() => {
+    setConditionId(null);
+  }, [conditionScope]);
+
+  // Apenas cargan las listas (ya con una categoría elegida), se preselecciona un default
+  // explícito por shortName en vez de confiar en el orden en que la API devuelve la lista
+  // (findByApplicableType no tenía ORDER BY): "Near Mint"/Inglés para singles, "Nuevo"/Inglés
+  // para sellados, con fallback al primer registro si por algún motivo no aparecen con ese
+  // short_name.
   useEffect(() => {
     if (conditions.length === 0 || conditionId !== null) return;
+    if (!isSingleType && !isSealedType) return;
     const def = isSealedType
       ? conditions.find(c => c.shortName === 'NEW') ?? conditions[0]
       : conditions.find(c => c.shortName === 'NM') ?? conditions[0];
     setConditionId(def.id);
-  }, [conditions, conditionId, isSealedType]);
+  }, [conditions, conditionId, isSingleType, isSealedType]);
 
   useEffect(() => {
     if (languages.length === 0 || languageId !== null) return;
