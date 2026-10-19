@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from 'react';
+import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import {
   View,
@@ -25,6 +25,8 @@ import { isDescendantOfOrSelf } from '@utils/categoryTree';
 type Props = NativeStackScreenProps<RootStackParamList, 'CreateProduct'>;
 
 export const CreateProductScreen = ({ navigation }: Props) => {
+  const createInProgress = useRef(false);
+  const pendingCreateRef = useRef<{ payload: string; key: string } | null>(null);
   const { categories, loading: loadingCategories } = useCategories();
 
   // Category tree selection state
@@ -261,6 +263,7 @@ export const CreateProductScreen = ({ navigation }: Props) => {
   };
 
   const handleCreateProduct = async () => {
+    if (createInProgress.current) return;
     if (!selectedLeaf) {
       Alert.alert('Error', 'Debes seleccionar un tipo de producto');
       return;
@@ -302,6 +305,7 @@ export const CreateProductScreen = ({ navigation }: Props) => {
       }
     }
 
+    createInProgress.current = true;
     try {
       const productData: any = {
         name: name.trim(),
@@ -326,7 +330,18 @@ export const CreateProductScreen = ({ navigation }: Props) => {
         productData.languageId = languageId;
       }
 
-      const createdProduct = await createProduct(productData);
+      const payload = JSON.stringify(productData);
+      if (pendingCreateRef.current?.payload !== payload) {
+        pendingCreateRef.current = {
+          payload,
+          key: `${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`,
+        };
+      }
+      const createdProduct = await createProduct({
+        product: productData,
+        idempotencyKey: pendingCreateRef.current.key,
+      });
+      pendingCreateRef.current = null;
       const productId = createdProduct.id;
 
       if (!isSingleType && images.length > 0) {
@@ -344,6 +359,8 @@ export const CreateProductScreen = ({ navigation }: Props) => {
         'No se pudo crear el producto: ' +
           (error instanceof Error ? error.message : 'Error desconocido')
       );
+    } finally {
+      createInProgress.current = false;
     }
   };
 

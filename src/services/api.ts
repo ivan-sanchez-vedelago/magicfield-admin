@@ -42,14 +42,23 @@ class ApiService {
   private setupInterceptors() {
     // Response interceptor for handling errors
     this.client.interceptors.response.use(
-      (response: AxiosResponse) => response,
+      (response: AxiosResponse) => {
+        const config = response.config;
+        if (config?.method) {
+          delete this.retryCount[`${config.method}_${config.url}`];
+        }
+        return response;
+      },
       async (error: AxiosError) => {
         console.log("API ERROR:", error.message);
         console.log("API ERROR URL:", error.config?.url);
         console.log("API ERROR STATUS:", error.response?.status);
         const config = error.config;
 
-        if (config && error.response?.status !== 401) {
+        const method = config?.method?.toLowerCase();
+        const isSafeToRetry = method === 'get' || method === 'head' || method === 'options';
+
+        if (config && isSafeToRetry && error.response?.status !== 401) {
           const key = `${config.method}_${config.url}`;
           this.retryCount[key] = (this.retryCount[key] || 0) + 1;
 
@@ -59,6 +68,7 @@ class ApiService {
             );
             return this.client.request(config);
           }
+          delete this.retryCount[key];
         }
 
         return Promise.reject(error);
@@ -151,10 +161,11 @@ class ApiService {
     return response.data;
   }
 
-  async createProduct(product: Omit<Product, 'id'>): Promise<Product> {
+  async createProduct(product: Omit<Product, 'id'>, idempotencyKey: string): Promise<Product> {
     const response = await this.client.post<Product>(
       ENDPOINTS.PRODUCTS.CREATE,
-      product
+      product,
+      { headers: { 'Idempotency-Key': idempotencyKey } }
     );
     return response.data;
   }

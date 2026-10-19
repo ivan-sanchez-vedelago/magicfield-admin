@@ -99,7 +99,10 @@ export function useProductById(id: string | null) {
 
 export function useCreateProduct(onSuccess?: (product: Product) => void) {
   return useAsyncMutation(
-    (product: Omit<Product, 'id'>) => apiService.createProduct(product),
+    ({ product, idempotencyKey }: {
+      product: Omit<Product, 'id'>;
+      idempotencyKey: string;
+    }) => apiService.createProduct(product, idempotencyKey),
     onSuccess
   );
 }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   View,
   ScrollView,
@@ -8,16 +8,27 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
+import axios from 'axios';
 import * as DocumentPicker from 'expo-document-picker';
 import { useImportSinglesCsv } from '@hooks';
 import { CsvImportResult } from '@types';
+import { useNavigation } from '@react-navigation/native';
+import type { DrawerNavigationProp } from '@react-navigation/drawer';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { DrawerStackParamList, RootStackParamList } from '@navigation/types';
 
 export const ImportSinglesScreen: React.FC = () => {
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, 'ImportSingles'>>();
+  const importInProgress = useRef(false);
   const [pickedFile, setPickedFile] = useState<{ uri: string; name: string } | null>(null);
   const [result, setResult] = useState<CsvImportResult | null>(null);
-  const { execute: importCsv, loading } = useImportSinglesCsv((res) => {
-    setResult(res);
-  });
+  const { execute: importCsv, loading } = useImportSinglesCsv();
+
+  const returnToAdminHome = () => {
+    navigation
+      .getParent<DrawerNavigationProp<DrawerStackParamList>>()
+      ?.navigate('ProductsStack');
+  };
 
   const handlePickFile = async () => {
     setResult(null);
@@ -35,15 +46,32 @@ export const ImportSinglesScreen: React.FC = () => {
   };
 
   const handleImport = async () => {
-    if (!pickedFile) return;
+    if (!pickedFile || importInProgress.current) return;
+    importInProgress.current = true;
     try {
-      await importCsv({ uri: pickedFile.uri, name: pickedFile.name });
-    } catch (err) {
+      const importResult = await importCsv({ uri: pickedFile.uri, name: pickedFile.name });
+      setResult(importResult);
+      setPickedFile(null);
+      returnToAdminHome();
       Alert.alert(
-        'Error',
-        'No se pudo importar el archivo: ' +
-          (err instanceof Error ? err.message : 'Error desconocido')
+        'Importación terminada',
+        `Filas leídas: ${importResult.totalRows}\nCreados: ${importResult.created}\nStock sumado: ${importResult.updatedExisting}\nErrores: ${importResult.errors.length}`
       );
+    } catch (err) {
+      const isAxiosError = axios.isAxiosError<{ error?: string }>(err);
+      const isAlreadyImported = isAxiosError && err.response?.status === 409;
+      const message = isAxiosError
+        ? err.response?.data?.error ?? err.message
+        : err instanceof Error ? err.message : 'Error desconocido';
+      if (isAlreadyImported) {
+        returnToAdminHome();
+        Alert.alert(
+          'Archivo ya importado',
+          message
+        );
+      } else {
+        Alert.alert('Error', `No se pudo importar el archivo: ${message}`);
+      }
     }
   };
 
@@ -53,7 +81,8 @@ export const ImportSinglesScreen: React.FC = () => {
         <Text style={styles.infoBannerText}>
           Importá un CSV exportado de ManaBox para cargar múltiples singles de una. Cada fila
           debe traer el Scryfall ID de la carta — no se verifica contra Scryfall, así que la
-          identificación depende de que ese dato venga correcto en el archivo.
+          identificación depende de que ese dato venga correcto en el archivo. El mismo archivo
+          no puede importarse más de una vez porque cada importación suma stock.
         </Text>
       </View>
 

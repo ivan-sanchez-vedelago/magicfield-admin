@@ -208,6 +208,7 @@ const DrawerNavigator = () => (
       name="ProductsStack"
       component={ProductsStackNavigator}
       options={{
+        popToTopOnBlur: true,
         drawerLabel: 'Productos',
         title: 'Productos',
         drawerIcon: ({ color, size }) => (
