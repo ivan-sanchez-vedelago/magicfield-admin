@@ -181,26 +181,6 @@ export const ProductsScreen: React.FC<Props> = ({ navigation }) => {
     navigation.navigate('ProductDetail', { productId: product.id });
   };
 
-  if (loading && products.length === 0) {
-    return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#3b82f6" />
-        <Text style={styles.loadingText}>Cargando productos...</Text>
-      </View>
-    );
-  }
-
-  if (error && products.length === 0) {
-    return (
-      <View style={styles.centerContainer}>
-        <Text style={styles.errorText}>Error al cargar productos</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}>
-          <Text style={styles.retryButtonText}>Intentar de Nuevo</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
   return (
     <View style={styles.container}>
       {/* Sliders de categorías: raíces primero, luego un slider por cada nivel de hijos */}
@@ -284,12 +264,26 @@ export const ProductsScreen: React.FC<Props> = ({ navigation }) => {
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
         }
         ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No hay productos</Text>
-            <TouchableOpacity style={styles.createEmptyButton}>
-              <Text style={styles.createEmptyButtonText}>Crear Primero</Text>
-            </TouchableOpacity>
-          </View>
+          loading ? (
+            <View style={styles.emptyContainer}>
+              <ActivityIndicator size="large" color="#3b82f6" />
+              <Text style={styles.loadingText}>Cargando productos...</Text>
+            </View>
+          ) : error ? (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.errorText}>Error al cargar productos</Text>
+              <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}>
+                <Text style={styles.retryButtonText}>Intentar de Nuevo</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>No hay productos</Text>
+              <TouchableOpacity style={styles.createEmptyButton}>
+                <Text style={styles.createEmptyButtonText}>Crear Primero</Text>
+              </TouchableOpacity>
+            </View>
+          )
         }
         ListFooterComponent={totalPages > 1 ? renderPagination() : null}
         contentContainerStyle={

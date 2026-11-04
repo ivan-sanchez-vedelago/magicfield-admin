@@ -55,26 +55,6 @@ export const RestoreProductsScreen: React.FC<Props> = ({ navigation }) => {
     navigation.navigate('RestoreProduct', { productId: product.id });
   };
 
-  if (loading && products.length === 0) {
-    return (
-      <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color="#3b82f6" />
-        <Text style={styles.loadingText}>Cargando productos agotados...</Text>
-      </View>
-    );
-  }
-
-  if (error && products.length === 0) {
-    return (
-      <View style={styles.centerContainer}>
-        <Text style={styles.errorText}>Error al cargar productos</Text>
-        <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}>
-          <Text style={styles.retryButtonText}>Intentar de Nuevo</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
   return (
     <View style={styles.container}>
       <View style={styles.infoBanner}>
@@ -124,9 +104,23 @@ export const RestoreProductsScreen: React.FC<Props> = ({ navigation }) => {
           <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
         }
         ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyText}>No hay productos agotados para restaurar</Text>
-          </View>
+          loading ? (
+            <View style={styles.emptyContainer}>
+              <ActivityIndicator size="large" color="#3b82f6" />
+              <Text style={styles.loadingText}>Cargando productos agotados...</Text>
+            </View>
+          ) : error ? (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.errorText}>Error al cargar productos</Text>
+              <TouchableOpacity style={styles.retryButton} onPress={() => refetch()}>
+                <Text style={styles.retryButtonText}>Intentar de Nuevo</Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>No hay productos agotados para restaurar</Text>
+            </View>
+          )
         }
         ListFooterComponent={
           totalPages > 1 ? (
