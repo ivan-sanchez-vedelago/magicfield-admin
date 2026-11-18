@@ -22,6 +22,7 @@ interface SalesAudit {
   orderId: string;
   productId: string;
   productName: string;
+  categoryName?: string | null;
   variantTags: string | null;
   set: string | null;
   collectorNumber: string | null;
@@ -70,6 +71,53 @@ interface GroupedOrder {
 }
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Orders'>;
+
+const getItemCategoryName = (item: SalesAudit): string => {
+  const savedCategory = item.categoryName?.trim();
+  if (savedCategory) return savedCategory;
+  if (item.collectorNumber?.trim()) return 'Singles';
+  if (item.set?.trim()) return 'Sellados';
+  return 'Accesorios';
+};
+
+const compareTextWithMissingLast = (
+  leftValue: string | null | undefined,
+  rightValue: string | null | undefined
+): number => {
+  const left = leftValue?.trim();
+  const right = rightValue?.trim();
+  if (!left && !right) return 0;
+  if (!left) return 1;
+  if (!right) return -1;
+  return left.localeCompare(right, 'es', { sensitivity: 'base' });
+};
+
+const sortOrderItems = (items: SalesAudit[]): SalesAudit[] =>
+  [...items].sort((left, right) =>
+    compareTextWithMissingLast(getItemCategoryName(left), getItemCategoryName(right))
+    || compareTextWithMissingLast(left.set, right.set)
+    || compareTextWithMissingLast(left.productName, right.productName)
+    || left.unitPrice - right.unitPrice
+    || left.id.localeCompare(right.id)
+  );
+
+const summarizeProductCategories = (items: SalesAudit[]): string => {
+  const totals = new Map<string, { name: string; quantity: number }>();
+  items.forEach(item => {
+    const name = getItemCategoryName(item);
+    const key = name.toLowerCase();
+    const current = totals.get(key);
+    totals.set(key, {
+      name: current?.name ?? name,
+      quantity: (current?.quantity ?? 0) + item.quantity,
+    });
+  });
+
+  return [...totals.values()]
+    .sort((left, right) => left.name.localeCompare(right.name, 'es', { sensitivity: 'base' }))
+    .map(({ name, quantity }) => `${name}: ${quantity}`)
+    .join(' · ');
+};
 
 export const OrdersScreen: React.FC<Props> = ({ navigation, route }) => {
   const [audits, setAudits] = useState<SalesAudit[]>([]);
@@ -351,7 +399,10 @@ export const OrdersScreen: React.FC<Props> = ({ navigation, route }) => {
                     {/* Productos */}
                     <View style={styles.productsSection}>
                       <Text style={styles.sectionLabel}>PRODUCTOS</Text>
-                      {order.items.map((item) => {
+                      <Text style={styles.productCategorySummary}>
+                        {summarizeProductCategories(order.items)}
+                      </Text>
+                      {sortOrderItems(order.items).map((item) => {
                         const variantTagsSuffix = item.variantTags
                           ? item.variantTags.split(', ').map(tag => ` (${tag})`).join('')
                           : '';
@@ -550,6 +601,11 @@ const styles = StyleSheet.create({
   },
   productsSection: {
     gap: 4,
+  },
+  productCategorySummary: {
+    fontSize: 12,
+    color: '#6b7280',
+    marginBottom: 4,
   },
   productRow: {
     flexDirection: 'row',
