@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { ImageUploader, ImageUploadResult, StockStepper, SelectField, SetPicker } from '@components';
+import { ImageUploader, ImageUploadResult, StockStepper, SelectField, FinishToggle, SetPicker } from '@components';
 import { useProductById, useUpdateProduct, useConditions, useLanguages, useFinishes, useCategories } from '@hooks';
 import { apiService } from '@services/api';
 import { Product, ProductImage } from '@types';
@@ -643,24 +643,20 @@ export const EditProductScreen = ({
             disabled={updateLoading}
           />
 
-          <SelectField
+          <FinishToggle
             label="Finish"
             options={(() => {
               const shortNames = availableFinishes.length > 0
                 ? availableFinishes
                 : finishes.map(f => f.shortName);
-              // El finish ya guardado siempre queda seleccionable, aunque por algún dato
-              // viejo no esté entre los que Scryfall reporta hoy para la carta.
-              const withCurrent = finish && !shortNames.includes(finish)
-                ? [...shortNames, finish]
-                : shortNames;
-              return withCurrent.map(shortName => ({
+              return shortNames.map(shortName => ({
                 key: shortName,
                 label: finishes.find(cf => cf.shortName === shortName)?.longName ?? shortName,
               }));
             })()}
             selectedKey={finish}
-            onSelect={(key) => {
+            selectedLabel={finishes.find(cf => cf.shortName === finish)?.longName ?? finish ?? undefined}
+            onToggle={(key) => {
               setFinish(key);
               handleFieldChange();
             }}

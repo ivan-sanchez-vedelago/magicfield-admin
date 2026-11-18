@@ -16,6 +16,9 @@ export type { CardSearchProps } from './CardSearch';
 export { SelectField } from './SelectField';
 export type { SelectFieldProps, SelectOption } from './SelectField';
 
+export { FinishToggle } from './FinishToggle';
+export type { FinishToggleProps } from './FinishToggle';
+
 export { SetPicker } from './SetPicker';
 export type { SetPickerProps } from './SetPicker';
 

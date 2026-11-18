@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { ImageUploader, ImageUploadResult, CardSearch, StockStepper, SelectField, SetPicker } from '@components';
+import { ImageUploader, ImageUploadResult, CardSearch, StockStepper, SelectField, FinishToggle, SetPicker } from '@components';
 import { useCreateProduct, useCategories, useConditions, useLanguages, useFinishes } from '@hooks';
 import { apiService } from '@services/api';
 import { ScryfallCard, Category } from '@types';
@@ -220,6 +220,11 @@ export const CreateProductScreen = ({ navigation }: Props) => {
   };
 
   const handleSelectCard = (card: ScryfallCard) => {
+    if (languageId === null && languages.length > 0) {
+      const defaultLanguage = languages.find(l => l.shortName.toLowerCase() === 'en') ?? languages[0];
+      setLanguageId(defaultLanguage.id);
+    }
+
     const newPriceUsd = getPrice(card.prices?.usd);
     const newPriceUsdFoil = getPrice(card.prices?.usd_foil);
     const newPriceUsdEtched = getPrice(card.prices?.usd_etched);
@@ -632,14 +637,14 @@ export const CreateProductScreen = ({ navigation }: Props) => {
                 disabled={loading}
               />
 
-              <SelectField
+              <FinishToggle
                 label="Finish"
                 options={availableFinishes.map(f => ({
                   key: f,
                   label: finishes.find(cf => cf.shortName === f)?.longName ?? f,
                 }))}
                 selectedKey={finish}
-                onSelect={handleFinishChange}
+                onToggle={handleFinishChange}
                 disabled={loading}
               />
             </View>
