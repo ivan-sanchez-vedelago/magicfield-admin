@@ -40,6 +40,8 @@ interface SalesAudit {
   deliveryType: string | null;
   shippingStreet: string | null;
   shippingStreetNumber: string | null;
+  shippingFloor: string | null;
+  shippingApartment: string | null;
   shippingCity: string | null;
   shippingProvince: string | null;
   shippingPostalCode: string | null;
@@ -60,6 +62,8 @@ interface GroupedOrder {
   deliveryType: string | null;
   shippingStreet: string | null;
   shippingStreetNumber: string | null;
+  shippingFloor: string | null;
+  shippingApartment: string | null;
   shippingCity: string | null;
   shippingProvince: string | null;
   shippingPostalCode: string | null;
@@ -202,6 +206,8 @@ export const OrdersScreen: React.FC<Props> = ({ navigation, route }) => {
         deliveryType: items[0].deliveryType ?? null,
         shippingStreet: items[0].shippingStreet ?? null,
         shippingStreetNumber: items[0].shippingStreetNumber ?? null,
+        shippingFloor: items[0].shippingFloor ?? null,
+        shippingApartment: items[0].shippingApartment ?? null,
         shippingCity: items[0].shippingCity ?? null,
         shippingProvince: items[0].shippingProvince ?? null,
         shippingPostalCode: items[0].shippingPostalCode ?? null,
@@ -268,6 +274,10 @@ export const OrdersScreen: React.FC<Props> = ({ navigation, route }) => {
         + (order.deliveryType === 'ENVIO_DOMICILIO' ? `(Envío a domicilio) ` : '')
         + (order.deliveryType === 'ENVIO_ANDREANI' ? `(Envío a sucursal Andreani) ` : '')
         + `${[toTitleCase(order.shippingStreet), order.shippingStreetNumber].filter(Boolean).join(' ')}`
+        + (order.deliveryType === 'ENVIO_DOMICILIO' && order.shippingFloor
+          ? `, Piso ${order.shippingFloor}` : '')
+        + (order.deliveryType === 'ENVIO_DOMICILIO' && order.shippingApartment
+          ? `, Departamento ${order.shippingApartment}` : '')
         + (order.shippingCity ? `, ${toTitleCase(order.shippingCity)}` : '')
         + (order.shippingProvince ? `, ${toTitleCase(order.shippingProvince)}` : ''),
       (order.shippingPostalCode ? `Codigo postal: ${order.shippingPostalCode}` : ''),
