@@ -35,7 +35,6 @@ build/
 dist/
 
 # Dependencies
-package-lock.json
 yarn.lock
 
 # Firebase
