@@ -74,10 +74,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Orders'>;
 
 const getItemCategoryName = (item: SalesAudit): string => {
   const savedCategory = item.categoryName?.trim();
-  if (savedCategory) return savedCategory;
-  if (item.collectorNumber?.trim()) return 'Singles';
-  if (item.set?.trim()) return 'Sellados';
-  return 'Accesorios';
+  return savedCategory || 'Sin categoría';
 };
 
 const compareTextWithMissingLast = (
