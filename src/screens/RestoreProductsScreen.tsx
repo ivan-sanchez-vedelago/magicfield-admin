@@ -143,7 +143,7 @@ export const RestoreProductsScreen: React.FC<Props> = ({ navigation }) => {
                 <Text style={styles.paginationButtonText}>Siguiente</Text>
               </TouchableOpacity>
             </View>
-          ) : null
+          ) : undefined
         }
         contentContainerStyle={products.length === 0 ? { flex: 1 } : undefined}
       />

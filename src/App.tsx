@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { View, SafeAreaView, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { NavigationContainer } from '@react-navigation/native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { RootNavigator } from '@navigation/RootNavigator';
@@ -12,7 +13,9 @@ import {
 
 export default function App() {
   useEffect(() => {
-    registerForPushNotifications();
+    registerForPushNotifications().catch((error) => {
+      console.error('Error al registrar notificaciones push:', error);
+    });
 
     // App abierta o en segundo plano: se toca la notificación en caliente.
     const unsubscribe = subscribeToOrderNotifications(navigateToOrder);
@@ -21,21 +24,23 @@ export default function App() {
 
   return (
     <GestureHandlerRootView style={styles.root}>
-      <SafeAreaView style={styles.safeArea}>
-        <NavigationContainer
-          ref={navigationRef}
-          onReady={() => {
-            // Cold-start: la app estaba cerrada del todo y se abrió tocando la notificación.
-            // Recién acá el navigationRef ya está listo para navegar -- antes de onReady,
-            // navigateToOrder() sería un no-op silencioso (ver isReady() en navigationRef.ts).
-            getInitialOrderIdFromNotification().then((orderId) => {
-              if (orderId) navigateToOrder(orderId);
-            });
-          }}
-        >
-          <RootNavigator />
-        </NavigationContainer>
-      </SafeAreaView>
+      <SafeAreaProvider>
+        <SafeAreaView style={styles.safeArea}>
+          <NavigationContainer
+            ref={navigationRef}
+            onReady={() => {
+              // Cold-start: la app estaba cerrada del todo y se abrió tocando la notificación.
+              // Recién acá el navigationRef ya está listo para navegar -- antes de onReady,
+              // navigateToOrder() sería un no-op silencioso (ver isReady() en navigationRef.ts).
+              getInitialOrderIdFromNotification().then((orderId) => {
+                if (orderId) navigateToOrder(orderId);
+              });
+            }}
+          >
+            <RootNavigator />
+          </NavigationContainer>
+        </SafeAreaView>
+      </SafeAreaProvider>
     </GestureHandlerRootView>
   );
 }

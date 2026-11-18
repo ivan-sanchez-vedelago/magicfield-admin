@@ -285,7 +285,7 @@ export const ProductsScreen: React.FC<Props> = ({ navigation }) => {
             </View>
           )
         }
-        ListFooterComponent={totalPages > 1 ? renderPagination() : null}
+        ListFooterComponent={totalPages > 1 ? renderPagination() : undefined}
         contentContainerStyle={
           visibleProducts.length === 0 ? { flex: 1 } : undefined
         }

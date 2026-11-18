@@ -1,5 +1,6 @@
 import { Platform } from 'react-native';
-import Constants, { ExecutionEnvironment } from 'expo-constants';
+import { isRunningInExpoGo } from 'expo';
+import Constants from 'expo-constants';
 import { apiService } from './api';
 
 // Desde el SDK 53, expo-notifications no soporta push remoto dentro de Expo Go (solo en
@@ -8,7 +9,7 @@ import { apiService } from './api';
 // import: por eso NO hay un `import * as Notifications from 'expo-notifications'` estático
 // arriba -- eso ya alcanzaría para dispararlo -- sino un require() adentro del `if`, para
 // que Expo Go ni siquiera llegue a cargar el módulo.
-const isExpoGo = Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
+const isExpoGo = isRunningInExpoGo();
 
 if (!isExpoGo) {
   const Notifications = require('expo-notifications');

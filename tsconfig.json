@@ -23,52 +23,51 @@
       "react-native",
       "node"
     ],
-    "baseUrl": ".",
     "paths": {
       "@/*": [
-        "src/*"
+        "./src/*"
       ],
       "@components": [
-        "src/components/index"
+        "./src/components/index"
       ],
       "@components/*": [
-        "src/components/*"
+        "./src/components/*"
       ],
       "@screens": [
-        "src/screens/index"
+        "./src/screens/index"
       ],
       "@screens/*": [
-        "src/screens/*"
+        "./src/screens/*"
       ],
       "@services": [
-        "src/services/index"
+        "./src/services/index"
       ],
       "@services/*": [
-        "src/services/*"
+        "./src/services/*"
       ],
       "@hooks": [
-        "src/hooks/index"
+        "./src/hooks/index"
       ],
       "@hooks/*": [
-        "src/hooks/*"
+        "./src/hooks/*"
       ],
       "@types": [
-        "src/types/index"
+        "./src/types/index"
       ],
       "@types/*": [
-        "src/types/*"
+        "./src/types/*"
       ],
       "@utils": [
-        "src/utils/index"
+        "./src/utils/index"
       ],
       "@utils/*": [
-        "src/utils/*"
+        "./src/utils/*"
       ],
       "@navigation": [
-        "src/navigation/index"
+        "./src/navigation/index"
       ],
       "@navigation/*": [
-        "src/navigation/*"
+        "./src/navigation/*"
       ]
     }
   },

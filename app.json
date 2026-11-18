@@ -6,10 +6,6 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
-    "splash": {
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
     "assetBundlePatterns": [
       "**/*"
     ],
@@ -41,7 +37,8 @@
           "icon": "./assets/favicon.png",
           "color": "#3b82f6"
         }
-      ]
+      ],
+      "expo-image"
     ],
     "extra": {
       "eas": {
