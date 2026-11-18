@@ -7,6 +7,8 @@ import {
   Text,
   StyleSheet,
   ActivityIndicator,
+  StyleProp,
+  ViewStyle,
 } from 'react-native';
 
 import { useScryfallSets } from '@hooks';
@@ -16,6 +18,7 @@ export interface SetPickerProps {
   value: string;
   onSelect: (setName: string) => void;
   disabled?: boolean;
+  style?: StyleProp<ViewStyle>;
 }
 
 // Mismo shell visual que CardSearch (buscador + lista scrolleable), pero mucho más simple:
@@ -23,7 +26,12 @@ export interface SetPickerProps {
 // /api/scryfall/sets), así que alcanza con traerla una sola vez y filtrarla en el cliente --
 // sin debounce, sin cache por query, sin el flag "selectingRef" de CardSearch (no hay
 // búsqueda en vivo contra Scryfall que suprimir).
-export const SetPicker: React.FC<SetPickerProps> = ({ value, onSelect, disabled = false }) => {
+export const SetPicker: React.FC<SetPickerProps> = ({
+  value,
+  onSelect,
+  disabled = false,
+  style,
+}) => {
   const { sets, loading } = useScryfallSets();
   const [query, setQuery] = useState(value);
   const [showResults, setShowResults] = useState(false);
@@ -45,7 +53,7 @@ export const SetPicker: React.FC<SetPickerProps> = ({ value, onSelect, disabled 
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, style]}>
       <View style={styles.searchBox}>
         <TextInput
           style={[styles.input, disabled && styles.disabledInput]}

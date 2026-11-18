@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import type { SelectOption } from './SelectField';
 
 export interface FinishToggleProps {
-  label?: string;
+  placeholder?: string;
   options: SelectOption[];
   selectedKey: string | null;
   selectedLabel?: string;
@@ -12,39 +12,49 @@ export interface FinishToggleProps {
 }
 
 export const FinishToggle: React.FC<FinishToggleProps> = ({
-  label = 'Finish',
+  placeholder = 'Seleccionar finish...',
   options,
   selectedKey,
   selectedLabel,
   onToggle,
   disabled = false,
 }) => {
-  const selectedIndex = options.findIndex(option => option.key === selectedKey);
-  const currentLabel = selectedIndex >= 0
-    ? options[selectedIndex].label
-    : selectedLabel ?? selectedKey ?? 'Seleccionar...';
-  const canChange = options.length > 0 && (options.length > 1 || selectedIndex < 0);
-  const isDisabled = disabled || !canChange;
-
-  const toggleFinish = () => {
-    if (options.length === 0) return;
-    const nextIndex = selectedIndex < 0 ? 0 : (selectedIndex + 1) % options.length;
-    onToggle(options[nextIndex].key);
-  };
+  const hasSelection = options.some(option => option.key === selectedKey);
+  const unselectedLabel = selectedLabel ?? selectedKey ?? placeholder;
 
   return (
     <View style={styles.group}>
-      <Text style={styles.label}>{label}</Text>
-      <TouchableOpacity
-        style={[styles.button, isDisabled && styles.buttonDisabled]}
-        onPress={toggleFinish}
-        disabled={isDisabled}
-        accessibilityRole="button"
-        accessibilityLabel={`${label}: ${currentLabel}. Tocar para cambiar`}
-      >
-        <Text style={styles.value}>{currentLabel}</Text>
-        {canChange && <Text style={styles.toggleIcon}>↻</Text>}
-      </TouchableOpacity>
+      {options.length > 0 && !hasSelection && (
+        <Text style={styles.placeholder}>{unselectedLabel}</Text>
+      )}
+      <View style={styles.options}>
+        {options.length > 0 ? options.map(option => {
+          const isSelected = option.key === selectedKey;
+          return (
+            <TouchableOpacity
+              key={option.key}
+              style={[
+                styles.option,
+                isSelected ? styles.optionSelected : styles.optionUnselected,
+                disabled && styles.optionDisabled,
+              ]}
+              onPress={() => onToggle(option.key)}
+              disabled={disabled || isSelected}
+              accessibilityRole="button"
+              accessibilityLabel={option.label}
+              accessibilityState={{ selected: isSelected, disabled: disabled || isSelected }}
+            >
+              <Text style={[styles.optionText, isSelected && styles.optionTextSelected]}>
+                {option.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        }) : (
+          <View style={[styles.option, styles.optionUnselected, styles.emptyOption]}>
+            <Text style={styles.optionText}>{unselectedLabel}</Text>
+          </View>
+        )}
+      </View>
     </View>
   );
 };
@@ -53,37 +63,50 @@ const styles = StyleSheet.create({
   group: {
     marginBottom: 4,
   },
-  label: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#6b7280',
+  placeholder: {
+    fontSize: 13,
+    color: '#9ca3af',
     marginBottom: 6,
     marginTop: 4,
   },
-  button: {
+  options: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 8,
+  },
+  option: {
+    flexGrow: 1,
+    flexBasis: '20%',
+    minWidth: 64,
     minHeight: 42,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
     borderRadius: 8,
-    paddingHorizontal: 12,
+    paddingHorizontal: 8,
     paddingVertical: 10,
-    marginBottom: 8,
-    backgroundColor: '#fff',
-    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
   },
-  buttonDisabled: {
+  optionSelected: {
+    backgroundColor: '#dbeafe',
+    borderColor: '#3b82f6',
+  },
+  optionUnselected: {
+    backgroundColor: '#f3f4f6',
+    borderColor: '#e5e7eb',
+  },
+  optionDisabled: {
     opacity: 0.6,
   },
-  value: {
-    fontSize: 13,
-    color: '#1f2937',
-    fontWeight: '600',
+  emptyOption: {
+    flexBasis: '100%',
   },
-  toggleIcon: {
-    fontSize: 18,
+  optionText: {
+    fontSize: 12,
+    color: '#6b7280',
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  optionTextSelected: {
     color: '#3b82f6',
-    fontWeight: '700',
   },
 });

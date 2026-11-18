@@ -501,21 +501,25 @@ export const CreateProductScreen = ({ navigation }: Props) => {
 
               <SetPicker value={set} onSelect={setSet} disabled={loading} />
 
-              <SelectField
-                label="Condición"
-                options={conditions.map(c => ({ key: String(c.id), label: c.longName }))}
-                selectedKey={conditionId !== null ? String(conditionId) : null}
-                onSelect={(key) => setConditionId(Number(key))}
-                disabled={loading}
-              />
+              <View style={styles.conditionLanguageRow}>
+                <SelectField
+                  style={styles.conditionLanguageField}
+                  placeholder="Condición"
+                  options={conditions.map(c => ({ key: String(c.id), label: c.longName }))}
+                  selectedKey={conditionId !== null ? String(conditionId) : null}
+                  onSelect={(key) => setConditionId(Number(key))}
+                  disabled={loading}
+                />
 
-              <SelectField
-                label="Idioma"
-                options={languages.map(l => ({ key: String(l.id), label: l.longName }))}
-                selectedKey={languageId !== null ? String(languageId) : null}
-                onSelect={(key) => setLanguageId(Number(key))}
-                disabled={loading}
-              />
+                <SelectField
+                  style={styles.conditionLanguageField}
+                  placeholder="Idioma"
+                  options={languages.map(l => ({ key: String(l.id), label: l.longName }))}
+                  selectedKey={languageId !== null ? String(languageId) : null}
+                  onSelect={(key) => setLanguageId(Number(key))}
+                  disabled={loading}
+                />
+              </View>
             </View>
           )}
 
@@ -621,24 +625,27 @@ export const CreateProductScreen = ({ navigation }: Props) => {
                 />
               </View>
 
-              <SelectField
-                label="Condición"
-                options={conditions.map(c => ({ key: String(c.id), label: c.longName }))}
-                selectedKey={conditionId !== null ? String(conditionId) : null}
-                onSelect={(key) => setConditionId(Number(key))}
-                disabled={loading}
-              />
+              <View style={styles.conditionLanguageRow}>
+                <SelectField
+                  style={styles.conditionLanguageField}
+                  placeholder="Condición"
+                  options={conditions.map(c => ({ key: String(c.id), label: c.longName }))}
+                  selectedKey={conditionId !== null ? String(conditionId) : null}
+                  onSelect={(key) => setConditionId(Number(key))}
+                  disabled={loading}
+                />
 
-              <SelectField
-                label="Idioma"
-                options={languages.map(l => ({ key: String(l.id), label: l.longName }))}
-                selectedKey={languageId !== null ? String(languageId) : null}
-                onSelect={(key) => setLanguageId(Number(key))}
-                disabled={loading}
-              />
+                <SelectField
+                  style={styles.conditionLanguageField}
+                  placeholder="Idioma"
+                  options={languages.map(l => ({ key: String(l.id), label: l.longName }))}
+                  selectedKey={languageId !== null ? String(languageId) : null}
+                  onSelect={(key) => setLanguageId(Number(key))}
+                  disabled={loading}
+                />
+              </View>
 
               <FinishToggle
-                label="Finish"
                 options={availableFinishes.map(f => ({
                   key: f,
                   label: finishes.find(cf => cf.shortName === f)?.longName ?? f,
@@ -783,6 +790,16 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+  },
+  conditionLanguageRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    columnGap: 8,
+  },
+  conditionLanguageField: {
+    flexGrow: 1,
+    flexBasis: '48%',
+    minWidth: 140,
   },
   flex1: {
     flex: 1,

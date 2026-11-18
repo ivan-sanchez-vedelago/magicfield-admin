@@ -385,6 +385,7 @@ export const EditProductScreen = ({
             <Text style={styles.infoValue}>{product.type.toUpperCase()}</Text>
           </View>
 
+          <Text style={styles.label}>Nombre del producto</Text>
           <TextInput
             style={styles.input}
             placeholder="Nombre del producto"
@@ -396,6 +397,7 @@ export const EditProductScreen = ({
             editable={!updateLoading}
           />
 
+          <Text style={styles.label}>Descripción</Text>
           <TextInput
             style={[styles.input, styles.multilineInput]}
             placeholder="Descripción"
@@ -410,31 +412,38 @@ export const EditProductScreen = ({
           />
 
           <View style={styles.row}>
-            <TextInput
-              style={[styles.input, styles.flex1, styles.rowInput]}
-              placeholder="Precio"
-              value={price}
-              onChangeText={(text) => {
-                setPrice(text);
-                handleFieldChange();
-              }}
-              keyboardType="decimal-pad"
-              editable={!updateLoading}
-            />
-            <StockStepper
-              style={[styles.flex1, styles.marginLeft, styles.rowInput]}
-              value={stock}
-              placeholder="Stock"
-              onChangeValue={(text) => {
-                setStock(text);
-                handleFieldChange();
-              }}
-              editable={!updateLoading}
-            />
+            <View style={styles.flex1}>
+              <Text style={styles.label}>Precio</Text>
+              <TextInput
+                style={[styles.input, styles.rowInput]}
+                placeholder="Precio"
+                value={price}
+                onChangeText={(text) => {
+                  setPrice(text);
+                  handleFieldChange();
+                }}
+                keyboardType="decimal-pad"
+                editable={!updateLoading}
+              />
+            </View>
+            <View style={[styles.flex1, styles.marginLeft]}>
+              <Text style={styles.label}>Stock</Text>
+              <StockStepper
+                style={styles.rowInput}
+                value={stock}
+                placeholder="Stock"
+                onChangeValue={(text) => {
+                  setStock(text);
+                  handleFieldChange();
+                }}
+                editable={!updateLoading}
+              />
+            </View>
           </View>
 
           <Text style={styles.label}>Set</Text>
           <SetPicker
+            style={styles.setPicker}
             value={set}
             onSelect={(newSet) => {
               setSet(newSet);
@@ -443,27 +452,31 @@ export const EditProductScreen = ({
             disabled={updateLoading}
           />
 
-          <SelectField
-            label="Condición"
-            options={conditions.map(c => ({ key: String(c.id), label: c.longName }))}
-            selectedKey={conditionId !== null ? String(conditionId) : null}
-            onSelect={(key) => {
-              setConditionId(Number(key));
-              handleFieldChange();
-            }}
-            disabled={updateLoading}
-          />
+          <View style={styles.conditionLanguageRow}>
+            <SelectField
+              style={styles.conditionLanguageField}
+              label="Condición"
+              options={conditions.map(c => ({ key: String(c.id), label: c.longName }))}
+              selectedKey={conditionId !== null ? String(conditionId) : null}
+              onSelect={(key) => {
+                setConditionId(Number(key));
+                handleFieldChange();
+              }}
+              disabled={updateLoading}
+            />
 
-          <SelectField
-            label="Idioma"
-            options={languages.map(l => ({ key: String(l.id), label: l.longName }))}
-            selectedKey={languageId !== null ? String(languageId) : null}
-            onSelect={(key) => {
-              setLanguageId(Number(key));
-              handleFieldChange();
-            }}
-            disabled={updateLoading}
-          />
+            <SelectField
+              style={styles.conditionLanguageField}
+              label="Idioma"
+              options={languages.map(l => ({ key: String(l.id), label: l.longName }))}
+              selectedKey={languageId !== null ? String(languageId) : null}
+              onSelect={(key) => {
+                setLanguageId(Number(key));
+                handleFieldChange();
+              }}
+              disabled={updateLoading}
+            />
+          </View>
         </View>
       )}
 
@@ -480,6 +493,7 @@ export const EditProductScreen = ({
             </Text>
           </View>
 
+          <Text style={styles.label}>Nombre del producto</Text>
           <TextInput
             style={styles.input}
             placeholder="Nombre del producto"
@@ -491,6 +505,7 @@ export const EditProductScreen = ({
             editable={!updateLoading}
           />
 
+          <Text style={styles.label}>Descripción</Text>
           <TextInput
             style={[styles.input, styles.multilineInput]}
             placeholder="Descripción"
@@ -505,27 +520,33 @@ export const EditProductScreen = ({
           />
 
           <View style={styles.row}>
-            <TextInput
-              style={[styles.input, styles.flex1, styles.rowInput]}
-              placeholder="Precio"
-              value={price}
-              onChangeText={(text) => {
-                setPrice(text);
-                handleFieldChange();
-              }}
-              keyboardType="decimal-pad"
-              editable={!updateLoading}
-            />
-            <StockStepper
-              style={[styles.flex1, styles.marginLeft, styles.rowInput]}
-              value={stock}
-              placeholder="Stock"
-              onChangeValue={(text) => {
-                setStock(text);
-                handleFieldChange();
-              }}
-              editable={!updateLoading}
-            />
+            <View style={styles.flex1}>
+              <Text style={styles.label}>Precio</Text>
+              <TextInput
+                style={[styles.input, styles.rowInput]}
+                placeholder="Precio"
+                value={price}
+                onChangeText={(text) => {
+                  setPrice(text);
+                  handleFieldChange();
+                }}
+                keyboardType="decimal-pad"
+                editable={!updateLoading}
+              />
+            </View>
+            <View style={[styles.flex1, styles.marginLeft]}>
+              <Text style={styles.label}>Stock</Text>
+              <StockStepper
+                style={styles.rowInput}
+                value={stock}
+                placeholder="Stock"
+                onChangeValue={(text) => {
+                  setStock(text);
+                  handleFieldChange();
+                }}
+                editable={!updateLoading}
+              />
+            </View>
           </View>
         </View>
       )}
@@ -621,30 +642,33 @@ export const EditProductScreen = ({
             </View>
           </View>
 
-          <SelectField
-            label="Condición"
-            options={conditions.map(c => ({ key: String(c.id), label: c.longName }))}
-            selectedKey={conditionId !== null ? String(conditionId) : null}
-            onSelect={(key) => {
-              setConditionId(Number(key));
-              handleFieldChange();
-            }}
-            disabled={updateLoading}
-          />
+          <View style={styles.conditionLanguageRow}>
+            <SelectField
+              style={styles.conditionLanguageField}
+              label="Condición"
+              options={conditions.map(c => ({ key: String(c.id), label: c.longName }))}
+              selectedKey={conditionId !== null ? String(conditionId) : null}
+              onSelect={(key) => {
+                setConditionId(Number(key));
+                handleFieldChange();
+              }}
+              disabled={updateLoading}
+            />
 
-          <SelectField
-            label="Idioma"
-            options={languages.map(l => ({ key: String(l.id), label: l.longName }))}
-            selectedKey={languageId !== null ? String(languageId) : null}
-            onSelect={(key) => {
-              setLanguageId(Number(key));
-              handleFieldChange();
-            }}
-            disabled={updateLoading}
-          />
+            <SelectField
+              style={styles.conditionLanguageField}
+              label="Idioma"
+              options={languages.map(l => ({ key: String(l.id), label: l.longName }))}
+              selectedKey={languageId !== null ? String(languageId) : null}
+              onSelect={(key) => {
+                setLanguageId(Number(key));
+                handleFieldChange();
+              }}
+              disabled={updateLoading}
+            />
+          </View>
 
           <FinishToggle
-            label="Finish"
             options={(() => {
               const shortNames = availableFinishes.length > 0
                 ? availableFinishes
@@ -788,6 +812,19 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+  },
+  conditionLanguageRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    columnGap: 8,
+  },
+  conditionLanguageField: {
+    flexGrow: 1,
+    flexBasis: '48%',
+    minWidth: 140,
+  },
+  setPicker: {
+    marginVertical: 0,
   },
   flex1: {
     flex: 1,

@@ -1,5 +1,13 @@
 import { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ScrollView,
+  StyleSheet,
+  StyleProp,
+  ViewStyle,
+} from 'react-native';
 
 export interface SelectOption {
   key: string;
@@ -7,11 +15,13 @@ export interface SelectOption {
 }
 
 export interface SelectFieldProps {
-  label: string;
+  label?: string;
+  placeholder?: string;
   options: SelectOption[];
   selectedKey: string | null;
   onSelect: (key: string) => void;
   disabled?: boolean;
+  style?: StyleProp<ViewStyle>;
 }
 
 // Mismo patrón que el dropdown de CardSearch (lista inline debajo del input, no un modal
@@ -20,24 +30,26 @@ export interface SelectFieldProps {
 // Compartido entre CreateProductScreen y EditProductScreen para condición/idioma/finish.
 export const SelectField = ({
   label,
+  placeholder = 'Seleccionar...',
   options,
   selectedKey,
   onSelect,
   disabled,
+  style,
 }: SelectFieldProps) => {
   const [open, setOpen] = useState(false);
   const selectedLabel = options.find(o => o.key === selectedKey)?.label;
 
   return (
-    <View style={styles.selectGroup}>
-      <Text style={styles.label}>{label}</Text>
+    <View style={[styles.selectGroup, style]}>
+      {label && <Text style={styles.label}>{label}</Text>}
       <TouchableOpacity
         style={[styles.input, styles.selectInput, disabled && styles.disabled]}
         onPress={() => setOpen(o => !o)}
         disabled={disabled}
       >
         <Text style={selectedLabel ? styles.selectValueText : styles.selectPlaceholderText}>
-          {selectedLabel ?? 'Seleccionar...'}
+          {selectedLabel ?? placeholder}
         </Text>
         <Text style={styles.selectChevron}>{open ? '▴' : '▾'}</Text>
       </TouchableOpacity>
