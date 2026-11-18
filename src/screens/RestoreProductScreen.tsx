@@ -440,8 +440,6 @@ export const RestoreProductScreen = ({
           que EditProductScreen), así que tienen que ser editables acá y no solo de lectura. */}
       {isSealedType && (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Set, Condición e Idioma</Text>
-
           <Text style={styles.label}>Set</Text>
           <SetPicker
             style={styles.setPicker}
